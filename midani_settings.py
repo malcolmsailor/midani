@@ -291,13 +291,22 @@ class Settings:
             4-tuples are of form (x, y, shadow_x, shadow_y), where x and y are
                 specified separately for notes and shadows.
             Default: [(10, -10)]
-        highlight_shadows: boolean. Controls whether shadows are highlighted
-            similarly to notes.
-            Default: False
+        default_shadow_color: tuple of form (int, int, int). RGB color that
+            should be blended with background color to make shadows.
+            Default: (0, 0, 0)
         shadow_scale: float. How much to scale shadows relative to the objects
             they shadow.
             # TODO make this apply to lines
             Default: 1.0
+        highlight_shadows: boolean. Controls whether shadows are highlighted
+            similarly to notes.
+            Default: False
+        note_shadows_over_clines: boolean. If True, then note (i.e., rectangle)
+            shadows are drawn after drawing connection lines, so they will
+            appear on top of the connection lines.
+            Default: False
+
+
 
 
 
@@ -401,16 +410,15 @@ class Settings:
     ] = dataclasses.field(
         default_factory=DEFAULT_SHADOW_POSITIONS
     )  # doc
-    default_shadow_color: tuple = (0, 0, 0)
-    shadow_scale: float = 1.0
+    default_shadow_color: tuple = (0, 0, 0)  # doc
+    shadow_scale: float = 1.0  # doc
 
     # TODO what do shadow_gradients do?
     shadow_gradients: bool = True
     shadow_gradient_offset: float = 5
-    highlight_shadows: bool = False
+    highlight_shadows: bool = False  # doc
 
-    # TODO doc
-    shadows_over_clines = True
+    note_shadows_over_clines = False  # doc
 
     duplicate_voice_settings: dict = dataclasses.field(default_factory=dict)
 

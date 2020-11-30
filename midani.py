@@ -164,65 +164,50 @@ def draw_note_shadows(rect_tuples, window, settings, table, r_boss):
             settings[voice_i]["shadow_color"],
             settings[voice_i]["shadow_strength"],
         )
-        for shadow_position in settings.shadow_positions:
-            for shadow_i in range(settings.num_shadows):
-                shadow_n = settings.num_shadows - shadow_i
-                for rect in voice:
-                    # I only ever used pxwidth and pywidth divided by 2 so I
-                    # just divide them by 2 here
-                    pxwidth = (
-                        rect.note.dur
-                        * rect.scale_x_factor
-                        * settings.shadow_scale ** shadow_n
-                        / 2
+        for shadow_i, shadow_position in enumerate(
+            reversed(settings.shadow_positions)
+        ):
+            shadow_n = settings.num_shadows - shadow_i
+            for rect in voice:
+                half_width = (
+                    rect.note.dur
+                    * rect.scale_x_factor
+                    * settings.shadow_scale ** shadow_n
+                    / 2
+                )
+                half_height = (
+                    channel.note_height
+                    * rect.scale_y_factor
+                    * settings.shadow_scale ** shadow_n
+                    / 2
+                )
+                shadow_x = shadow_position.shadow_x
+                shadow_y = shadow_position.shadow_y
+                if settings.shadow_gradients:
+                    shadow_n_strength = shadow_i / (
+                        settings.num_shadows + settings.shadow_gradient_offset
                     )
-                    pywidth = (
-                        channel.note_height
-                        * rect.scale_y_factor
-                        * settings.shadow_scale ** shadow_n
-                        / 2
+                    shadow_n_color = midani_colors.blend_colors(
+                        shadow_color, rect.color, shadow_n_strength,
                     )
-                    shadow_x = shadow_position.shadow_x * shadow_n
-                    shadow_y = shadow_position.shadow_y * shadow_n
-                    if settings.shadow_gradients:
-                        shadow_n_strength = shadow_i / (
-                            settings.num_shadows
-                            + settings.shadow_gradient_offset
-                        )
+                    if (
+                        hl_blend := rect.highlight_factor
+                        * settings.shadow_hl_strength
+                    ) :
                         shadow_n_color = midani_colors.blend_colors(
-                            shadow_color, rect.color, shadow_n_strength,
+                            shadow_n_color, settings.highlight_color, hl_blend,
                         )
-                        if (
-                            hl_blend := rect.highlight_factor
-                            * settings.shadow_hl_strength
-                        ) :
-                            shadow_n_color = midani_colors.blend_colors(
-                                shadow_n_color,
-                                settings.highlight_color,
-                                hl_blend,
-                            )
-                    # TODO why is the value of half_height not calculated from
-                    # basic_y_width and pywidth in the same way as half_width?
-                    half_height = 0.5 * rect.scale_y_factor
-                    bottom = (
-                        channel.y_position(rect.pitch - half_height) + shadow_y
-                    )
-                    top = (
-                        channel.y_position(rect.pitch + half_height) + shadow_y
-                    )
-                    if bottom >= top:
-                        continue
-                    half_width = 0.5 * rect.note.dur - pxwidth
-                    r_boss.plot_rect(
-                        max(
-                            window.start,
-                            rect.note.start + shadow_x + half_width,
-                        ),
-                        min(window.end, rect.note.end + shadow_x - half_width,),
-                        bottom,
-                        top,
-                        shadow_n_color,
-                    )
+                bottom = channel.y_position(rect.pitch) - half_height + shadow_y
+                top = channel.y_position(rect.pitch) + half_height + shadow_y
+                if bottom >= top:
+                    continue
+                r_boss.plot_rect(
+                    max(window.start, rect.note.mid + shadow_x - half_width,),
+                    min(window.end, rect.note.mid + shadow_x + half_width,),
+                    bottom,
+                    top,
+                    shadow_n_color,
+                )
 
 
 def _connection_line_conditions_apply(now, src, dst, settings):
@@ -363,11 +348,11 @@ def plot(settings, table):
             now, window, settings, table
         )
         if settings.shadow_strength > 0:
-            if not settings.shadows_over_clines:
+            if not settings.note_shadows_over_clines:
                 draw_note_shadows(rect_tuples, window, settings, table, r_boss)
             draw_line_shadows(line_tuples, window, settings, table, r_boss)
         draw_connection_lines(line_tuples, window, settings, table, r_boss)
-        if settings.shadow_strength > 0 and settings.shadows_over_clines:
+        if settings.shadow_strength > 0 and settings.note_shadows_over_clines:
             draw_note_shadows(rect_tuples, window, settings, table, r_boss)
         draw_notes(rect_tuples, window, settings, table, r_boss)
         draw_annotations(window, settings, r_boss)
