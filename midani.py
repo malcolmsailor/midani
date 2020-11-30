@@ -201,16 +201,6 @@ def draw_note_shadows(rect_tuples, window, settings, table, r_boss):
                                 settings.highlight_color,
                                 hl_blend,
                             )
-                    # shadow_x = (
-                    #     sign(shadow_n_x) * pxwidth
-                    #     if settings.close_shadows and pxwidth < abs(shadow_n_x)
-                    #     else shadow_n_x
-                    # )
-                    # center = (
-                    #     sign(shadow_n_y) * pywidth
-                    #     if settings.close_shadows and pywidth < abs(shadow_n_y)
-                    #     else shadow_n_y
-                    # )
                     # TODO why is the value of half_height not calculated from
                     # basic_y_width and pywidth in the same way as half_width?
                     half_height = 0.5 * rect.scale_y_factor
@@ -274,25 +264,6 @@ def draw_line_shadows(line_tuples, window, settings, table, r_boss):
                         window.now, src, dst, settings
                     ):
                         continue
-                    # lwidth = settings.con_line_width * src.scale_factor
-                    # pxwidth = lwidth / settings.w_factor
-                    # pywidth = lwidth / channel.h_factor
-                    # if settings.close_shadows and pxwidth < abs(
-                    #     shadow_position.cline_shadow_x
-                    # ):
-                    #     x_offset = pxwidth * sign(
-                    #         shadow_position.cline_shadow_x
-                    #     )
-                    # else:
-                    #     x_offset = shadow_position.cline_shadow_x
-                    # if settings.close_shadows and pywidth < abs(
-                    #     shadow_position.cline_shadow_y
-                    # ):
-                    #     y_offset = pywidth * sign(
-                    #         shadow_position.cline_shadow_y
-                    #     )
-                    # else:
-                    #     y_offset = shadow_position.cline_shadow_y
                     r_boss.plot_line(
                         x1=src.note.mid + shadow_position.cline_shadow_x,
                         x2=dst.note.mid + shadow_position.cline_shadow_x,
@@ -329,47 +300,6 @@ def draw_connection_lines(line_tuples, window, settings, table, r_boss):
                 color=color,
                 width=settings.con_line_width * src.scale_factor,
             )
-
-
-# def draw_shadows_on_connection_lines(
-#     rect_tuples, window, settings, table, r_boss
-# ):
-#     # TODO I do not see any effect from this
-#     for voice_i, voice in zip(settings.voice_order, rect_tuples):
-#         if (
-#             voice_i not in settings.voices_to_render
-#             or not voice
-#             or not settings[voice_i]["connection_lines"]
-#             or not settings[voice_i]["rectangles"]
-#         ):
-#             continue
-#         channel_i = settings.chan_assmts[voice_i]
-#         channel = table.channels[channel_i]
-#         color = midani_colors.blend_colors(
-#             window.bg_color(),
-#             settings[voice_i]["shadow_color"],
-#             settings[voice_i]["shadow_strength"],
-#         )
-#         for shadow_position in settings.shadow_positions:
-#             x_offset = shadow_position.shadow_x * (
-#                 0.5 if shadow_position.shadow_x < 0 else 1
-#             )
-#             y_offset = shadow_position.shadow_y * (
-#                 0.5 if shadow_position.shadow_y < 0 else 1
-#             )
-#             # I've copied the original script here, but why don't we need to
-#             # iterate over num_shadows? Possibly that was an oversight on an
-#             # update of the script?
-#             # for rect in voice:
-#             half_width = rect.note.dur / 2 * rect.scale_x_factor
-#             half_height = rect.scale_y_factor / 2
-#             r_boss.plot_rect(
-#                 rect.note.mid - half_width + x_offset,
-#                 rect.note.mid + half_width + x_offset,
-#                 rect.note.pitch - half_height + y_offset,
-#                 rect.note.pitch + half_height + y_offset,
-#                 color,
-#             )
 
 
 def draw_notes(rect_tuples, window, settings, table, r_boss):
@@ -439,10 +369,6 @@ def plot(settings, table):
         draw_connection_lines(line_tuples, window, settings, table, r_boss)
         if settings.shadow_strength > 0 and settings.shadows_over_clines:
             draw_note_shadows(rect_tuples, window, settings, table, r_boss)
-        # if settings.shadow_strength > 0 and settings.close_shadows:
-        #     draw_shadows_on_connection_lines(
-        #         rect_tuples, window, settings, table, r_boss
-        #     )
         draw_notes(rect_tuples, window, settings, table, r_boss)
         draw_annotations(window, settings, r_boss)
         now += settings.frame_increment

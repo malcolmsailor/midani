@@ -412,9 +412,6 @@ class Settings:
     # TODO doc
     shadows_over_clines = True
 
-    # TODO what exactly does close_shadows do?
-    # close_shadows: bool = True  # TODO delete this attribute?
-
     duplicate_voice_settings: dict = dataclasses.field(default_factory=dict)
 
     num_channels: int = 1
