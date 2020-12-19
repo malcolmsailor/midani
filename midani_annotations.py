@@ -1,5 +1,6 @@
-def time(window, settings):
+def time(window):
     return f"{window.now:f}"
+
 
 ANNOT = {
     "time": time,

@@ -9,7 +9,6 @@ R_PRINT_COUNT = 1
 
 
 class RBoss:
-    # del RBoss needs to be called before exiting to close outf!
     def __init__(self, settings):
         self.outfnumber = 0
         self.outf_dirname = settings._temp_r_dirname
@@ -27,13 +26,11 @@ class RBoss:
         self.out_height = settings.out_height
         self._init_png_str = (
             f'png(file = "{self.png_fname_base}'
-            f'{{png_fnumber:0{settings._png_fnum_digits}d}}.png", '
+            f'{{png_fnumber:0{settings.png_fnum_digits}d}}.png", '
             f"width = {self.out_width}, height = {self.out_height})\n"
             # The next line is copied from the original version of the script,
             # I no longer remember what it does
             'par(mai = c(0,0,0,0), xaxs = "i", yaxs = "i")\n'
-            # Set bg color
-            # TODO does bg_color need to be formatted? check out "color_string" func
             'par(bg = "{bg_color}")\n'
             "plot(c({window_start}, {window_end}), "
             "c({window_bottom}, {window_top}), "
@@ -43,7 +40,7 @@ class RBoss:
     @staticmethod
     def hex_color(color):
         # Will raise a ValueError if color has floats (rather than ints)
-        return f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}"
+        return f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}{color[3]:02x}"
 
     def _close_outf(self):
         try:
@@ -64,16 +61,15 @@ class RBoss:
     def init_png(self, window):
         if (
             self.line_count > MAX_LINE_COUNT
-            or (self.plot_count % MAX_PLOT_COUNT) > MAX_PLOT_COUNT
+            or (self.plot_count + 1) % MAX_PLOT_COUNT == 0
         ):
             self._increment_outf()
-        # print(f"Initializing png {self.png_fnumber}")
         if self.plot_count % PLOT_PRINT_COUNT == 0:
             print(f"Writing frame {self.plot_count} \r", end="")
         self.outf.write(
             self._init_png_str.format(
                 png_fnumber=self.png_fnumber,
-                bg_color=self.hex_color(window.bg_color()),
+                bg_color=self.hex_color(window.bg_color),
                 window_start=window.start,
                 window_end=window.end,
                 window_bottom=window.bottom,
@@ -107,13 +103,13 @@ class RBoss:
     def annotate(self, text, x, y, color):
         for line in text.split("\n"):
             self.outf.write(
-                f'text(c({x}), c({y}), "{text}", '
+                f'text(c({x}), c({y}), "{line}", '
                 f'col = "{self.hex_color(color)}")\n'
             )
             self.line_count += 1
 
     def run_r(self):
-        print(f"Plotting {self.plot_count + 1} frames in R")
+        print(f"Plotting {self.plot_count} frames in R")
         if not os.path.exists(self.png_dirname):
             os.makedirs(self.png_dirname)
         self._close_outf()
@@ -122,7 +118,16 @@ class RBoss:
                 print(
                     f"Processing R file {count + 1}/{self.outfnumber}\r", end=""
                 )
-            subprocess.run(["R", "CMD", "BATCH", outfname, "--slave"])
+            proc = subprocess.run(
+                ["Rscript", outfname],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                check=False,
+            )
+            if proc.returncode != 0:
+                print("")
+                print(f"Rscript returned error code {proc.returncode}")
+                print(proc.stdout.decode())
         print("")
         if self.clean_up:
             print("Removing temporary R files")
