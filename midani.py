@@ -4,13 +4,13 @@ import os
 import re
 import sys
 
-import from_my_other_projects.midi_funcs as midi_funcs
+import src.from_my_other_projects.midi_funcs as midi_funcs
 
-import midani_av
-import midani_misc_classes
-import midani_plot
-import midani_settings
-import midani_time
+import src.midani_av as midani_av
+import src.midani_misc_classes as midani_misc_classes
+import src.midani_plot as midani_plot
+import src.midani_settings as midani_settings
+import src.midani_time as midani_time
 
 NO_PATH_MSG = """Nothing to animate! Either
     - pass path to a midi file as a command-line argument with "-m" or "--midi"

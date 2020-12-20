@@ -1,4 +1,4 @@
-import from_my_other_projects.mal_misc as mal_misc
+import src.from_my_other_projects.mal_misc as mal_misc
 
 
 class TempoChanges:

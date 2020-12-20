@@ -4,7 +4,7 @@ import math
 import random
 import typing
 
-import midani_colors
+import src.midani_colors as midani_colors
 
 #
 # class Note:

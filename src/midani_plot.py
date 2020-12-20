@@ -1,9 +1,9 @@
 import math
 
-import midani_annotations
-import midani_colors
-import midani_misc_classes
-import midani_r
+import src.midani_annotations as midani_annotations
+import src.midani_colors as midani_colors
+import src.midani_misc_classes as midani_misc_classes
+import src.midani_r as midani_r
 
 
 def _rect_or_its_shadow_in_frame(now, note, settings):

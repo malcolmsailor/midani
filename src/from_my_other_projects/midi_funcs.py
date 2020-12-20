@@ -3,8 +3,8 @@ import fractions
 
 import mido
 
-import from_my_other_projects.note_classes
-import from_my_other_projects.tuning
+import src.from_my_other_projects.note_classes as note_classes
+import src.from_my_other_projects.tuning as tuning
 
 NUM_CHANNELS = 16
 
@@ -98,7 +98,7 @@ def _note_off_handler(
         max_denominator=max_denominator
     )
 
-    note_object = from_my_other_projects.note_classes.Note(
+    note_object = note_classes.Note(
         pitch, attack, dur, velocity=velocity, choir=channel
     )
 
@@ -192,7 +192,7 @@ def read_midi_to_internal_data(
     if split_channels_to_voices:
         num_voices *= NUM_CHANNELS
 
-    internal_data = from_my_other_projects.note_classes.Score(
+    internal_data = note_classes.Score(
         tet=tet, num_voices=num_voices, time_sig=time_sig
     )
     if track_num_offset:
@@ -202,9 +202,7 @@ def read_midi_to_internal_data(
     # Sorting the tracks avoids orphan note or pitchwheel events.
     sorted_tracks = _return_sorted_midi_tracks(in_mid)
 
-    pitch_bend_tuple_dict = from_my_other_projects.tuning.return_pitch_bend_tuple_dict(
-        tet
-    )
+    pitch_bend_tuple_dict = tuning.return_pitch_bend_tuple_dict(tet)
 
     inverse_pb_tup_dict = {}
     for pitch, pb_tup in pitch_bend_tuple_dict.items():
