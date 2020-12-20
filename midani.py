@@ -22,6 +22,8 @@ either be included as a command line argument with -m/--midi, or it must be
 specified with the "midifname" keyword argument in a settings file provided with
 -s/--settings."""
 
+SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
+
 
 def read_score(settings):
     return midi_funcs.read_midi_to_internal_data(
@@ -65,7 +67,9 @@ def main(midi_path, audio_path, test_flag, user_settings_path):
             )
         else:
             user_settings["frame_increment"] = 0.5
-    settings = midani_settings.Settings(**user_settings)
+    settings = midani_settings.Settings(
+        script_path=SCRIPT_PATH, **user_settings
+    )
     if settings.process_video != "only":
         score = read_score(settings)
         tempo_changes = midani_time.TempoChanges(score)

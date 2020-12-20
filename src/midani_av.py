@@ -32,7 +32,7 @@ def process_video(settings, n):
         print(f"\rAdding {print_png}{str_i}.png", end="")
         frame = cv2.imread(img_path)
         if frame is None:
-            print("Error: couldn't read {img_path}")
+            print(f"\nError: couldn't read {img_path}")
         elif settings.clean_up_png_files:
             os.remove(img_path)
         out.write(frame)

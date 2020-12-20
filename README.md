@@ -70,3 +70,10 @@ optional arguments:
 The subdirectory `sample_settings` contains a few sample settings files to quickly demonstrate a few of the different options available.
 
 The subdirectory `sample_music` contains a few midi files to play with for demo purposes. I created these algorithmically with another project of mine. I have provided mp3s generated therefrom with `fluidsynth` and a free General MIDI soundfont. The audio fidelity may leave something to be desired.
+
+## Major TODOs
+
+- documentation
+- tests
+- finish sample_settings
+- mop-up bugs etc.

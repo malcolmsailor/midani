@@ -2,7 +2,6 @@
     "midifname": "sample_music/effrhy_732.mid",
     "audio_fname": "sample_music/effrhy_732.mp3",
     "seed": 0,
-    "outro": 5,
     "default_note_opacity": 128,
     "color_palette": [
         [96, 96, 96],

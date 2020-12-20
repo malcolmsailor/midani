@@ -32,9 +32,11 @@ COLOR_LISTS = ("color_palette",)
 
 BG_COLOR_LISTS = ("bg_colors",)
 
-SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
-DEFAULT_OUTPUT_PATH = os.path.join(SCRIPT_PATH, "output")
-DEFAULT_TEMP_R_PATH = os.path.join(SCRIPT_PATH, ".temp_r_files")
+# SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
+# DEFAULT_OUTPUT_PATH = os.path.join(SCRIPT_PATH, "output")
+DEFAULT_OUTPUT_PATH = "output"
+# DEFAULT_TEMP_R_PATH = os.path.join(SCRIPT_PATH, ".temp_r_files")
+DEFAULT_TEMP_R_PATH = ".temp_r_files"
 
 
 @dataclasses.dataclass
@@ -553,7 +555,7 @@ class Settings:
     midifname: str = ""
     midi_tracks_to_voices: bool = True
     midi_channels_to_voices: bool = False
-    output_dirname: str = DEFAULT_OUTPUT_PATH  # doc
+    output_dirname: str = None  # doc
     resolution: typing.Tuple[int, int] = (1280, 720)
     _temp_r_dirname: str = DEFAULT_TEMP_R_PATH
     process_video: str = "yes"
@@ -709,8 +711,10 @@ class Settings:
     bg_color_blend: bool = True
     intro_bg_color: tuple = (0, 0, 0, 255)
     outro_bg_color: tuple = None
+    script_path: str = None  # for internal use only
 
     def __post_init__(self):
+
         if self.seed is not None:
             random.seed(self.seed)
         if self.intro_bg_color is None:
@@ -803,15 +807,25 @@ class Settings:
         )
         self._max_end = max(self.note_end, self.line_end)
         self._max_start = max(self.note_start, self.line_start)
-        if not os.path.isabs(self._temp_r_dirname):
+        if self._temp_r_dirname is None:
             self._temp_r_dirname = os.path.join(
-                SCRIPT_PATH, self._temp_r_dirname
+                self.script_path, DEFAULT_TEMP_R_PATH
+            )
+        elif not os.path.isabs(self._temp_r_dirname):
+            self._temp_r_dirname = os.path.join(
+                self.script_path, self._temp_r_dirname
             )
         self.temp_r_script_base = os.path.join(
             self._temp_r_dirname, TEMP_R_SCRIPT
         )
-        if not os.path.isabs(self.output_dirname):
-            self.output_dirname = os.path.join(SCRIPT_PATH, self.output_dirname)
+        if self.output_dirname is None:
+            self.output_dirname = os.path.join(
+                self.script_path, DEFAULT_OUTPUT_PATH
+            )
+        elif not os.path.isabs(self.output_dirname):
+            self.output_dirname = os.path.join(
+                self.script_path, self.output_dirname
+            )
         self.png_fname_base = os.path.join(
             self.output_dirname,
             os.path.splitext(os.path.basename(self.midifname))[0],
