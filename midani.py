@@ -4,13 +4,9 @@ import os
 import re
 import sys
 
-import src.from_my_other_projects.midi_funcs as midi_funcs
-
 import src.midani_av as midani_av
-import src.midani_misc_classes as midani_misc_classes
 import src.midani_plot as midani_plot
 import src.midani_settings as midani_settings
-import src.midani_time as midani_time
 
 NO_PATH_MSG = """Nothing to animate! Either
     - pass path to a midi file as a command-line argument with "-m" or "--midi"
@@ -23,25 +19,6 @@ specified with the "midifname" keyword argument in a settings file provided with
 -s/--settings."""
 
 SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
-
-
-def read_score(settings):
-    return midi_funcs.read_midi_to_internal_data(
-        settings.midifname,
-        tet=settings.tet,
-        split_tracks_to_voices=settings.midi_tracks_to_voices,
-        split_channels_to_voices=settings.midi_channels_to_voices,
-    )
-
-
-def crop_score(score, settings, tempo_changes):
-    start_beat = tempo_changes.btime_from_ctime(settings.start_time)
-    end_beat = tempo_changes.btime_from_ctime(settings.end_time)
-    return score.get_passage(
-        passage_start_time=start_beat,
-        passage_end_time=end_beat,
-        end_time_refers_to_attack=True,
-    )
 
 
 def main(midi_path, audio_path, test_flag, user_settings_path):
@@ -71,14 +48,7 @@ def main(midi_path, audio_path, test_flag, user_settings_path):
         script_path=SCRIPT_PATH, **user_settings
     )
     if settings.process_video != "only":
-        score = read_score(settings)
-        tempo_changes = midani_time.TempoChanges(score)
-        settings.update_from_score(score, tempo_changes)
-        score = crop_score(score, settings, tempo_changes)
-        pitch_table = midani_misc_classes.PitchTable(
-            score, settings, tempo_changes
-        )
-        n_frames = midani_plot.plot(settings, pitch_table)
+        n_frames = midani_plot.plot(settings)
     else:
         png_pattern = re.compile(
             os.path.basename(settings.png_fname_base) + r"\d+\.png"

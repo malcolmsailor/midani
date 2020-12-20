@@ -1,3 +1,11 @@
+[MASTER]
+
+ignore=midani_tests.py,
+    note_classes.py,
+    mal_misc.py,
+    midi_funcs.py,
+    tuning.py,sample_settings,
+
 [MESSAGES CONTROL]
 
 disable=too-many-instance-attributes,
@@ -8,6 +16,10 @@ disable=too-many-instance-attributes,
     missing-module-docstring,
     too-many-statements,
     too-few-public-methods,
+    too-many-arguments,
+    duplicate-code,
+    too-many-lines,
+    fixme,
 
 
 

@@ -7,8 +7,7 @@ sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 )
 
-import src.midani_av as midani_av
-import src.midani_settings as midani_settings
+import src.midani_av as midani_av  # pylint: disable=wrong-import-position
 
 SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
 OUT_PATH = os.path.join(SCRIPT_PATH, "test_out")

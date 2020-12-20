@@ -9,18 +9,22 @@ import cv2
 def process_video(settings, n):
     # After http://tsaith.github.io/combine-images-into-a-video-with-python-3-and-opencv-3.html
 
-    # Define the codec and create VideoWriter object
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Be sure to use lower case
-    out = cv2.VideoWriter(
+    # For some reason, pylint doesn't recognize any of the members I
+    # import from cv2
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # pylint: disable=no-member
+    out = cv2.VideoWriter(  # pylint: disable=no-member
         settings.video_fname,
         fourcc,
         1 / settings.frame_increment,
         (settings.out_width, settings.out_height),
     )
-
+    try:
+        terminal_width = os.get_terminal_size().columns
+    except OSError:  # Thrown when running with pytest
+        terminal_width = 80
     if (
         len(settings.png_fname_base) + settings.png_fnum_digits + 11
-        > os.get_terminal_size().columns
+        > terminal_width
     ):
         print_png = os.path.basename(settings.png_fname_base)
     else:
@@ -30,7 +34,7 @@ def process_video(settings, n):
         str_i = str(i).zfill(settings.png_fnum_digits)
         img_path = f"{settings.png_fname_base}{str_i}.png"
         print(f"\rAdding {print_png}{str_i}.png", end="")
-        frame = cv2.imread(img_path)
+        frame = cv2.imread(img_path)  # pylint: disable=no-member
         if frame is None:
             print(f"\nError: couldn't read {img_path}")
         elif settings.clean_up_png_files:
@@ -39,7 +43,7 @@ def process_video(settings, n):
     print("\nDone.")
 
     out.release()
-    cv2.destroyAllWindows()
+    cv2.destroyAllWindows()  # pylint: disable=no-member
 
 
 def add_audio(settings):
@@ -75,4 +79,5 @@ def add_audio(settings):
         print(proc.stdout.decode())
     else:
         print(f"Audio file {settings.audio_fname} added to video with ffmpeg")
+    os.remove(settings.video_fname)
     shutil.move(temp_file, settings.video_fname)

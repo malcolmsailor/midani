@@ -4,6 +4,8 @@ import src.midani_annotations as midani_annotations
 import src.midani_colors as midani_colors
 import src.midani_misc_classes as midani_misc_classes
 import src.midani_r as midani_r
+import src.midani_score as midani_score
+import src.midani_time as midani_time
 
 
 def _rect_or_its_shadow_in_frame(now, note, settings):
@@ -306,7 +308,12 @@ def draw_annotations(window, settings, r_boss):
                 y += 0.025
 
 
-def plot(settings, table):
+def plot(settings):
+    score = midani_score.read_score(settings)
+    tempo_changes = midani_time.TempoChanges(score)
+    settings.update_from_score(score, tempo_changes)
+    score = midani_score.crop_score(score, settings, tempo_changes)
+    table = midani_misc_classes.PitchTable(score, settings, tempo_changes)
     r_boss = midani_r.RBoss(settings)
     window = midani_misc_classes.Window(settings)
     now = window.get_first_now()

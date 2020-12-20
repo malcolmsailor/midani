@@ -32,10 +32,7 @@ COLOR_LISTS = ("color_palette",)
 
 BG_COLOR_LISTS = ("bg_colors",)
 
-# SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
-# DEFAULT_OUTPUT_PATH = os.path.join(SCRIPT_PATH, "output")
 DEFAULT_OUTPUT_PATH = "output"
-# DEFAULT_TEMP_R_PATH = os.path.join(SCRIPT_PATH, ".temp_r_files")
 DEFAULT_TEMP_R_PATH = ".temp_r_files"
 
 
