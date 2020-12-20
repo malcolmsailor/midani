@@ -17,6 +17,11 @@ NO_PATH_MSG = """Nothing to animate! Either
     - include path to a midi file as "midifname" in a settings file passed with
         "-s" or "--settings\""""
 
+ARGPARSE_DESCRIPTION = """Animate a midi file. The path to a midi file must
+either be included as a command line argument with -m/--midi, or it must be
+specified with the "midifname" keyword argument in a settings file provided with
+-s/--settings."""
+
 
 def read_score(settings):
     return midi_funcs.read_midi_to_internal_data(
@@ -89,7 +94,7 @@ def main(midi_path, audio_path, test_flag, user_settings_path):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=ARGPARSE_DESCRIPTION)
     parser.add_argument("-m", "--midi", help="path to midi file to animate")
     parser.add_argument(
         "-a", "--audio", help="path to audio file to add to video"

@@ -277,7 +277,7 @@ class Settings:
             Default: True
         max_connection_line_distance: float. Maximum time interval in seconds
             between end of one note and beginning of next for which a
-            connection line will be drawn.
+            connection line will be drawn. # TODO test!!!
             Default: 0.25
         max_connection_line_interval: float. Maximum pitch interval (in
             temperament as defined by `tet`) between notes for which a
