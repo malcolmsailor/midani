@@ -2,7 +2,9 @@
 
 Make piano-roll animations from midi files.
 
-Frames are plotted with R and then combined into a video with opencv-python. Finally, audio is added with FFmpeg. Why, you might ask, is R used to plot frames, rather than a Python plotting library like Matplotlib? For no better reason than that at the time I started the script (in summer 2018), R was the only plotting software I was familiar with.
+Frames are plotted with R and then combined into a video with opencv-python. Finally, audio is added with FFmpeg.
+
+TODO add some frames here for eye candy
 
 ## Dependencies
 
@@ -67,12 +69,6 @@ optional arguments:
   -t, --test            set frame rate to a maximum of 2 fps
 ```
 
-## Sample files
-
-The subdirectory `sample_settings` contains a few sample settings files to quickly demonstrate a few of the different options available.
-
-The subdirectory `sample_music` contains a few midi files to play with for demo purposes. I created these algorithmically with another project of mine. I have provided mp3s generated therefrom with `fluidsynth` and a free General MIDI soundfont. The audio fidelity may leave something to be desired.
-
 ## Configuration
 
 For full documentation of the various settings available, see `docs/settings.md`.
@@ -95,6 +91,16 @@ For example, if you wanted a "primary color" note color palette, with white back
 ```
 
 For more examples, see the files in `sample_settings/`.
+
+## Miscellany
+
+Why, you might ask, is R used to plot frames, rather than a Python plotting library like Matplotlib? For no better reason than that at the time I started the script (in summer 2018), R was the only plotting software I was familiar with.
+
+## Sample files
+
+The subdirectory `sample_settings` contains a few sample settings files to quickly demonstrate a few of the different options available.
+
+The subdirectory `sample_music` contains a few midi files to play with for demo purposes. I created these algorithmically with another project of mine. I have provided mp3s generated therefrom with `fluidsynth` and a free General MIDI soundfont. The audio fidelity may leave something to be desired.
 
 ## Major TODOs
 
