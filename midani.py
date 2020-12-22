@@ -1,3 +1,6 @@
+"""Make piano-roll animations from midi files.
+"""
+
 import argparse
 import ast
 import os
@@ -22,6 +25,8 @@ SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
 
 
 def main(midi_path, audio_path, test_flag, user_settings_path):
+    """Foo bar blah blah.
+    """
     if user_settings_path is None:
         user_settings = {}
     else:
@@ -65,6 +70,8 @@ def main(midi_path, audio_path, test_flag, user_settings_path):
 
         if settings.audio_fname:
             midani_av.add_audio(settings)
+
+        print(f"The output file is\n{settings.video_fname}")
 
 
 if __name__ == "__main__":

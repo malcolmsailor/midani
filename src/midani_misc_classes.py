@@ -1,3 +1,6 @@
+"""Provides a number of classes used internally by midani.
+"""
+
 import dataclasses
 import functools
 import math
@@ -6,18 +9,9 @@ import typing
 
 import src.midani_colors as midani_colors
 
-#
-# class Note:
-#     def __init__(self, p, t1, t2):
-#         self.pitch = p
-#         self.start = t1
-#         self.end = t2
-#         self.dur = t2 - t1
-#         self.mid = t1 + (t2 - t1) / 2
-
 
 @dataclasses.dataclass
-class Note:
+class Note:  # pylint: disable=missing-class-docstring
     pitch: int
     start: float
     end: float
@@ -29,6 +23,9 @@ class Note:
 
 @dataclasses.dataclass
 class RectTuple:
+    """Stores data used to plot rectangles.
+    """
+
     note: Note
     scale_x_factor: float
     scale_y_factor: float
@@ -43,6 +40,9 @@ class RectTuple:
 
 @dataclasses.dataclass
 class LineTuple:
+    """Stores data used to plot lines.
+    """
+
     note: Note
     scale_factor: float
     flutter: float
@@ -55,6 +55,9 @@ class LineTuple:
 
 
 class PitchFlutter:
+    """Calculates 'flutter' according to provided parameters.
+    """
+
     def __init__(
         self,
         max_flutter_size,
@@ -71,13 +74,18 @@ class PitchFlutter:
             + min_flutter_period
         )
         self.flutter_offset = random.random() * self.flutter_period
-        self.flutter_sin_factor = self.flutter_period * math.pi
+        self.flutter_sin_factor = (2 * math.pi) / self.flutter_period
 
     def __call__(self, now):
-        return math.sin(now * self.flutter_sin_factor) * self.flutter_size
+        return (
+            math.sin((now + self.flutter_offset) * self.flutter_sin_factor)
+            * self.flutter_size
+        )
 
 
 class Window:
+    """A class that keeps track of frame position and background color."""
+
     def __init__(self, settings):
         self.frame_len = settings.frame_len
         self.frame_position = settings.frame_position
@@ -225,6 +233,9 @@ class Window:
 
 
 class PitchRange:
+    """Used by child classes below to determine where pitches lie in range.
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._l_pitch = None
@@ -271,12 +282,26 @@ class PitchRange:
 
 
 class VoiceList(PitchRange, list):
+    """A list/PitchRange object.
+
+    The only implemented method for adding objects is append().
+    """
+
     def append(self, note):
         super().append(note)
         self.update_from_pitch(note.pitch)
 
+    def insert(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def extend(self, *args, **kwargs):
+        raise NotImplementedError
+
 
 class Channel(PitchRange):
+    """Represents a horizontal 'channel' within which notes can be plotted.
+    """
+
     def __init__(self, channel_i, settings):
         super().__init__()
         self.l_padding = settings.channel_settings[channel_i]["l_padding"]
@@ -301,6 +326,9 @@ class Channel(PitchRange):
 
 
 class PitchTable(PitchRange, list):
+    """Reads a Score and then builds a "pitch table" for use in plotting.
+    """
+
     def __init__(self, score, settings, tempo_changes, *args, **kwargs):
         super().__init__()
         self.settings = settings

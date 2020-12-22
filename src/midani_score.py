@@ -1,3 +1,6 @@
+"""Provides functions to read midi file into score object.
+"""
+
 import src.from_my_other_projects.midi_funcs as midi_funcs
 
 def read_score(settings):

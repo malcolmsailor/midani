@@ -1,3 +1,7 @@
+"""For annotating frames.
+"""
+
+
 def time(window):
     return f"{window.now:f}"
 

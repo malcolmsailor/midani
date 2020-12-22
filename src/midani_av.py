@@ -1,3 +1,5 @@
+"""Functions for compiling video and adding audio.
+"""
 import os
 import shutil
 import subprocess

@@ -1,3 +1,5 @@
+"""Test video compilation with opencv and audio insertion with FFmpeg.
+"""
 import dataclasses
 import os
 import shutil
@@ -14,7 +16,7 @@ OUT_PATH = os.path.join(SCRIPT_PATH, "test_out")
 
 
 @dataclasses.dataclass
-class DummySettings:
+class DummySettings:  # pylint: disable=missing-class-docstring
     png_fnum_digits: int = 5
     frame_increment: float = 1 / 30
     video_fname: str = os.path.join(OUT_PATH, "test_video.mp4")

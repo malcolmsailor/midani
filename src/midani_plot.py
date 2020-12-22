@@ -1,3 +1,6 @@
+"""Plots frames according to settings.
+"""
+
 import math
 
 import src.midani_annotations as midani_annotations
@@ -198,7 +201,7 @@ def _connection_line_conditions_apply(now, src, dst, settings):
         and src.note.start == dst.note.start
     ):
         return False
-    if dst.note.start - src.note.end > settings.max_connection_line_distance:
+    if dst.note.mid - src.note.mid > settings.max_connection_line_duration:
         return False
     if abs(dst.pitch - src.pitch) > settings.max_connection_line_interval:
         return False

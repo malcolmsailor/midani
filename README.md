@@ -38,9 +38,13 @@ Create an animation with the default settings:
 
 `python midani.py --midi [MIDIFILE]`
 
+The same, but add audio as well:
+
+`python midani.py --midi [MIDIFILE] --audio [AUDIOFILE]`
+
 The same, but animate at 2fps rather than the default 30fps, so you can get a flavor of the results without waiting quite so long:
 
-`python midani.py --midi [MIDIFILE] --test`
+`python midani.py --midi [MIDIFILE] --audio [AUDIOFILE] --test`
 
 Create an animation using one of the sample settings and one of the sample midi/audio files:
 
@@ -65,11 +69,17 @@ optional arguments:
   -t, --test            set frame rate to a maximum of 2 fps
 ```
 
-### Sample files
+## Sample files
 
 The subdirectory `sample_settings` contains a few sample settings files to quickly demonstrate a few of the different options available.
 
 The subdirectory `sample_music` contains a few midi files to play with for demo purposes. I created these algorithmically with another project of mine. I have provided mp3s generated therefrom with `fluidsynth` and a free General MIDI soundfont. The audio fidelity may leave something to be desired.
+
+## Configuration
+
+To configure with custom settings, save a file containing only a python dictionary, and pass it as an argument with `-s`/`--settings`. This file will be parsed with `ast.literal_eval` so, to quote the Python docs, it "may only consist of the following Python literal structures: strings, bytes, numbers, tuples, lists, dicts, sets, booleans, and None."
+
+For examples, see the files in `sample_settings/`. For full documentation...
 
 ## Major TODOs
 

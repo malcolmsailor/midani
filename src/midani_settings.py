@@ -1,3 +1,6 @@
+"""Provides Settings object for controlling animation parameters.
+"""
+
 import collections
 import dataclasses
 import itertools
@@ -59,6 +62,10 @@ class Settings:
         is omitted, then the color will be fully opaque.
 
     Keyword args:
+
+        General
+        =======
+
         midifname: str. Path to input midi file to animate. If a midi path is
             passed as a command-line argument to the script, this value will
             be ignored. If this value is not set, nor is a command-line path
@@ -78,12 +85,12 @@ class Settings:
         resolution: tuple of form (int, int). Resolution of output frames.
             Default (1280, 720)
         process_video: str. Possible values:
-            "yes": (Default) makes .mp4 video file using OpenCV
-            "no": doesn't make video file.
-            "only": makes .mp4 video file using OpenCV and skips the rest of the
-                script. (Note: in this case, the number of frames will be
-                inferred from the number of files that match the png filename
-                in `output_dirname`.)
+                "yes": (Default) makes .mp4 video file using OpenCV
+                "no": doesn't make video file.
+                "only": makes .mp4 video file using OpenCV and skips the rest of the
+                    script. (Note: in this case, the number of frames will be
+                    inferred from the number of files that match the png filename
+                    in `output_dirname`.)
         video_fname: str. Path to output video file. If not passed, the video
             will be written in `output_dirname` with the same basename as
             `midifname`. Has no effect if `process_video` == "no".
@@ -105,19 +112,7 @@ class Settings:
         seed: int. Seed for python's random module.
             Default: None.
 
-        debugging
-        =========
-
-        add_annotations: list of strings. Annotate each frame according to the
-            values in this list. Possible values:
-                "time"
-            Default: empty.
-        annot_color: tuple of form (int, int, int, int). Color for annotations.
-            Default: (255, 255, 255, 255).
-        now_line: boolean. If True, adds a line to each frame indicating "now".
-            Default: False.
-
-        frame
+        Frame
         ======
 
         frame_len: float. Length (in seconds) of each frame.
@@ -135,7 +130,7 @@ class Settings:
             of their attack.)
             Default: 0.5
 
-        timing
+        Timing
         ======
 
         intro: float. Length of time in seconds that should precede `start_time`
@@ -197,12 +192,11 @@ class Settings:
         bar_length: float. (Only) used to interpret `start_bar`, `end_bar`,
             and/or `final_bar`. If any of these latter are nonzero, it will
             raise a ValueError not to pass a nonzero value of this setting.
-
         scale_notes_from_attack: bool. If True, then notes and lines are scaled
             based on their attack time. Otherwise, they are scaled based on the
             midpoint between their attack and their release.
 
-        voice settings
+        Voice settings
         ==============
 
         voices_to_render: list-like of integer indices. Determines which
@@ -265,7 +259,7 @@ class Settings:
 
 
 
-        connection lines
+        Connection lines
         ================
 
         global_connection_lines: boolean. If True, "connection lines" are drawn
@@ -274,9 +268,12 @@ class Settings:
             that this sets a default that can be overridden on a per-voice
             basis.
             Default: True
-        max_connection_line_distance: float. Maximum time interval in seconds
-            between end of one note and beginning of next for which a
-            connection line will be drawn. # TODO test!!!
+        max_connection_line_duration: float. Maximum time interval in seconds
+            between middle of one note and middle of next for which a
+            connection line will be drawn.
+            NB that if a note that is long starts just before a note that is
+            short, the line may appear to go "backwards" from the former to the
+            latter.
             Default: 0.25
         max_connection_line_interval: float. Maximum pitch interval (in
             temperament as defined by `tet`) between notes for which a
@@ -309,8 +306,9 @@ class Settings:
             Default: 1.0
 
 
-        notes (or "rectangles")
+        Notes (or "rectangles")
         =======================
+
         global_rectangles: boolean. If True, a "rectangle" (the usual piano-roll
             representation) is drawn for each note. Note that this sets
             a default that can be overridden on a per-voice basis.
@@ -358,8 +356,9 @@ class Settings:
             `lambda x: 1/x` will throw a ZeroDivisionError).
             Default: lambda x: x (i.e., linear)
 
-        highlight
+        Highlight
         =========
+
         highlight_strength: float. Controls how strongly `highlight_color` is
             mixed with the current note color at moment "now".
             Default: 1.0
@@ -377,8 +376,9 @@ class Settings:
             should be blended with note color to make highlight.
             Default: (224, 224, 224, 255)
 
-        shadows
+        Shadows
         =======
+
         To turn on shadow rendering, ensure that `shadow_positions` is at least
         one tuple long and that at least one voice has a shadow_strength greater
         than 0.
@@ -434,7 +434,7 @@ class Settings:
             will be 3/9.)
             Default: 0.0
 
-        channels
+        Channels
         ========
 
         num_channels: int. Number of exclusive horizontal `channels` to place
@@ -465,7 +465,7 @@ class Settings:
                     channel.
                     Default: 0.1
 
-        flutter
+        Flutter
         =======
 
         "Flutter" is constant sinusoidal up-down motion I added to make the
@@ -484,7 +484,7 @@ class Settings:
         min_flutter_period: float. Set lower bound on flutter period in seconds.
             Default: 4.0
 
-        bounce
+        Bounce
         ======
 
         "Bounce" is scaling or vertical motion that occurs at the attack of a
@@ -512,7 +512,7 @@ class Settings:
         bounce_len: float. Length of bounce in seconds.
             Default: 1.0
 
-        background
+        Background
         ==========
 
         The background color can be either constant, or it can change at
@@ -547,6 +547,17 @@ class Settings:
             end of the outro (if any), or during the complete outro, if
             `bg_color_blend` is False.
 
+        Debugging
+        =========
+
+        add_annotations: list of strings. Annotate each frame according to the
+            values in this list. Possible values:
+                "time"
+            Default: empty.
+        annot_color: tuple of form (int, int, int, int). Color for annotations.
+            Default: (255, 255, 255, 255).
+        now_line: boolean. If True, adds a line to each frame indicating "now".
+            Default: False.
     """
 
     midifname: str = ""
@@ -626,7 +637,7 @@ class Settings:
 
     # TEST connection_line parameters
     global_connection_lines: bool = True
-    max_connection_line_distance: float = 0.25
+    max_connection_line_duration: float = 0.25
     max_connection_line_interval: float = None
     no_connection_lines_between_simultaneous_notes: bool = True
 
@@ -679,7 +690,6 @@ class Settings:
     min_flutter_size: float = 0.0
     max_flutter_period: float = 8.0
     min_flutter_period: float = 4.0
-    # TODO fix flutter period
 
     # bounce_type can be
     #   - "vertical" (note bounces up and down)

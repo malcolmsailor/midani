@@ -26,5 +26,6 @@
     "global_note_height": 4,
     "max_flutter_size": 2,
     "min_flutter_size": 1,
-    "end_time": 1,
+    "end_time": 10,
+    "outro": 0,
 }

@@ -138,8 +138,8 @@ def read_midi_to_internal_data(
     max_denominator=8192,
     first_note_at_0=False,
     min_attack_to_adjust=4,
-    split_tracks_to_voices=True,  # TODO doc
-    split_channels_to_voices=False,  # TODO doc
+    split_tracks_to_voices=True,
+    split_channels_to_voices=False,
 ):
     """Reads midi file into a Score() instance.
 
@@ -249,9 +249,12 @@ def read_midi_to_internal_data(
                     internal_data.add_meta_message(msg)
                 else:
                     internal_data.add_other_message(track_i - 1, msg)
-        if track_i != 0:
-            internal_data.voices[track_i - 1].update_sort()
+        # Replaced this code with voice.update_sort() below
+        # if track_i != 0:
+        # internal_data.voices[track_i - 1].update_sort()
 
+    for voice in internal_data.voices:
+        voice.update_sort()
     internal_data.remove_empty_voices()
     if first_note_at_0 is False:
         return internal_data

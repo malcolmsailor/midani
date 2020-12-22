@@ -1,3 +1,6 @@
+"""Provides RBoss class to control Rscript.
+"""
+
 import os
 import shutil
 import subprocess
@@ -9,6 +12,9 @@ R_PRINT_COUNT = 1
 
 
 class RBoss:
+    """Class for writing R scripts and then calling Rscript to read them.
+    """
+
     def __init__(self, settings):
         self.outfnumber = 0
         self.outf_dirname = settings._temp_r_dirname

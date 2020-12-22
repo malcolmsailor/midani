@@ -1,7 +1,13 @@
+"""Provides TempoChanges class.
+"""
+
 import src.from_my_other_projects.mal_misc as mal_misc
 
 
 class TempoChanges:
+    """Uses tempo changes from Score to convert between beats and clock times.
+    """
+
     def __init__(self, score):
         self.t_changes_btimes = {
             beat: tempo
@@ -29,18 +35,28 @@ class TempoChanges:
         self.clock_times = list(self.t_changes_ctimes.keys())
 
     def ctime_from_btime(self, beat_time):
-        tempo_btime = mal_misc.binary_search(
-            self.beat_times, beat_time, not_found="force_lower"
-        )
+        print(f"beat_time: {beat_time}")
+        tempo_btime = self.beat_times[
+            mal_misc.binary_search(
+                self.beat_times, beat_time, not_found="force_lower"
+            )
+        ]
+        print(f"tempo_btime: {tempo_btime}")
         tempo = self.t_changes_btimes[tempo_btime]
+        print(f"tempo: {tempo}")
         tempo_start = self.beat_time_to_clock_time[tempo_btime]
+        print(f"tempo_start: {tempo_start}")
         beat_delta = beat_time - tempo_btime
+        print(f"beat_delta: {beat_delta}")
+        print(f"return value: {tempo_start + beat_delta * 60 / tempo}")
         return tempo_start + beat_delta * 60 / tempo
 
     def btime_from_ctime(self, clock_time):
-        tempo_ctime = mal_misc.binary_search(
-            self.clock_times, clock_time, not_found="force_lower"
-        )
+        tempo_ctime = self.clock_times[
+            mal_misc.binary_search(
+                self.clock_times, clock_time, not_found="force_lower"
+            )
+        ]
         tempo = self.t_changes_ctimes[tempo_ctime]
         tempo_start = self.clock_time_to_beat_time[tempo_ctime]
         clock_delta = clock_time - tempo_ctime

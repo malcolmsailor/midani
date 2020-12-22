@@ -1,3 +1,6 @@
+"""Write pngs with midani_plot.py to verify it is working as expected.
+"""
+
 import os
 import sys
 
