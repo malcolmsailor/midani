@@ -1,3 +1,6 @@
+"""Retrieve docstring from midani_settings.py and convert to settings.md
+"""
+
 import re
 import os
 

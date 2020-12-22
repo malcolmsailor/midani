@@ -1,14 +1,12 @@
 # Midani
 
-Make piano-roll animations from midi files
+Make piano-roll animations from midi files.
 
-## Description
-
-TODO
-
-Requires Python >= 3.8
+Frames are plotted with R and then combined into a video with opencv-python. Finally, audio is added with FFmpeg. Why, you might ask, is R used to plot frames, rather than a Python plotting library like Matplotlib? For no better reason than that at the time I started the script (in summer 2018), R was the only plotting software I was familiar with.
 
 ## Dependencies
+
+Requires Python >= 3.8
 
 - Python libraries:
     - opencv-python
@@ -77,9 +75,26 @@ The subdirectory `sample_music` contains a few midi files to play with for demo 
 
 ## Configuration
 
+For full documentation of the various settings available, see `docs/settings.md`.
+
 To configure with custom settings, save a file containing only a python dictionary, and pass it as an argument with `-s`/`--settings`. This file will be parsed with `ast.literal_eval` so, to quote the Python docs, it "may only consist of the following Python literal structures: strings, bytes, numbers, tuples, lists, dicts, sets, booleans, and None."
 
-For examples, see the files in `sample_settings/`. For full documentation...
+For example, if you wanted a "primary color" note color palette, with white background color, you could save the following dictionary in a file called `example.py` and then invoke the script with `--settings example.py`:
+
+```python
+{
+    "color_palette": (
+        (255, 0, 0),
+        (0, 255, 0),
+        (0, 0, 255),
+    ),
+    "bg_colors": (
+        (255, 255, 255),
+    ),
+}
+```
+
+For more examples, see the files in `sample_settings/`.
 
 ## Major TODOs
 

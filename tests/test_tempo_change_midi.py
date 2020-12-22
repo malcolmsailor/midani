@@ -1,3 +1,5 @@
+"""Test that tempo change conversions in midani_time.py are working
+"""
 import dataclasses
 import os
 import sys
