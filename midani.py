@@ -31,7 +31,6 @@ SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
 def main(midi_path, audio_path, test_flag, user_settings_path):
     print("Midani: make piano-roll animations from midi files")
     print("==================================================")
-    print("(c) Malcolm Sailor 2020")
     print("https://github.com/malcolmsailor/midani\n")
     if user_settings_path is None:
         user_settings = {}
@@ -56,6 +55,7 @@ def main(midi_path, audio_path, test_flag, user_settings_path):
             )
         else:
             user_settings["frame_increment"] = 0.5
+        user_settings["_test"] = True
     settings = midani_settings.Settings(
         script_path=SCRIPT_PATH, **user_settings
     )

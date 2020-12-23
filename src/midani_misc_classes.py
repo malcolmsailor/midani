@@ -183,17 +183,9 @@ class Window:
         next_bg_color = self.bg_colors[
             (self.bg_time_i + 1) % len(self.bg_colors)
         ]
-        try:
-            bg_prop = (self.end_bg_time - self.prev_bg_time) / (
-                self.next_bg_time
-                - (
-                    self.prev_bg_time
-                    if self.prev_bg_time != self.next_bg_time
-                    else 0
-                )
-            )
-        except:
-            breakpoint()
+        bg_prop = (self.end_bg_time - self.prev_bg_time) / (
+            self.next_bg_time - self.prev_bg_time
+        )
         return midani_colors.blend_colors(prev_bg_color, next_bg_color, bg_prop)
 
     def get_first_now(self):

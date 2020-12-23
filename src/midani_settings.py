@@ -195,6 +195,7 @@ class Settings:
         scale_notes_from_attack: bool. If True, then notes and lines are scaled
             based on their attack time. Otherwise, they are scaled based on the
             midpoint between their attack and their release.
+            Default: True
 
         Voice settings
         ==============
@@ -415,15 +416,12 @@ class Settings:
         highlight_shadows: boolean. Controls whether shadows are highlighted
             similarly to notes.
             Default: False
-        note_shadows_over_clines: boolean. If True, then note (i.e., rectangle)
-            shadows are drawn after drawing connection lines, so they will
-            appear on top of the connection lines.
-            Default: False
         shadow_gradients: boolean. Only useful if `shadow_positions` has length
             greater than 1. If True, then shadow colors will be blended along a
             gradient from closest to the note color (the first shadow in the
-            list) to closest to the background color (the last shadow in the
+            list) to closest to the shadow color (the last shadow in the
             list).
+            Default: True
         shadow_gradient_offset: float. When used with shadow gradients, higher
             values will make the first shadow stand out more clearly from the
             note it is shadowing. (The "strength" of the note color added to the
@@ -475,10 +473,10 @@ class Settings:
 
         max_flutter_size: float. Set upper bound on flutter "size". Measured
             in semitones.
-            Default: 0.0
+            Default: 0.6
         min_flutter_size: float. Set lower bound on flutter "size". Measured
             in semitones.
-            Default: 0.0
+            Default: 0.3
         max_flutter_period: float. Set upper bound on flutter period in seconds.
             Default: 8.0
         min_flutter_period: float. Set lower bound on flutter period in seconds.
@@ -506,7 +504,7 @@ class Settings:
             If `bounce_size` is larger than 2, on the other hand, the range will
             be (0, bounce_size), to avoid scaling by negative values. (Perhaps
             a nonlinear function would've been better but that'll have to wait.)
-            Default: 0.0
+            Default: 0.3
         bounce_period: float. Period of up/down or in/out motion, in seconds.
             Default: 1.0
         bounce_len: float. Length of bounce in seconds.
@@ -576,6 +574,7 @@ class Settings:
     add_annotations: list = dataclasses.field(default_factory=list)
     annot_color: typing.Tuple[int, int, int] = (255, 255, 255, 255)
     now_line: bool = False
+    _test: bool = False  # append "_test to output filename"
 
     # frame
 
@@ -679,27 +678,19 @@ class Settings:
     shadow_gradient_offset: float = 5
     highlight_shadows: bool = False
 
-    note_shadows_over_clines = False
-
     num_channels: int = 1
     channel_proportions: tuple = ()
     chan_assmts: dict = dataclasses.field(default_factory=dict)
     channel_settings: dict = dataclasses.field(default_factory=dict)
 
-    max_flutter_size: float = 0.0
-    min_flutter_size: float = 0.0
+    max_flutter_size: float = 0.6
+    min_flutter_size: float = 0.3
     max_flutter_period: float = 8.0
     min_flutter_period: float = 4.0
 
-    # bounce_type can be
-    #   - "vertical" (note bounces up and down)
-    #   - "scalar" (size of note is scaled in and out)
     bounce_type: str = "vertical"
-    # bounce size in semitones
-    bounce_size: float = 0.0
-    # bounce period in seconds [in original script, bounce_period was in beats]
+    bounce_size: float = 0.3
     bounce_period: float = 1.0
-    # bounce length in seconds [in original script, bounce_period was in beats]
     bounce_len: float = 1.0
 
     # If bg_beat_times is empty, or bg_beat_times_length is 0, bg color is
@@ -843,6 +834,9 @@ class Settings:
                 self.output_dirname,
                 os.path.splitext(os.path.basename(self.midi_fname))[0] + ".mp4",
             )
+        if self._test:
+            bits = os.path.splitext(self.video_fname)
+            self.video_fname = bits[0] + "_TEST" + bits[1]
         if (
             self.start_bar or self.end_bar or self.final_bar
         ) and not self.bar_length:
@@ -992,8 +986,14 @@ class Settings:
                     )
                     if clock_time > self.end_time:
                         break_out = True
-                        break
                     self.bg_clock_times.append(clock_time)
+                    # We put the break here (and not before the append) because
+                    # we want to have one extra
+                    # bg_time in the list that will never actually be reached,
+                    # so that denominators of form (next_bg_time - prev_bg_time)
+                    # will never give divide by zero errors.
+                    if break_out:
+                        break
                 if break_out:
                     break
 

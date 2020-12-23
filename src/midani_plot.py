@@ -129,7 +129,29 @@ def get_voice_and_line_tuples(now, settings, table):
     return rect_tuples, line_tuples
 
 
-def draw_note_shadows(rect_tuples, window, settings, table, r_boss):
+def _get_shadow_gradient(
+    shadow_i, shadow_color, main_color, hl_factor, settings
+):
+    shadow_n_strength = shadow_i / (
+        settings.num_shadows + settings.shadow_gradient_offset
+    )
+    shadow_n_color = midani_colors.blend_colors(
+        shadow_color, main_color, shadow_n_strength,
+    )
+    if (hl_blend := hl_factor * settings.shadow_hl_strength) :
+        shadow_n_color = midani_colors.blend_colors(
+            shadow_n_color, settings.highlight_color, hl_blend,
+        )
+    return shadow_n_color
+
+
+def draw_note_shadows(
+    shadow_i, shadow_position, rect_tuples, window, settings, table, r_boss
+):
+    # for shadow_i, shadow_position in enumerate(
+    #     reversed(settings.shadow_positions)
+    # ):
+    shadow_n = settings.num_shadows - shadow_i
     for voice_i, voice in zip(settings.voice_order, rect_tuples):
         if (
             voice_i not in settings.voices_to_render
@@ -145,50 +167,80 @@ def draw_note_shadows(rect_tuples, window, settings, table, r_boss):
             settings[voice_i]["shadow_strength"],
         )
         shadow_n_color = shadow_color
-        for shadow_i, shadow_position in enumerate(
-            reversed(settings.shadow_positions)
-        ):
-            shadow_n = settings.num_shadows - shadow_i
-            for rect in voice:
-                half_width = (
-                    rect.note.dur
-                    * rect.scale_x_factor
-                    * settings.shadow_scale ** shadow_n
-                    / 2
+
+        for rect in voice:
+            half_width = (
+                rect.note.dur
+                * rect.scale_x_factor
+                * settings.shadow_scale ** shadow_n
+                / 2
+            )
+            half_height = (
+                channel.note_height
+                * rect.scale_y_factor
+                * settings.shadow_scale ** shadow_n
+                / 2
+            )
+            shadow_x = shadow_position.shadow_x
+            shadow_y = shadow_position.shadow_y
+            if settings.shadow_gradients:
+                shadow_n_color = _get_shadow_gradient(
+                    shadow_i,
+                    shadow_color,
+                    rect.color,
+                    rect.highlight_factor,
+                    settings,
                 )
-                half_height = (
-                    channel.note_height
-                    * rect.scale_y_factor
-                    * settings.shadow_scale ** shadow_n
-                    / 2
-                )
-                shadow_x = shadow_position.shadow_x
-                shadow_y = shadow_position.shadow_y
-                if settings.shadow_gradients:
-                    shadow_n_strength = shadow_i / (
-                        settings.num_shadows + settings.shadow_gradient_offset
-                    )
-                    shadow_n_color = midani_colors.blend_colors(
-                        shadow_color, rect.color, shadow_n_strength,
-                    )
-                    if (
-                        hl_blend := rect.highlight_factor
-                        * settings.shadow_hl_strength
-                    ) :
-                        shadow_n_color = midani_colors.blend_colors(
-                            shadow_n_color, settings.highlight_color, hl_blend,
-                        )
-                bottom = channel.y_position(rect.pitch) - half_height + shadow_y
-                top = channel.y_position(rect.pitch) + half_height + shadow_y
-                if bottom >= top:
-                    continue
-                r_boss.plot_rect(
-                    max(window.start, rect.note.mid + shadow_x - half_width,),
-                    min(window.end, rect.note.mid + shadow_x + half_width,),
-                    bottom,
-                    top,
-                    shadow_n_color,
-                )
+                # shadow_n_strength = shadow_i / (
+                #     settings.num_shadows + settings.shadow_gradient_offset
+                # )
+                # shadow_n_color = midani_colors.blend_colors(
+                #     shadow_color, rect.color, shadow_n_strength,
+                # )
+                # if (
+                #     hl_blend := rect.highlight_factor
+                #     * settings.shadow_hl_strength
+                # ) :
+                #     shadow_n_color = midani_colors.blend_colors(
+                #         shadow_n_color, settings.highlight_color, hl_blend,
+                #     )
+            bottom = channel.y_position(rect.pitch) - half_height + shadow_y
+            top = channel.y_position(rect.pitch) + half_height + shadow_y
+            if bottom >= top:
+                continue
+            r_boss.plot_rect(
+                max(window.start, rect.note.mid + shadow_x - half_width,),
+                min(window.end, rect.note.mid + shadow_x + half_width,),
+                bottom,
+                top,
+                shadow_n_color,
+            )
+
+
+def draw_shadows(line_tuples, rect_tuples, window, settings, table, r_boss):
+    if settings.shadows <= 0:
+        return
+    for shadow_i, shadow_position in enumerate(
+        reversed(settings.shadow_positions)
+    ):
+        draw_line_shadows(
+            shadow_i,
+            shadow_position,
+            line_tuples,
+            window,
+            settings,
+            table,
+            r_boss,
+        )
+        draw_note_shadows(
+            shadow_i,
+            shadow_position,
+            rect_tuples,
+            window,
+            settings,
+            table,
+            r_boss,
+        )
 
 
 def _connection_line_conditions_apply(now, src, dst, settings):
@@ -208,7 +260,9 @@ def _connection_line_conditions_apply(now, src, dst, settings):
     return True
 
 
-def draw_line_shadows(line_tuples, window, settings, table, r_boss):
+def draw_line_shadows(
+    shadow_i, shadow_position, line_tuples, window, settings, table, r_boss
+):
     for voice_i, voice in zip(settings.voice_order, line_tuples):
         if (
             voice_i not in settings.voices_to_render
@@ -223,22 +277,38 @@ def draw_line_shadows(line_tuples, window, settings, table, r_boss):
             settings[voice_i]["shadow_color"],
             settings[voice_i]["shadow_strength"],
         )
-        for shadow_position in settings.shadow_positions:
-            for src, dst in zip(voice, voice[1:]):
-                if not _connection_line_conditions_apply(
-                    window.now, src, dst, settings
-                ):
-                    continue
-                r_boss.plot_line(
-                    x1=src.note.mid + shadow_position.cline_shadow_x,
-                    x2=dst.note.mid + shadow_position.cline_shadow_x,
-                    y1=channel.y_position(src.pitch)
-                    + shadow_position.cline_shadow_y,
-                    y2=channel.y_position(dst.pitch)
-                    + shadow_position.cline_shadow_y,
-                    width=settings.con_line_width * src.scale_factor,
-                    color=shadow_color,
+        # for shadow_i, shadow_position in zip(
+        #     range(len(settings.shadow_positions) - 1, -1, -1),
+        #     settings.shadow_positions,
+        # ):
+        # for shadow_i, shadow_position in enumerate(
+        #     reversed(settings.shadow_positions)
+        # ):
+        for src, dst in zip(voice, voice[1:]):
+            if not _connection_line_conditions_apply(
+                window.now, src, dst, settings
+            ):
+                continue
+            if settings.shadow_gradients:
+                shadow_n_color = _get_shadow_gradient(
+                    shadow_i,
+                    shadow_color,
+                    src.color,
+                    0,  # no highlighting of connection lines
+                    settings,
                 )
+            else:
+                shadow_n_color = shadow_color
+            r_boss.plot_line(
+                x1=src.note.mid + shadow_position.cline_shadow_x,
+                x2=dst.note.mid + shadow_position.cline_shadow_x,
+                y1=channel.y_position(src.pitch)
+                + shadow_position.cline_shadow_y,
+                y2=channel.y_position(dst.pitch)
+                + shadow_position.cline_shadow_y,
+                width=settings.con_line_width * src.scale_factor,
+                color=shadow_n_color,
+            )
 
 
 def draw_connection_lines(line_tuples, window, settings, table, r_boss):
@@ -331,13 +401,8 @@ def plot(settings):
         rect_tuples, line_tuples = get_voice_and_line_tuples(
             now, settings, table
         )
-        if settings.shadows > 0:
-            if not settings.note_shadows_over_clines:
-                draw_note_shadows(rect_tuples, window, settings, table, r_boss)
-            draw_line_shadows(line_tuples, window, settings, table, r_boss)
+        draw_shadows(line_tuples, rect_tuples, window, settings, table, r_boss)
         draw_connection_lines(line_tuples, window, settings, table, r_boss)
-        if settings.shadows > 0 and settings.note_shadows_over_clines:
-            draw_note_shadows(rect_tuples, window, settings, table, r_boss)
         draw_notes(rect_tuples, window, settings, table, r_boss)
         draw_annotations(window, settings, r_boss)
         now += settings.frame_increment

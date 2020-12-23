@@ -17,9 +17,7 @@ So many, but a few are
 
 # TODO
 
-Write general documentation
-Document code at least a little bit
-Write more extensive tests
+Offset color for connection lines?
 
 # Scheme ideas
 

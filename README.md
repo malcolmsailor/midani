@@ -2,10 +2,6 @@
 
 Make piano-roll animations from midi files.
 
-Frames are plotted with R and then combined into a video with opencv-python. Finally, audio is added with FFmpeg.
-
-TODO add some frames here for eye candy
-
 ![Demo frame](docs/demo_frame.png)
 
 ## Dependencies
@@ -106,14 +102,12 @@ The subdirectory `sample_music` contains a few midi files to play with for demo 
 
 ## Known issues
 
-Output files don't always play back correctly with Quicktime:
+[VLC](https://www.videolan.org/vlc/index.html) is recommended for playback of output video files. Videos also play back correctly on Youtube. But they don't always play back correctly with Quicktime:
 
 - if framerate is too slow (e.g., with `--test` flag), there is no video playback (only a static green screen)
 - audio playback doesn't seem to work.
 
-[VLC](https://www.videolan.org/vlc/index.html) is recommended for playback.
 
-TODO make sure videos work on Youtube
 
 ## Major TODOs
 
