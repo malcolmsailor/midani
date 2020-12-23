@@ -15,7 +15,7 @@ Note on colors:
 
 ## General 
 
-- **midifname**: str. Path to input midi file to animate. If a midi path is
+- **midi_fname**: str. Path to input midi file to animate. If a midi path is
             passed as a command-line argument to the script, this value will
             be ignored. If this value is not set, nor is a command-line path
             passed, the script will abort---it will have nothing to animate!
@@ -42,12 +42,12 @@ Note on colors:
                     in `output_dirname`.)
 - **video_fname**: str. Path to output video file. If not passed, the video
             will be written in `output_dirname` with the same basename as
-            `midifname`. Has no effect if `process_video` == "no".
+            `midi_fname`. Has no effect if `process_video` == "no".
 - **audio_fname**: str. Path to input audio file. If passed, this audio file
             will be added to the output video file using ffmpeg. If ffmpeg is
             not found, a warning will be printed instead and no audio will be
             added. (If `process_video` == "no", in which case this argument is
-            ignored.) Note that if `midifname` is passed as a command-line
+            ignored.) Note that if `midi_fname` is passed as a command-line
             argument, this keyword argument will be ignored; any audio file
             should then be passed as a command-line argument as well.
 - **clean_up_r_files**: bool. If False, the R scripts output by this script

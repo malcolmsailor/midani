@@ -22,7 +22,7 @@ TEMPOS = [120, 144, 160, 176]
 
 @dataclasses.dataclass
 class DummySettings:  # pylint: disable=missing-class-docstring
-    midifname: str
+    midi_fname: str
     tet: int = 12
     midi_tracks_to_voices: bool = True
     midi_channels_to_voices: bool = False

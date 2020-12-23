@@ -5,7 +5,7 @@ import src.from_my_other_projects.midi_funcs as midi_funcs
 
 def read_score(settings):
     return midi_funcs.read_midi_to_internal_data(
-        settings.midifname,
+        settings.midi_fname,
         tet=settings.tet,
         split_tracks_to_voices=settings.midi_tracks_to_voices,
         split_channels_to_voices=settings.midi_channels_to_voices,

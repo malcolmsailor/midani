@@ -1,4 +1,8 @@
 """Make piano-roll animations from midi files.
+
+(c) 2020 Malcolm Sailor
+
+https://github.com/malcolmsailor/midani
 """
 
 import argparse
@@ -13,31 +17,34 @@ import src.midani_settings as midani_settings
 
 NO_PATH_MSG = """Nothing to animate! Either
     - pass path to a midi file as a command-line argument with "-m" or "--midi"
-    - include path to a midi file as "midifname" in a settings file passed with
+    - include path to a midi file as "midi_fname" in a settings file passed with
         "-s" or "--settings\""""
 
 ARGPARSE_DESCRIPTION = """Animate a midi file. The path to a midi file must
 either be included as a command line argument with -m/--midi, or it must be
-specified with the "midifname" keyword argument in a settings file provided with
+specified with the "midi_fname" keyword argument in a settings file provided with
 -s/--settings."""
 
 SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
 
 
 def main(midi_path, audio_path, test_flag, user_settings_path):
-    """Foo bar blah blah.
-    """
+    print("Midani: make piano-roll animations from midi files")
+    print("==================================================")
+    print("(c) Malcolm Sailor 2020")
+    print("https://github.com/malcolmsailor/midani\n")
     if user_settings_path is None:
         user_settings = {}
     else:
+        print(f"Reading settings from {user_settings_path}")
         with open(user_settings_path, "r", encoding="utf-8") as inf:
             user_settings = ast.literal_eval(inf.read())
     if midi_path is None:
-        if "midifname" not in user_settings or not user_settings["midifname"]:
+        if "midi_fname" not in user_settings or not user_settings["midi_fname"]:
             print(NO_PATH_MSG)
             sys.exit(1)
     else:
-        user_settings["midifname"] = midi_path
+        user_settings["midi_fname"] = midi_path
         if audio_path is None:
             user_settings["audio_fname"] = ""
     if audio_path is not None:

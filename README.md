@@ -6,6 +6,8 @@ Frames are plotted with R and then combined into a video with opencv-python. Fin
 
 TODO add some frames here for eye candy
 
+![Demo frame](docs/demo_frame.png)
+
 ## Dependencies
 
 Requires Python >= 3.8
@@ -57,7 +59,7 @@ usage: midani.py [-h] [-m MIDI] [-a AUDIO] [-s SETTINGS] [-t]
 
 Animate a midi file. The path to a midi file must either be included as a
 command line argument with -m/--midi, or it must be specified with the
-"midifname" keyword argument in a settings file provided with -s/--settings.
+"midi_fname" keyword argument in a settings file provided with -s/--settings.
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -102,9 +104,17 @@ The subdirectory `sample_settings` contains a few sample settings files to quick
 
 The subdirectory `sample_music` contains a few midi files to play with for demo purposes. I created these algorithmically with another project of mine. I have provided mp3s generated therefrom with `fluidsynth` and a free General MIDI soundfont. The audio fidelity may leave something to be desired.
 
+## Known issues
+
+Output files don't always play back correctly with Quicktime:
+
+- if framerate is too slow (e.g., with `--test` flag), there is no video playback (only a static green screen)
+- audio playback doesn't seem to work.
+
+[VLC](https://www.videolan.org/vlc/index.html) is recommended for playback.
+
+TODO make sure videos work on Youtube
+
 ## Major TODOs
 
-- documentation
-- tests
 - finish sample_settings
-- mop-up bugs etc.

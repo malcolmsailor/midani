@@ -66,7 +66,7 @@ class Settings:
         General
         =======
 
-        midifname: str. Path to input midi file to animate. If a midi path is
+        midi_fname: str. Path to input midi file to animate. If a midi path is
             passed as a command-line argument to the script, this value will
             be ignored. If this value is not set, nor is a command-line path
             passed, the script will abort---it will have nothing to animate!
@@ -93,12 +93,12 @@ class Settings:
                     in `output_dirname`.)
         video_fname: str. Path to output video file. If not passed, the video
             will be written in `output_dirname` with the same basename as
-            `midifname`. Has no effect if `process_video` == "no".
+            `midi_fname`. Has no effect if `process_video` == "no".
         audio_fname: str. Path to input audio file. If passed, this audio file
             will be added to the output video file using ffmpeg. If ffmpeg is
             not found, a warning will be printed instead and no audio will be
             added. (If `process_video` == "no", in which case this argument is
-            ignored.) Note that if `midifname` is passed as a command-line
+            ignored.) Note that if `midi_fname` is passed as a command-line
             argument, this keyword argument will be ignored; any audio file
             should then be passed as a command-line argument as well.
         clean_up_r_files: bool. If False, the R scripts output by this script
@@ -560,7 +560,7 @@ class Settings:
             Default: False.
     """
 
-    midifname: str = ""
+    midi_fname: str = ""
     midi_tracks_to_voices: bool = True
     midi_channels_to_voices: bool = False
     output_dirname: str = None  # doc
@@ -835,13 +835,13 @@ class Settings:
             )
         self.png_fname_base = os.path.join(
             self.output_dirname,
-            os.path.splitext(os.path.basename(self.midifname))[0],
+            os.path.splitext(os.path.basename(self.midi_fname))[0],
         )
         self.png_fnum_digits = 5
         if not self.video_fname:
             self.video_fname = os.path.join(
                 self.output_dirname,
-                os.path.splitext(os.path.basename(self.midifname))[0] + ".mp4",
+                os.path.splitext(os.path.basename(self.midi_fname))[0] + ".mp4",
             )
         if (
             self.start_bar or self.end_bar or self.final_bar
