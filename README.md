@@ -90,6 +90,8 @@ For example, if you wanted a "primary color" note color palette, with white back
 
 For more examples, see the files in `sample_settings/`.
 
+![Another demo frame](docs/demo_frame2.png)
+
 ## Miscellany
 
 Why, you might ask, is R used to plot frames, rather than a Python plotting library like Matplotlib? For no better reason than that at the time I started the script (in summer 2018), R was the only plotting software I was familiar with.

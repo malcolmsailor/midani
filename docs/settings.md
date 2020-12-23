@@ -142,6 +142,7 @@ Note on colors:
 - **scale_notes_from_attack**: bool. If True, then notes and lines are scaled
             based on their attack time. Otherwise, they are scaled based on the
             midpoint between their attack and their release.
+            *Default*: `True`
 
 ## Voice settings 
 
@@ -213,6 +214,13 @@ Note on colors:
             that this sets a default that can be overridden on a per-voice
             basis.
             *Default*: `True`
+- **con_line_offset_color**: tuple of form (int, int, int[, int]). An RGB
+            color to blend with the color of the previous note, in order to
+            define the color of the connection_lines.
+            *Default*: `(128, 128, 128, 255)`
+- **con_line_offset_prop**: float. Controls strength of blend of
+            `con_line_offset_color`.
+            *Default*: `0.0`
 - **max_connection_line_duration**: float. Maximum time interval in seconds
             between middle of one note and middle of next for which a
             connection line will be drawn.
@@ -357,15 +365,12 @@ To turn on shadow rendering, ensure that `shadow_positions` is at least
 - **highlight_shadows**: boolean. Controls whether shadows are highlighted
             similarly to notes.
             *Default*: `False`
-- **note_shadows_over_clines**: boolean. If True, then note (i.e., rectangle)
-            shadows are drawn after drawing connection lines, so they will
-            appear on top of the connection lines.
-            *Default*: `False`
 - **shadow_gradients**: boolean. Only useful if `shadow_positions` has length
             greater than 1. If True, then shadow colors will be blended along a
             gradient from closest to the note color (the first shadow in the
-            list) to closest to the background color (the last shadow in the
+            list) to closest to the shadow color (the last shadow in the
             list).
+            *Default*: `True`
 - **shadow_gradient_offset**: float. When used with shadow gradients, higher
             values will make the first shadow stand out more clearly from the
             note it is shadowing. (The "strength" of the note color added to the
@@ -415,10 +420,10 @@ To turn on shadow rendering, ensure that `shadow_positions` is at least
 
 - **max_flutter_size**: float. Set upper bound on flutter "size". Measured
             in semitones.
-            *Default*: `0.0`
+            *Default*: `0.6`
 - **min_flutter_size**: float. Set lower bound on flutter "size". Measured
             in semitones.
-            *Default*: `0.0`
+            *Default*: `0.3`
 - **max_flutter_period**: float. Set upper bound on flutter period in seconds.
             *Default*: `8.0`
 - **min_flutter_period**: float. Set lower bound on flutter period in seconds.
@@ -445,7 +450,7 @@ To turn on shadow rendering, ensure that `shadow_positions` is at least
             If `bounce_size` is larger than 2, on the other hand, the range will
             be (0, bounce_size), to avoid scaling by negative values. (Perhaps
             a nonlinear function would've been better but that'll have to wait.)
-            *Default*: `0.0`
+            *Default*: `0.3`
 - **bounce_period**: float. Period of up/down or in/out motion, in seconds.
             *Default*: `1.0`
 - **bounce_len**: float. Length of bounce in seconds.

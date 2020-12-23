@@ -1,7 +1,7 @@
 {
-    "midi_fname": "sample_music/effrhy_124.mid",
-    "audio_fname": "sample_music/effrhy_124.mp3",
-    "video_fname": "output/effrhy_124_settings2.mp4",
+    "midi_fname": "sample_music/effrhy_131.mid",
+    "audio_fname": "sample_music/effrhy_131.mp3",
+    "video_fname": "output/effrhy_131_settings2.mp4",
     "shadow_gradients": True,
     "shadow_positions": [
         (3, -3),
@@ -13,5 +13,8 @@
     ],
     "bg_colors": [(0, 0, 0),],
     "global_shadow_color": (0, 0, 0),
+    "con_line_offset_color": (0, 0, 0),
+    "con_line_offset_prop": 0.4,
+    "max_connection_line_duration": 1,
     "shadow_scale": 0.95,
 }

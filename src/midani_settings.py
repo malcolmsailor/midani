@@ -30,6 +30,7 @@ SINGLE_COLORS = (
     "global_shadow_color",
     "highlight_color",
     "annot_color",
+    "con_line_offset_color",
 )
 COLOR_LISTS = ("color_palette",)
 
@@ -269,6 +270,13 @@ class Settings:
             that this sets a default that can be overridden on a per-voice
             basis.
             Default: True
+        con_line_offset_color: tuple of form (int, int, int[, int]). An RGB
+            color to blend with the color of the previous note, in order to
+            define the color of the connection_lines.
+            Default: (128, 128, 128, 255)
+        con_line_offset_prop: float. Controls strength of blend of
+            `con_line_offset_color`.
+            Default: 0.0
         max_connection_line_duration: float. Maximum time interval in seconds
             between middle of one note and middle of next for which a
             connection line will be drawn.
@@ -634,8 +642,9 @@ class Settings:
     )
     default_note_opacity: int = 255
 
-    # TEST connection_line parameters
     global_connection_lines: bool = True
+    con_line_offset_prop: float = 0.0
+    con_line_offset_color: tuple = (128, 128, 128, 255)
     max_connection_line_duration: float = 0.25
     max_connection_line_interval: float = None
     no_connection_lines_between_simultaneous_notes: bool = True

@@ -15,10 +15,6 @@ So many, but a few are
 - settings.shadow_scale applies to connection lines as well?
 - connection_lines for simultaneous notes go to previous/following non-simultaneous notes?
 
-# TODO
-
-Offset color for connection lines?
-
 # Scheme ideas
 
 Something like this:

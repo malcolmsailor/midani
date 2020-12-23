@@ -148,9 +148,6 @@ def _get_shadow_gradient(
 def draw_note_shadows(
     shadow_i, shadow_position, rect_tuples, window, settings, table, r_boss
 ):
-    # for shadow_i, shadow_position in enumerate(
-    #     reversed(settings.shadow_positions)
-    # ):
     shadow_n = settings.num_shadows - shadow_i
     for voice_i, voice in zip(settings.voice_order, rect_tuples):
         if (
@@ -191,19 +188,6 @@ def draw_note_shadows(
                     rect.highlight_factor,
                     settings,
                 )
-                # shadow_n_strength = shadow_i / (
-                #     settings.num_shadows + settings.shadow_gradient_offset
-                # )
-                # shadow_n_color = midani_colors.blend_colors(
-                #     shadow_color, rect.color, shadow_n_strength,
-                # )
-                # if (
-                #     hl_blend := rect.highlight_factor
-                #     * settings.shadow_hl_strength
-                # ) :
-                #     shadow_n_color = midani_colors.blend_colors(
-                #         shadow_n_color, settings.highlight_color, hl_blend,
-                #     )
             bottom = channel.y_position(rect.pitch) - half_height + shadow_y
             top = channel.y_position(rect.pitch) + half_height + shadow_y
             if bottom >= top:
@@ -277,23 +261,21 @@ def draw_line_shadows(
             settings[voice_i]["shadow_color"],
             settings[voice_i]["shadow_strength"],
         )
-        # for shadow_i, shadow_position in zip(
-        #     range(len(settings.shadow_positions) - 1, -1, -1),
-        #     settings.shadow_positions,
-        # ):
-        # for shadow_i, shadow_position in enumerate(
-        #     reversed(settings.shadow_positions)
-        # ):
         for src, dst in zip(voice, voice[1:]):
             if not _connection_line_conditions_apply(
                 window.now, src, dst, settings
             ):
                 continue
             if settings.shadow_gradients:
+                src_color = midani_colors.blend_colors(
+                    src.color,
+                    settings.con_line_offset_color,
+                    settings.con_line_offset_prop,
+                )
                 shadow_n_color = _get_shadow_gradient(
                     shadow_i,
                     shadow_color,
-                    src.color,
+                    src_color,
                     0,  # no highlighting of connection lines
                     settings,
                 )
@@ -326,7 +308,11 @@ def draw_connection_lines(line_tuples, window, settings, table, r_boss):
                 window.now, src, dst, settings
             ):
                 continue
-            color = src.color
+            color = midani_colors.blend_colors(
+                src.color,
+                settings.con_line_offset_color,
+                settings.con_line_offset_prop,
+            )
             r_boss.plot_line(
                 x1=src.note.mid,
                 x2=dst.note.mid,
