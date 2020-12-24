@@ -1,10 +1,10 @@
 # Midani
 
-![Demo frame](docs/demo_frame.png)
+![Demo frame](docs/resources/demo_frame.png)
 
 Make piano-roll animations from midi files.
 
-![Another demo frame](docs/demo_frame2.png)
+![Another demo frame](docs/resources/demo_frame2.png)
 
 ## Dependencies
 

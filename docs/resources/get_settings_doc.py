@@ -5,7 +5,7 @@ import re
 import os
 
 SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
-OUT_PATH = os.path.join(SCRIPT_PATH, "settings.md")
+OUT_PATH = os.path.join(SCRIPT_PATH, "../settings.md")
 PREAMBLE = """# Midani settings
 
 """
@@ -13,7 +13,7 @@ PREAMBLE = """# Midani settings
 
 def get_docstring():
     with open(
-        os.path.join(SCRIPT_PATH, "../src/midani_settings.py"), "r"
+        os.path.join(SCRIPT_PATH, "../../src/midani_settings.py"), "r"
     ) as inf:
         docstring = re.search(
             r'Settings:\s+"""(.*?)"""', inf.read(), re.MULTILINE + re.DOTALL
@@ -38,7 +38,7 @@ def get_docstring():
 
 
 def get_readme():
-    with open(os.path.join(SCRIPT_PATH, "../README.md"), "r") as inf:
+    with open(os.path.join(SCRIPT_PATH, "../../README.md"), "r") as inf:
         readme = re.search(
             r"## Configuration\n(.*?)##", inf.read(), re.MULTILINE + re.DOTALL
         )[1]
