@@ -1,5 +1,33 @@
 # Midani settings
 
+
+See also the general documentation in README.md
+
+## General usage
+
+To configure with custom settings, save a file containing only a python dictionary, and pass it as an argument with `-s`/`--settings`. This file will be parsed with `ast.literal_eval` so, to quote the Python docs, it "may only consist of the following Python literal structures: strings, bytes, numbers, tuples, lists, dicts, sets, booleans, and None."
+
+## Example
+
+For example, if you wanted a "primary color" note color palette, with white background color, you could save the following dictionary in a file called `example.py` and then invoke the script with `--settings example.py`:
+
+```python
+{
+    "color_palette": (
+        (255, 0, 0),
+        (0, 255, 0),
+        (0, 0, 255),
+    ),
+    "bg_colors": (
+        (255, 255, 255),
+    ),
+}
+```
+
+For more examples, see the files in `sample_settings/`.
+
+## Detailed settings
+
 When these settings contain terms like "start" and "end", these refer to
     positions *on each frame*. E.g., `note_start` is how far from the left side
     of each frame notes should begin. But notes are moving to the left, so this
@@ -13,7 +41,7 @@ Note on colors:
 
 
 
-## General 
+### General 
 
 - **midi_fname**: str. Path to input midi file to animate. If a midi path is
             passed as a command-line argument to the script, this value will
@@ -61,7 +89,7 @@ Note on colors:
 - **seed**: int. Seed for python's random module.
             *Default*: `None.`
 
-## Frame 
+### Frame 
 
 - **frame_len**: float. Length (in seconds) of each frame.
             (I.e., the time interval between the moment represented by the left
@@ -78,7 +106,7 @@ Note on colors:
             of their attack.)
             *Default*: `0.5`
 
-## Timing 
+### Timing 
 
 - **intro**: float. Length of time in seconds that should precede `start_time`
             *Default*: `1.0`
@@ -144,7 +172,7 @@ Note on colors:
             midpoint between their attack and their release.
             *Default*: `True`
 
-## Voice settings 
+### Voice settings 
 
 - **voices_to_render**: list-like of integer indices. Determines which
             "voices" (=tracks) in the input midi file to render. If empty, all
@@ -206,7 +234,7 @@ Note on colors:
 
 
 
-## Connection lines 
+### Connection lines 
 
 - **global_connection_lines**: boolean. If True, "connection lines" are drawn
             between adjacent notes on the same track (subject to certain
@@ -259,7 +287,7 @@ Note on colors:
             *Default*: `1.0`
 
 
-## Notes (or "rectangles") 
+### Notes (or "rectangles") 
 
 - **global_rectangles**: boolean. If True, a "rectangle" (the usual piano-roll
             representation) is drawn for each note. Note that this sets
@@ -308,7 +336,7 @@ Note on colors:
             `lambda x: 1/x` will throw a ZeroDivisionError).
             *Default*: `lambda x: x (i.e., linear)`
 
-## Highlight 
+### Highlight 
 
 - **highlight_strength**: float. Controls how strongly `highlight_color` is
             mixed with the current note color at moment "now".
@@ -327,7 +355,7 @@ Note on colors:
             should be blended with note color to make highlight.
             *Default*: `(224, 224, 224, 255)`
 
-## Shadows 
+### Shadows 
 
 To turn on shadow rendering, ensure that `shadow_positions` is at least
         one tuple long and that at least one voice has a shadow_strength greater
@@ -381,7 +409,7 @@ To turn on shadow rendering, ensure that `shadow_positions` is at least
             will be 3/9.)
             *Default*: `0.0`
 
-## Channels 
+### Channels 
 
 - **num_channels**: int. Number of exclusive horizontal `channels` to place
             voices into. (For example, the winds and the strings could be placed
@@ -411,7 +439,7 @@ To turn on shadow rendering, ensure that `shadow_positions` is at least
                     channel.
                     *Default*: `0.1`
 
-## Flutter 
+### Flutter 
 
 "Flutter" is constant sinusoidal up-down motion I added to make the
         notes seem more "alive". Each pitch in each channel has a random (but
@@ -429,7 +457,7 @@ To turn on shadow rendering, ensure that `shadow_positions` is at least
 - **min_flutter_period**: float. Set lower bound on flutter period in seconds.
             *Default*: `4.0`
 
-## Bounce 
+### Bounce 
 
 "Bounce" is scaling or vertical motion that occurs at the attack of a
         note to visually accent the attack. The amount of "bounce" is scaled
@@ -456,7 +484,7 @@ To turn on shadow rendering, ensure that `shadow_positions` is at least
 - **bounce_len**: float. Length of bounce in seconds.
             *Default*: `1.0`
 
-## Background 
+### Background 
 
 The background color can be either constant, or it can change at
         specified times. If it changes, it can either change suddenly or blend
@@ -490,7 +518,7 @@ If `bg_beat_times` is empty, or if `bg_beat_times_length` == 0, or if
             end of the outro (if any), or during the complete outro, if
             `bg_color_blend` is False.
 
-## Debugging 
+### Debugging 
 
 - **add_annotations**: list of strings. Annotate each frame according to the
             values in this list. Possible values:

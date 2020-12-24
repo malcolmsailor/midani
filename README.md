@@ -1,8 +1,10 @@
 # Midani
 
+![Demo frame](docs/demo_frame.png)
+
 Make piano-roll animations from midi files.
 
-![Demo frame](docs/demo_frame.png)
+![Another demo frame](docs/demo_frame2.png)
 
 ## Dependencies
 
@@ -89,8 +91,6 @@ For example, if you wanted a "primary color" note color palette, with white back
 ```
 
 For more examples, see the files in `sample_settings/`.
-
-![Another demo frame](docs/demo_frame2.png)
 
 ## Miscellany
 
