@@ -106,13 +106,12 @@ class RBoss:
         )
         self.line_count += 1
 
-    def annotate(self, text, x, y, color):
-        for line in text.split("\n"):
-            self.outf.write(
-                f'text(c({x}), c({y}), "{line}", '
-                f'col = "{self.hex_color(color)}")\n'
-            )
-            self.line_count += 1
+    def text(self, text, x, y, color, size=1.0):
+        self.outf.write(
+            f'text(c({x}), c({y}), "{text}", '
+            f'col = "{self.hex_color(color)}", cex={size})\n'
+        )
+        self.line_count += 1
 
     def run_r(self):
         print(f"Plotting {self.plot_count} frames in R")

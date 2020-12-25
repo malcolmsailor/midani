@@ -354,14 +354,27 @@ def draw_notes(rect_tuples, window, settings, table, r_boss):
             )
 
 
+def draw_lyrics(window, lyricist, settings, r_boss):
+    lyric = lyricist(window.now)
+    if lyric is None:
+        return
+    x = (window.end - window.start) * settings.lyrics_x + window.start
+    y = settings.lyrics_y
+    r_boss.text(
+        text=lyric,
+        x=x,
+        y=y,
+        color=settings.lyrics_color,
+        size=settings.lyrics_size,
+    )
+
+
 def draw_annotations(window, settings, r_boss):
     y = 0.1
     for annot in settings.add_annotations:
         if annot in midani_annotations.ANNOT:
-            for line in midani_annotations.ANNOT[annot](window, settings).split(
-                "\n"
-            ):
-                r_boss.annotate(
+            for line in midani_annotations.ANNOT[annot](window).split("\n"):
+                r_boss.text(
                     text=line, x=window.now, y=y, color=settings.annot_color,
                 )
                 y += 0.025
@@ -375,6 +388,7 @@ def plot(settings):
     table = midani_misc_classes.PitchTable(score, settings, tempo_changes)
     r_boss = midani_r.RBoss(settings)
     window = midani_misc_classes.Window(settings)
+    lyricist = midani_annotations.Lyricist(settings)
     now = window.get_first_now()
     while window.in_range(now):
         window.update(now)
@@ -390,6 +404,7 @@ def plot(settings):
         draw_shadows(line_tuples, rect_tuples, window, settings, table, r_boss)
         draw_connection_lines(line_tuples, window, settings, table, r_boss)
         draw_notes(rect_tuples, window, settings, table, r_boss)
+        draw_lyrics(window, lyricist, settings, r_boss)
         draw_annotations(window, settings, r_boss)
         now += settings.frame_increment
     r_boss.run_r()

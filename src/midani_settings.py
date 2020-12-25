@@ -31,6 +31,7 @@ SINGLE_COLORS = (
     "highlight_color",
     "annot_color",
     "con_line_offset_color",
+    "lyrics_color",
 )
 COLOR_LISTS = ("color_palette",)
 
@@ -197,6 +198,28 @@ class Settings:
             based on their attack time. Otherwise, they are scaled based on the
             midpoint between their attack and their release.
             Default: True
+
+        Lyrics
+        ======
+
+        lyrics: dict of form float: str. The float keys are times in seconds;
+            the string values is the lyric text that should occur at those times.
+            Each lyric occurs until the time specified by the next lyric. To
+            make a lyric go away, but not have another appear, use an empty
+            string. The lyrics will be sorted by their associated times, so
+            it is not necessary for this dictionary to be in order.
+            Default: None
+        lyrics_x: float between 0 and 1. Specifies horizontal frame position on
+            which lyrics are centered. The far left is 0 and the far right is 1.
+            Default: 0.5
+        lyrics_y: float between 0 and 1. Specifies vertical frame position on
+            which lyrics are centered. The bottom is 0 and the top is 1.
+            Default: 0.1
+        lyrics_color: tuple of form (int, int, int[, int]). Color for lyrics.
+            Default: (255, 255, 255, 255).
+        lyrics_size: float. Sets lyrics size by scaling the lyrics with the
+            `cex` argument to the R `text` command.
+            Default: 3.0
 
         Voice settings
         ==============
@@ -560,7 +583,8 @@ class Settings:
             values in this list. Possible values:
                 "time"
             Default: empty.
-        annot_color: tuple of form (int, int, int, int). Color for annotations.
+        annot_color: tuple of form (int, int, int[, int]). Color for
+            annotations.
             Default: (255, 255, 255, 255).
         now_line: boolean. If True, adds a line to each frame indicating "now".
             Default: False.
@@ -583,6 +607,14 @@ class Settings:
     annot_color: typing.Tuple[int, int, int] = (255, 255, 255, 255)
     now_line: bool = False
     _test: bool = False  # append "_test to output filename"
+
+    # lyrics
+
+    lyrics: dict = None
+    lyrics_x: float = 0.5
+    lyrics_y: float = 0.1
+    lyrics_color: float = (255, 255, 255, 255)
+    lyrics_size: float = 3.0
 
     # frame
 
