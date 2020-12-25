@@ -33,7 +33,6 @@
     "min_flutter_size": 0.3,
     "bounce_type": "scalar",
     "bounce_size": 1.2,
-    "end_time": 9,
     "global_connection_lines": True,
     "line_start_size": 0,
     "line_end_size": 0,
