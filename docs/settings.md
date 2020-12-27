@@ -5,7 +5,7 @@ See also the general documentation in README.md
 
 ## General usage
 
-To configure with custom settings, save a file containing only a python dictionary, and pass it as an argument with `-s`/`--settings`. This file will be parsed with `ast.literal_eval` so, to quote the Python docs, it "may only consist of the following Python literal structures: strings, bytes, numbers, tuples, lists, dicts, sets, booleans, and None."
+To configure with custom settings, save a file containing only a python dictionary, and pass it as an argument with `-s`/`--settings`. In order to permit arithmetic expressions and conveniences like list comprehensions, this file will be parsed with `eval()` so don't do anything reckless with it (e.g., use settings from sources that you do not trust).
 
 ## Example
 
@@ -444,7 +444,8 @@ To turn on shadow rendering, ensure that `shadow_positions` is at least
             `num_channels`, a ValueError will be raised.
 - **chan_assmts**: dictionary of form {int: int}. Assigns voices (keys) to
             channels (values). Any missing voices will be assigned to channel 0.
-            If omitted, all voices are assigned to channel 0.
+            If omitted, all voices are assigned to channel 0. Channel 0 is the
+            top channel.
 - **channel_settings**: dictionary of form {int: dict}, where the int key is
             the index to a channel and the dictionary value provides per-channel
             settings as specified below. Any channels or settings omitted will
@@ -454,9 +455,9 @@ To turn on shadow rendering, ensure that `shadow_positions` is at least
                     and the bottom of the channel, as a proportion of the
                     channel.
                     *Default*: `0.1`
-    - "l_padding": float between 0 and 1. Indicates how much padding
-                    should be provided below the lowest pitch of the channel
-                    and the bottom of the channel, as a proportion of the
+    - "h_padding": float between 0 and 1. Indicates how much padding
+                    should be provided below the highest pitch of the channel
+                    and the top of the channel, as a proportion of the
                     channel.
                     *Default*: `0.1`
 
@@ -543,7 +544,8 @@ If `bg_beat_times` is empty, or if `bg_beat_times_length` == 0, or if
 
 - **add_annotations**: list of strings. Annotate each frame according to the
             values in this list. Possible values:
-    - "time"
+    - "time": clock time (intro times are negative)
+    - "section": i.e., "intro", "outro", or neither (="main")
             *Default*: `empty.`
 - **annot_color**: tuple of form (int, int, int[, int]). Color for
             annotations.

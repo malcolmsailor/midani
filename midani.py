@@ -37,7 +37,8 @@ def main(midi_path, audio_path, test_flag, user_settings_path):
     else:
         print(f"Reading settings from {user_settings_path}")
         with open(user_settings_path, "r", encoding="utf-8") as inf:
-            user_settings = ast.literal_eval(inf.read())
+            # user_settings = ast.literal_eval(inf.read())
+            user_settings = eval(inf.read())  # TODO
     if midi_path is None:
         if "midi_fname" not in user_settings or not user_settings["midi_fname"]:
             print(NO_PATH_MSG)
