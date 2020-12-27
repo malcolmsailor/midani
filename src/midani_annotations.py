@@ -6,8 +6,17 @@ def time(window):
     return f"{window.now:f}"
 
 
+def section(window):
+    if window.in_intro:
+        return "intro"
+    if window.in_outro:
+        return "outro"
+    return "main"
+
+
 ANNOT = {
     "time": time,
+    "section": section,
 }
 
 

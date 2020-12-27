@@ -478,7 +478,8 @@ class Settings:
             `num_channels`, a ValueError will be raised.
         chan_assmts: dictionary of form {int: int}. Assigns voices (keys) to
             channels (values). Any missing voices will be assigned to channel 0.
-            If omitted, all voices are assigned to channel 0.
+            If omitted, all voices are assigned to channel 0. Channel 0 is the
+            top channel.
         channel_settings: dictionary of form {int: dict}, where the int key is
             the index to a channel and the dictionary value provides per-channel
             settings as specified below. Any channels or settings omitted will
@@ -488,9 +489,9 @@ class Settings:
                     and the bottom of the channel, as a proportion of the
                     channel.
                     Default: 0.1
-                "l_padding": float between 0 and 1. Indicates how much padding
-                    should be provided below the lowest pitch of the channel
-                    and the bottom of the channel, as a proportion of the
+                "h_padding": float between 0 and 1. Indicates how much padding
+                    should be provided below the highest pitch of the channel
+                    and the top of the channel, as a proportion of the
                     channel.
                     Default: 0.1
 
@@ -581,7 +582,8 @@ class Settings:
 
         add_annotations: list of strings. Annotate each frame according to the
             values in this list. Possible values:
-                "time"
+                "time": clock time (intro times are negative)
+                "section": i.e., "intro", "outro", or neither (="main")
             Default: empty.
         annot_color: tuple of form (int, int, int[, int]). Color for
             annotations.
