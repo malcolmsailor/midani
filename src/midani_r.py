@@ -121,7 +121,8 @@ class RBoss:
         for count, outfname in enumerate(self.outfnames):
             if count % R_PRINT_COUNT == 0:
                 print(
-                    f"Processing R file {count + 1}/{self.outfnumber}\r", end=""
+                    f"Processing R file {count + 1}/{self.outfnumber}  \r",
+                    end="",
                 )
             proc = subprocess.run(
                 ["Rscript", outfname],
