@@ -133,7 +133,7 @@ class Window:
         if self.bg_color_constant:
             return self.bg_colors[0]
         # "between start and end"
-        if self.start_time <= self._now <= self.end_bg_time:
+        if self.in_main:
             self._update_bg_times()
             prev_bg_color = self.bg_colors[self.bg_time_i % len(self.bg_colors)]
             if not self.bg_color_blend:
@@ -145,7 +145,7 @@ class Window:
                 (self.bg_time_i + 1) % len(self.bg_colors)
             ]
         # "before start"
-        elif self._now < self.start_time:
+        elif self.in_intro:
             prev_bg_color = self.intro_bg_color
             if not self.bg_color_blend:
                 return prev_bg_color
@@ -157,7 +157,7 @@ class Window:
             # complicated expression that I'm uncertain of the motivation for
             bg_prop = 1 - (self.start_time - self._now) / self.intro
         # "after end"
-        elif self._now > self.end_bg_time:
+        elif self.in_outro:
             self._update_bg_times()
             self.outro_has_begun = True
             next_bg_color = self.outro_bg_color
@@ -230,6 +230,18 @@ class Window:
     @property
     def now(self):  # pylint: disable=missing-docstring
         return self._now
+
+    @property
+    def in_main(self):
+        return self.start_time <= self._now <= self.end_bg_time
+
+    @property
+    def in_intro(self):
+        return self._now < self.start_time
+
+    @property
+    def in_outro(self):
+        return self._now > self.end_bg_time
 
 
 class PitchRange:
