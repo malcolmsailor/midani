@@ -757,7 +757,8 @@ class Settings:
     def __post_init__(self):
         if not self.midi_fname:
             raise ValueError("no 'midi_fname' keyword argument to Settings()")
-
+        if not self.script_path:
+            raise ValueError("no 'script_path' keyword argument to Settings()")
         if self.seed is not None:
             random.seed(self.seed)
         if self.intro_bg_color is None:
