@@ -755,6 +755,8 @@ class Settings:
     script_path: str = None  # for internal use only
 
     def __post_init__(self):
+        if not self.midi_fname:
+            raise ValueError("no 'midi_fname' keyword argument to Settings()")
 
         if self.seed is not None:
             random.seed(self.seed)
