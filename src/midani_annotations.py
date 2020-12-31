@@ -21,6 +21,9 @@ ANNOT = {
 
 
 class Lyricist:
+    """Provides the lyrics at the current moment.
+    """
+
     def __init__(self, settings):
         self.prev_time = self.prev_lyric = None
         try:

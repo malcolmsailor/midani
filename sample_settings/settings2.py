@@ -12,9 +12,10 @@
         (18, -18),
     ],
     "bg_colors": [(0, 0, 0),],
-    "global_shadow_color": (0, 0, 0),
+    "shadow_color": (0, 0, 0),
     "con_line_offset_color": (0, 0, 0),
     "con_line_offset_prop": 0.4,
     "max_connection_line_duration": 1,
     "shadow_scale": 0.95,
+    "end_time": 2,
 }

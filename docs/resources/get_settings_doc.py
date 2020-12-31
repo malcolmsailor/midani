@@ -11,18 +11,31 @@ PREAMBLE = """# Midani settings
 """
 
 
+def get_code_block_replacement(code_block):
+    indent_len = len(
+        re.search(r"(?P<indent> *)```$", code_block).group("indent")
+    )
+    indent_pattern = re.compile(r"^" + " " * indent_len, re.MULTILINE)
+    return re.sub(indent_pattern, "", code_block)
+
+
 def get_docstring():
     with open(
         os.path.join(SCRIPT_PATH, "../../src/midani_settings.py"), "r"
     ) as inf:
         docstring = re.search(
-            r'Settings:\s+"""(.*?)"""', inf.read(), re.MULTILINE + re.DOTALL
+            r'^class Settings:\s+"""(.*?)"""',
+            inf.read(),
+            re.MULTILINE + re.DOTALL,
         )[1]
 
     kwarg_pattern = re.compile(r"^ {8}(\w+(, \w+)*):", flags=re.MULTILINE)
     docstring = re.sub(kwarg_pattern, r"- **\1**:", docstring)
-    subkwarg_pattern = re.compile(r"^ {16}(\"\w+\")", flags=re.MULTILINE)
-    docstring = re.sub(subkwarg_pattern, r"    - \1", docstring)
+    # As a hack to avoid subkwarg_pattern picking up dictionary keys in
+    # code-blocks, I add an extra space before the colon in these items
+    # in the docstring
+    subkwarg_pattern = re.compile(r"^ {16}(\"\w+\") :", flags=re.MULTILINE)
+    docstring = re.sub(subkwarg_pattern, r"    - \1:", docstring)
 
     subheading_pattern = re.compile(
         r"^$\n {8}([^\n]+)\n {8}=+\n^$", flags=re.MULTILINE
@@ -34,6 +47,13 @@ def get_docstring():
     docstring = re.sub(paragraph_pattern, r"\n\1\n", docstring)
     docstring = docstring.split("\n\n", maxsplit=3)[3]
     docstring = docstring.replace("Keyword args:", "")
+    # Process code blocks:
+    code_block_pattern = re.compile(
+        r"^ *```.*?^ *```", re.MULTILINE + re.DOTALL
+    )
+    code_blocks = re.findall(code_block_pattern, docstring)
+    for block in code_blocks:
+        docstring = docstring.replace(block, get_code_block_replacement(block))
     return docstring
 
 

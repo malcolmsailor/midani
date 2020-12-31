@@ -24,13 +24,16 @@ ShadowPositions = collections.namedtuple(
     defaults=[None, None],
 )
 
-SINGLE_COLORS = (
+PER_VOICE_COLORS = (
+    "shadow_color",
+    "highlight_color",
+    "con_line_offset_color",
+)
+
+GLOBAL_COLORS = (
     "intro_bg_color",
     "outro_bg_color",
-    "global_shadow_color",
-    "highlight_color",
     "annot_color",
-    "con_line_offset_color",
     "lyrics_color",
 )
 COLOR_LISTS = ("color_palette",)
@@ -39,6 +42,189 @@ BG_COLOR_LISTS = ("bg_colors",)
 
 DEFAULT_OUTPUT_PATH = "output"
 DEFAULT_TEMP_R_PATH = ".temp_r_files"
+
+
+def post_init_helper(obj):
+    """Called by both VoiceSettings and Settings
+    """
+    obj.frame_note_start = (
+        obj.note_start
+        * obj.global_parent.frame_len
+        * obj.global_parent.frame_position
+    )
+    obj.frame_note_end = (
+        obj.note_end
+        * obj.global_parent.frame_len
+        * (1 - obj.global_parent.frame_position)
+    )
+
+    obj.frame_line_start = (
+        obj.line_start
+        * obj.global_parent.frame_len
+        * obj.global_parent.frame_position
+    )
+    obj.frame_line_end = (
+        obj.line_end
+        * obj.global_parent.frame_len
+        * (1 - obj.global_parent.frame_position)
+    )
+
+    if obj.max_connection_line_interval is None:
+        obj.max_connection_line_interval = obj.tet
+
+    obj.shadow_hl_strength = obj.highlight_strength * obj.highlight_shadows
+    obj.bounce_radius = obj.bounce_size / 2
+    obj.bounce_sin_factor = 2 * math.pi / obj.bounce_period
+
+    # TODO allow different shadow positions on a per-voice basis?
+    # self.num_shadows = len(self.shadow_positions)
+    # # The next line tells us whether we need to update shadow positions
+    # if not all(
+    #     [isinstance(item, ShadowPositions) for item in self.shadow_positions]
+    # ):
+    #     self.shadow_positions = [
+    #         ShadowPositions(
+    #             shadow_x=s[0] / self.w_factor,
+    #             shadow_y=s[1] / self.out_height,
+    #             cline_shadow_x=(s[2] if len(s) > 2 else s[0]) / self.w_factor,
+    #             cline_shadow_y=(s[3] if len(s) > 3 else s[1]) / self.out_height,
+    #         )
+    #         for s in self.shadow_positions
+    #     ]
+    # self.max_shadow_x_time = max(
+    #     [s.shadow_x for s in self.shadow_positions]
+    #     + [s.cline_shadow_x for s in self.shadow_positions]
+    #     + [0,]
+    # )
+    # self.min_shadow_x_time = min(
+    #     [s.shadow_x for s in self.shadow_positions]
+    #     + [s.cline_shadow_x for s in self.shadow_positions]
+    #     + [0,]
+    # )
+
+
+class VoiceSettings:
+    """Manages attribute access for voice settings.
+
+    If an attribute is not found, looks in voice of which the voice is a
+    duplicate, if any; otherwise, looks in global Settings object.
+    """
+
+    allowed_kwargs = (
+        "connection_lines",
+        "con_line_offset_color",
+        "con_line_offset_prop",
+        "max_connection_line_duration",
+        "max_connection_line_interval",
+        "no_connection_lines_between_simultaneous_notes",
+        "line_start",
+        "line_end",
+        "con_line_width",
+        "line_start_size",
+        "line_end_size",
+        "rectangles",
+        "note_start",
+        "note_end",
+        "note_size",
+        "note_width",
+        "note_height",
+        "note_start_width",
+        "note_start_height",
+        "note_end_width",
+        "note_end_height",
+        "start_scale_function",
+        "end_scale_function",
+        "highlight_strength",
+        "highlight_start",
+        "highlight_end",
+        "highlight_color",
+        "shadow_strength",
+        "shadow_color",
+        "shadow_scale",
+        "highlight_shadows",
+        "shadow_gradients",
+        "shadow_gradient_offset",
+        "max_flutter_size",
+        "min_flutter_size",
+        "max_flutter_period",
+        "min_flutter_period",
+        "bounce_type",
+        "bounce_size",
+        "bounce_period",
+        "bounce_len",
+    )
+
+    allowed_attributes = (
+        "frame_note_start",
+        "frame_note_end",
+        "frame_line_start",
+        "frame_line_end",
+        "max_shadow_x_time",
+        "min_shadow_x_time",
+        "num_shadows",
+        "shadow_hl_strength",
+        "bounce_radius",
+        "bounce_sin_factor",
+    ) + allowed_kwargs
+
+    def __init__(self, voice_i, parent, **kwargs):
+        self.parent = parent
+        if isinstance(parent, Settings):
+            self.global_parent = parent
+        else:
+            self.global_parent = parent.global_parent
+
+        for arg, val in kwargs.items():
+            if arg not in self.allowed_kwargs:
+                raise ValueError(
+                    f"'{arg}' is not a valid keyword-argument to VoiceSettings"
+                )
+            setattr(self, arg, val)
+        self.getattr_func = self._getattr
+        if not hasattr(self, "color"):
+            self.color = parent.color_palette[
+                voice_i % len(parent.color_palette)
+            ]
+        elif len(self.color) < 4:
+            self.color = tuple(self.color) + (self.default_note_opacity)
+        for color_name in PER_VOICE_COLORS:
+            if len(getattr(self, color_name)) < 4:
+                setattr(
+                    self,
+                    color_name,
+                    tuple(list(getattr(self, color_name)) + [255,]),
+                )
+        if "note_size" in dir(self):
+            if (
+                "note_width" not in dir(self)
+                or self.note_width  # pylint: disable=access-member-before-definition
+                is None
+            ):
+                self.note_width = self.note_size
+            if (
+                "note_height" not in dir(self)
+                or self.note_height  # pylint: disable=access-member-before-definition
+                is None
+            ):
+                self.note_height = self.note_size
+
+        post_init_helper(self)
+        self.getattr_func = self._getattr2
+
+    def _getattr(self, name):
+        return getattr(self.parent, name)
+
+    def __getattr__(self, name):
+        return self.getattr_func(name)
+
+    def _getattr2(self, name):
+        """After post_init runs, we overwrite __getattr__ with this function.
+        """
+        if name in self.allowed_attributes:
+            return self._getattr(name)
+        raise AttributeError(
+            f"'{name}' is not a valid attribute for VoiceSettings"
+        )
 
 
 @dataclasses.dataclass
@@ -51,6 +237,37 @@ class Settings:
     Some settings are omitted from the description of keyword arguments below
     as they are unlikely to be of interest to the user (they are in a sense
     "private" to the script).
+
+    There are two types of settings, "global" settings and "per-voice" settings:
+
+    - Global settings always apply to the animation as a whole. An example is
+    `intro`, which sets the length of time before the music begins.
+    - Per-voice settings can be applied to individual "voices" (=tracks in the
+    input midi file). They can also be provided as global defaults which apply
+    whenever the setting is not explicitly set for an individual voice. An
+    example is `connection_lines`, which controls whether lines are drawn
+    connecting consecutive notes in a voice.
+
+    An example of the usage of global and per-voice settings:
+
+    ```
+    {
+        "intro": 5,  # Global setting
+        "voice_settings": {  # dict of per-voice settings
+            0: {
+                "connection_lines": True,  # Sets "connection_lines" for voice 0
+            }
+        },
+        "connection_lines": False,  # Sets global default for voices
+                                    # This global default will not apply to
+                                    # voice 0, which sets "connection_lines"
+                                    # explicitly
+    }
+    ```
+
+    For the most part, the settings below each heading below are either all
+    global  or all per-voice. Which of these is the case is noted directly
+    below each heading, as are several special cases.
 
     When these settings contain terms like "start" and "end", these refer to
     positions *on each frame*. E.g., `note_start` is how far from the left side
@@ -67,6 +284,8 @@ class Settings:
 
         General
         =======
+
+        All general settings are global.
 
         midi_fname: str. Path to input midi file to animate. If a midi path is
             passed as a command-line argument to the script, this value will
@@ -87,12 +306,12 @@ class Settings:
         resolution: tuple of form (int, int). Resolution of output frames.
             Default (1280, 720)
         process_video: str. Possible values:
-                "yes": (Default) makes .mp4 video file using OpenCV
-                "no": doesn't make video file.
-                "only": makes .mp4 video file using OpenCV and skips the rest of the
-                    script. (Note: in this case, the number of frames will be
-                    inferred from the number of files that match the png filename
-                    in `output_dirname`.)
+                "yes" : (Default) makes .mp4 video file using OpenCV
+                "no" : doesn't make video file.
+                "only" : makes .mp4 video file using OpenCV and skips the rest
+                    of the script. (Note: in this case, the number of frames
+                    will be inferred from the number of files that match the
+                    png filename in `output_dirname`.)
         video_fname: str. Path to output video file. If not passed, the video
             will be written in `output_dirname` with the same basename as
             `midi_fname`. Has no effect if `process_video` == "no".
@@ -117,6 +336,8 @@ class Settings:
         Frame
         ======
 
+        All frame settings are global.
+
         frame_len: float. Length (in seconds) of each frame.
             (I.e., the time interval between the moment represented by the left
             side of the frame and the moment represented by the right side.)
@@ -134,6 +355,8 @@ class Settings:
 
         Timing
         ======
+
+        All timing settings are global.
 
         intro: float. Length of time in seconds that should precede `start_time`
             Default: 1.0
@@ -202,6 +425,8 @@ class Settings:
         Lyrics
         ======
 
+        All lyrics settings are global.
+
         lyrics: dict of form float: str. The float keys are times in seconds;
             the string values is the lyric text that should occur at those times.
             Each lyric occurs until the time specified by the next lyric. To
@@ -221,8 +446,82 @@ class Settings:
             `cex` argument to the R `text` command.
             Default: 3.0
 
-        Voice settings
-        ==============
+        Channels
+        ========
+
+        All channels settings are global.
+
+        num_channels: int. Number of exclusive horizontal `channels` to place
+            voices into. (For example, the winds and the strings could be placed
+            into exclusive channels.)
+            Default: 1
+        channel_proportions: tuple of floats. Relative heights of channels.
+            Channels are listed from top to bottom. Will be normalized, so
+            heights don't have to sum to 1 or any other particular value. If
+            this argument is omitted, then all channels will have the same
+            height. If this argument is included, but its length does not equal
+            `num_channels`, a ValueError will be raised.
+        chan_assmts: dictionary of form {int: int}. Assigns voices (keys) to
+            channels (values). Any missing voices will be assigned to channel 0.
+            If omitted, all voices are assigned to channel 0. Channel 0 is the
+            top channel.
+        channel_settings: dictionary of form {int: dict}, where the int key is
+            the index to a channel and the dictionary value provides per-channel
+            settings as specified below. Any channels or settings omitted will
+            be provided with the default settings.
+                "l_padding" : float between 0 and 1. Indicates how much padding
+                    should be provided below the lowest pitch of the channel
+                    and the bottom of the channel, as a proportion of the
+                    channel.
+                    Default: 0.1
+                "h_padding" : float between 0 and 1. Indicates how much padding
+                    should be provided below the highest pitch of the channel
+                    and the top of the channel, as a proportion of the
+                    channel.
+                    Default: 0.1
+
+        Background
+        ==========
+
+        The background color can be either constant, or it can change at
+        specified times. If it changes, it can either change suddenly or blend
+        linearly from one color to the next.
+
+        All background settings are global.
+
+        If `bg_beat_times` is empty, or if `bg_beat_times_length` == 0, or if
+        len(bg_colors) == 1, the background color will  be constant.
+
+        bg_beat_times: list of numbers. Sets the times, in beats, between the
+            arrival of each color in `bg_colors`. If 0 is not the first item
+            in the list, the bg_color until the first time in the list will
+            be the last color in `bg_colors`.
+            Default: (0,)
+        bg_beat_times_length: number. Sets the number of beats at which the list
+            of times in `bg_beat_times` will repeat. E.g., if `bg_beat_times`
+            is [0, 3] and `bg_beat_times_length` is 8, the effective background
+            beat times inferred will be [0, 3, 8, 11, 16, 19, ...]. Essentially
+            sets a "time signature" for `bg_beat_times`. If < than the largest
+            number in `bg_beat_times`, strange things may happen.
+            Default: 0
+        bg_colors: a list of tuples of form (int, int, int, int), where each
+            tuple is an RGB color.
+            Default: [(32, 32, 32, 255), (192, 192, 192, 255)]
+        bg_color_blend: boolean. If True, background colors scale linearly from
+            one to the next. If False, background colors change suddenly.
+            Default: True
+        intro_bg_color: tuple of form (int, int, int). The RGB color at the
+            start of the intro (if any), or during the complete intro, if
+            `bg_color_blend` is False.
+        outro_bg_color: tuple of form (int, int, int). The RGB color at the
+            end of the outro (if any), or during the complete outro, if
+            `bg_color_blend` is False.
+
+        Global voice settings
+        =====================
+
+        These settings are all global; to set per-voice settings, use the
+        "voice_settings" argument described below.
 
         voices_to_render: list-like of integer indices. Determines which
             "voices" (=tracks) in the input midi file to render. If empty, all
@@ -241,29 +540,19 @@ class Settings:
             ordered from highest to lowest.
             Default: False
         voice_settings: dictionary. Keys are integer indices to voices (=tracks)
-            in the input midi file. Values are themselves dictionaries with the
-            keys being the settings listed below. (See also
-            `duplicate_voice_settings` below.)
-            For all settings except "color", if the setting is not present in
-            the dictionary associated with a voice (or if there is no dictionary
-            for that voice), then the setting will have the value of the
-            "global" setting with the same name. (E.g., "rectangles" will be
-            assigned the value of `global_rectangles`.) For documentation of
-            what these settings do, see the "global" settings elsewhere in the
-            docstring for this class. If "color" is not  present, a color
-            from `color_palette` will be assigned to the voice.
-            Per-voice settings:
-                "color"
-                "connection_lines"
-                "rectangles"
-                "shadow_color"
-                "shadow_strength"
-                "size"
-                "size_x"
-                "size_y"
+            in the input midi file. Values are themselves dictionaries of
+            per-voice settings. See above for more on per-voice settings. See
+            also `duplicate_voice_settings` below.
+            Note that the per-voice setting "color" is a special case: if the
+            "color" argument is not explicitly provided for a voice, the voice
+            will be assigned the color from the global "color_palette" setting
+            at the position specified by its integer index (modulo the length of
+            the color palette).
         duplicate_voice_settings: a dictionary of form {int, list of ints}. Keys
-            are indices to voices whose settings will be copied to the voices
-            whose index are in the associated list.
+            are "parent" voices and settings are "child" voices. Any per-voice
+            settings not explicitly set in the child voice will be taken from
+            the parent voice. If they are not found in the parent voice, the
+            search continues recursively until we reach the global settings.
         p_displace: a dictionary of form {int, list of ints}. Keys are pitch
             intervals in semitones. Values are lists of indices to voices. The
             voices indicated will be displaced by the associated interval. This
@@ -287,11 +576,11 @@ class Settings:
         Connection lines
         ================
 
-        global_connection_lines: boolean. If True, "connection lines" are drawn
+        All connection line settings are per-voice or global.
+
+        connection_lines: boolean. If True, "connection lines" are drawn
             between adjacent notes on the same track (subject to certain
-            conditions, controlled by the subsequent keyword arguments). Note
-            that this sets a default that can be overridden on a per-voice
-            basis.
+            conditions, controlled by the subsequent keyword arguments).
             Default: True
         con_line_offset_color: tuple of form (int, int, int[, int]). An RGB
             color to blend with the color of the previous note, in order to
@@ -341,7 +630,9 @@ class Settings:
         Notes (or "rectangles")
         =======================
 
-        global_rectangles: boolean. If True, a "rectangle" (the usual piano-roll
+        All rectangle settings are per-voice or global.
+
+        rectangles: boolean. If True, a "rectangle" (the usual piano-roll
             representation) is drawn for each note. Note that this sets
             a default that can be overridden on a per-voice basis.
             Default: True
@@ -355,30 +646,28 @@ class Settings:
             distance between the end of the frame and "now" as indicated by
             `frame_position`.
             Default: 1.0
-        global_note_size: float. Factor by which notes should be scaled at
+        note_size: float. Factor by which notes should be scaled at
             moment "now". The base height of a note is 1 semitone, and the base
             width is its duration, so if > 1, rectangles will overlap each
             other, whereas if it is < 1, they will have extra spacing. If
-            either `global_note_width` or `global_note_height` are nonzero,
+            either `note_width` or `note_height` are nonzero,
             this argument is ignored in the width or height dimension,
-            respectively (or both). Note that this argument, as well as the
-            other 'global' note size arguments below, sets a default that can be
-            overridden on a per-voice basis.
+            respectively (or both).
             Default: 1.
-        global_note_width: float. Overrides `global_note_size` in x
+        note_width: float. Overrides `note_size` in x
             dimension.
-        global_note_height: float. Overrides `global_note_size` in y
+        note_height: float. Overrides `note_size` in y
             dimension.
-        note_start_width: float. Amount by which `global_note_size` should be
+        note_start_width: float. Amount by which `note_size` should be
             scaled horizontally at `line_start`.
             Default: 1.0
-        note_start_height: float. Amount by which `global_note_size` should be
+        note_start_height: float. Amount by which `note_size` should be
             scaled vertically at `line_start`.
             Default: 1.0
-        note_end_width: float. Amount by which `global_note_size` should be
+        note_end_width: float. Amount by which `note_size` should be
             scaled horizontally at `line_end`.
             Default: 1.0
-        note_end_height: float. Amount by which `global_note_size` should be
+        note_end_height: float. Amount by which `note_size` should be
             scaled vertically at `line_end`.
             Default: 1.0
         start_scale_function, end_scale_function: callables. These functions
@@ -390,6 +679,8 @@ class Settings:
 
         Highlight
         =========
+
+        All highlight settings are per-voice or global.
 
         highlight_strength: float. Controls how strongly `highlight_color` is
             mixed with the current note color at moment "now".
@@ -411,14 +702,15 @@ class Settings:
         Shadows
         =======
 
+        `shadow_positions` is a global setting. All other shadow settings are
+        per-voice or global.
+
         To turn on shadow rendering, ensure that `shadow_positions` is at least
         one tuple long and that at least one voice has a shadow_strength greater
         than 0.
 
-        global_shadow_strength: float. Controls how strongly `shadow_color` is
-            mixed with the current background color to form "shadows". Note
-            that this sets a default that can be overridden on a per-voice
-            basis.
+        shadow_strength: float. Controls how strongly `shadow_color` is
+            mixed with the current background color to form "shadows".
             Default: 0.6.
         shadow_positions: a list of 2- or 4-tuples of floats. Specifies shadow
             positions relative to notes/lines, in pixels (thus if the
@@ -433,10 +725,8 @@ class Settings:
             4-tuples are of form (x, y, shadow_x, shadow_y), where x and y are
                 specified separately for notes and shadows.
             Default: []
-        global_shadow_color: tuple of form (int, int, int, int). RGB color that
-            should be blended with background color to make shadows. Note
-            that this sets a default that can be overridden on a per-voice
-            basis.
+        shadow_color: tuple of form (int, int, int, int). RGB color that
+            should be blended with background color to make shadows.
             Default: (128, 128, 128, 255)
         shadow_scale: float. How much to scale shadows relative to the objects
             they shadow. If there is more than one shadow per note (i.e., if
@@ -463,38 +753,6 @@ class Settings:
             will be 3/9.)
             Default: 0.0
 
-        Channels
-        ========
-
-        num_channels: int. Number of exclusive horizontal `channels` to place
-            voices into. (For example, the winds and the strings could be placed
-            into exclusive channels.)
-            Default: 1
-        channel_proportions: tuple of floats. Relative heights of channels.
-            Channels are listed from top to bottom. Will be normalized, so
-            heights don't have to sum to 1 or any other particular value. If
-            this argument is omitted, then all channels will have the same
-            height. If this argument is included, but its length does not equal
-            `num_channels`, a ValueError will be raised.
-        chan_assmts: dictionary of form {int: int}. Assigns voices (keys) to
-            channels (values). Any missing voices will be assigned to channel 0.
-            If omitted, all voices are assigned to channel 0. Channel 0 is the
-            top channel.
-        channel_settings: dictionary of form {int: dict}, where the int key is
-            the index to a channel and the dictionary value provides per-channel
-            settings as specified below. Any channels or settings omitted will
-            be provided with the default settings.
-                "l_padding": float between 0 and 1. Indicates how much padding
-                    should be provided below the lowest pitch of the channel
-                    and the bottom of the channel, as a proportion of the
-                    channel.
-                    Default: 0.1
-                "h_padding": float between 0 and 1. Indicates how much padding
-                    should be provided below the highest pitch of the channel
-                    and the top of the channel, as a proportion of the
-                    channel.
-                    Default: 0.1
-
         Flutter
         =======
 
@@ -503,15 +761,32 @@ class Settings:
         constant) flutter size (the vertical distance progressed) and period
         within the ranges defined by the parameters below.
 
+        `flutter_per_voice` is a global setting. All other flutter settings are
+        per-voice or global.
+
+        flutter_per_voice: boolean. Global setting only. If False, then each
+            pitch has a globally assigned flutter. If True, then flutters are
+            assigned to pitches separately for each individual voice. Thus, if
+            this is True, unison pitches in different voices will move up and
+            down at a slightly different pace from one another, whereas if it
+            is False, they will move at the same pace, and thus one voice will
+            consistently occlude the voices behind it.
+            Default: False.
         max_flutter_size: float. Set upper bound on flutter "size". Measured
-            in semitones.
+            in semitones. As a per-voice setting, only has an effect if
+            `flutter_per_voice` is True.
             Default: 0.6
         min_flutter_size: float. Set lower bound on flutter "size". Measured
-            in semitones.
+            in semitones. As a per-voice setting, only has an effect if
+            `flutter_per_voice` is True.
             Default: 0.3
         max_flutter_period: float. Set upper bound on flutter period in seconds.
+            As a per-voice setting, only has an effect if `flutter_per_voice`
+            is True.
             Default: 8.0
         min_flutter_period: float. Set lower bound on flutter period in seconds.
+            As a per-voice setting, only has an effect if `flutter_per_voice`
+            is True.
             Default: 4.0
 
         Bounce
@@ -520,6 +795,8 @@ class Settings:
         "Bounce" is scaling or vertical motion that occurs at the attack of a
         note to visually accent the attack. The amount of "bounce" is scaled
         linearly from "now" until `bounce_len` seconds later.
+
+        All bounce settings are per-voice or global.
 
         bounce_type: string. Either "vertical" (note "bounces" up or down) or
             "scalar" (note is scaled in and out).
@@ -542,48 +819,13 @@ class Settings:
         bounce_len: float. Length of bounce in seconds.
             Default: 1.0
 
-        Background
-        ==========
-
-        The background color can be either constant, or it can change at
-        specified times. If it changes, it can either change suddenly or blend
-        linearly from one color to the next.
-
-        If `bg_beat_times` is empty, or if `bg_beat_times_length` == 0, or if
-        len(bg_colors) == 1, the background color will  be constant.
-
-        bg_beat_times: list of numbers. Sets the times, in beats, between the
-            arrival of each color in `bg_colors`. If 0 is not the first item
-            in the list, the bg_color until the first time in the list will
-            be the last color in `bg_colors`.
-            Default: (0,)
-        bg_beat_times_length: number. Sets the number of beats at which the list
-            of times in `bg_beat_times` will repeat. E.g., if `bg_beat_times`
-            is [0, 3] and `bg_beat_times_length` is 8, the effective background
-            beat times inferred will be [0, 3, 8, 11, 16, 19, ...]. Essentially
-            sets a "time signature" for `bg_beat_times`. If < than the largest
-            number in `bg_beat_times`, strange things may happen.
-            Default: 0
-        bg_colors: a list of tuples of form (int, int, int, int), where each
-            tuple is an RGB color.
-            Default: [(32, 32, 32, 255), (192, 192, 192, 255)]
-        bg_color_blend: boolean. If True, background colors scale linearly from
-            one to the next. If False, background colors change suddenly.
-            Default: True
-        intro_bg_color: tuple of form (int, int, int). The RGB color at the
-            start of the intro (if any), or during the complete intro, if
-            `bg_color_blend` is False.
-        outro_bg_color: tuple of form (int, int, int). The RGB color at the
-            end of the outro (if any), or during the complete outro, if
-            `bg_color_blend` is False.
-
         Debugging
         =========
 
         add_annotations: list of strings. Annotate each frame according to the
             values in this list. Possible values:
-                "time": clock time (intro times are negative)
-                "section": i.e., "intro", "outro", or neither (="main")
+                "time" : clock time (intro times are negative)
+                "section" : i.e., "intro", "outro", or neither (="main")
             Default: empty.
         annot_color: tuple of form (int, int, int[, int]). Color for
             annotations.
@@ -676,7 +918,7 @@ class Settings:
     )
     default_note_opacity: int = 255
 
-    global_connection_lines: bool = True
+    connection_lines: bool = True
     con_line_offset_prop: float = 0.0
     con_line_offset_color: tuple = (128, 128, 128, 255)
     max_connection_line_duration: float = 0.25
@@ -689,12 +931,12 @@ class Settings:
     line_end_size: float = 1.0
     con_line_width: float = 5
 
-    global_rectangles: bool = True
+    rectangles: bool = True
     note_start: float = 1
     note_end: float = 1
-    global_note_size: float = 1
-    global_note_width: float = 0
-    global_note_height: float = 0
+    note_size: float = 1
+    note_width: float = None
+    note_height: float = None
     note_start_width: float = 1
     note_end_width: float = 1
     note_start_height: float = 1
@@ -707,14 +949,14 @@ class Settings:
     highlight_end: float = 0.25
     highlight_color: tuple = (224, 224, 224, 255)
 
-    global_shadow_strength: float = 0.6
+    shadow_strength: float = 0.6
     shadow_positions: typing.Sequence[
         # remove when pylint bug is fixed
         typing.Union[  # pylint: disable=unsubscriptable-object
             typing.Tuple[float, float, float, float], typing.Tuple[float, float]
         ]
     ] = dataclasses.field(default_factory=DEFAULT_SHADOW_POSITIONS)
-    global_shadow_color: tuple = (128, 128, 128, 255)
+    shadow_color: tuple = (128, 128, 128, 255)
     shadow_scale: float = 1.0
 
     shadow_gradients: bool = True
@@ -726,6 +968,7 @@ class Settings:
     chan_assmts: dict = dataclasses.field(default_factory=dict)
     channel_settings: dict = dataclasses.field(default_factory=dict)
 
+    flutter_per_voice: bool = False
     max_flutter_size: float = 0.6
     min_flutter_size: float = 0.3
     max_flutter_period: float = 8.0
@@ -755,6 +998,13 @@ class Settings:
     script_path: str = None  # for internal use only
 
     def __post_init__(self):
+        self.global_parent = self
+        # Attributes defined in post_init_helper:
+        self.frame_note_start = self.frame_note_end = None
+        self.frame_line_start = self.frame_line_end = None
+        self.shadow_hl_strength = None
+        self.bounce_radius = self.bounce_sin_factor = None
+        post_init_helper(self)
         if not self.midi_fname:
             raise ValueError("no 'midi_fname' keyword argument to Settings()")
         if not self.script_path:
@@ -766,7 +1016,7 @@ class Settings:
         if self.outro_bg_color is None:
             self.outro_bg_color = self.intro_bg_color
         # Add transparency value to colors if absent
-        for color_name in SINGLE_COLORS:
+        for color_name in GLOBAL_COLORS + PER_VOICE_COLORS:
             if len(getattr(self, color_name)) < 4:
                 setattr(
                     self,
@@ -816,41 +1066,6 @@ class Settings:
             sum(self.channel_heights[i + 1 :]) for i in range(self.num_channels)
         ]
 
-        self.default_voice_settings = {
-            "connection_lines": self.global_connection_lines,
-            "rectangles": self.global_rectangles,
-            "size": self.global_note_size,
-            "size_x": self.global_note_width,
-            "size_y": self.global_note_height,
-            "color": None,  # choose from colormap
-            "shadow_color": self.global_shadow_color,
-            "shadow_strength": self.global_shadow_strength,
-        }
-
-        # Get missing voice_settings
-        for voice_i in self.duplicate_voice_settings:
-            if voice_i not in self.voice_settings:
-                self.voice_settings[
-                    voice_i
-                ] = self.default_voice_settings.copy()
-
-        # Misc processing
-
-        self.shadow_hl_strength = (
-            self.highlight_strength * self.highlight_shadows
-        )
-
-        self.note_start = self.note_start * self.frame_len * self.frame_position
-        self.note_end = (
-            self.note_end * self.frame_len * (1 - self.frame_position)
-        )
-
-        self.line_start = self.line_start * self.frame_len * self.frame_position
-        self.line_end = (
-            self.line_end * self.frame_len * (1 - self.frame_position)
-        )
-        self._max_end = max(self.note_end, self.line_end)
-        self._max_start = max(self.note_start, self.line_start)
         if self._temp_r_dirname is None:
             self._temp_r_dirname = os.path.join(
                 self.script_path, DEFAULT_TEMP_R_PATH
@@ -892,19 +1107,20 @@ class Settings:
             )
         self.out_width, self.out_height = self.resolution
 
-        if self.max_connection_line_interval is None:
-            self.max_connection_line_interval = self.tet
+        self.w_factor = self.out_width / self.frame_len
 
-        self.bounce_radius = self.bounce_size / 2
-        self.bounce_sin_factor = 2 * math.pi / self.bounce_period
+        if self.note_width is None:
+            self.note_width = self.note_size
+        if self.note_height is None:
+            self.note_height = self.note_size
 
         # The following attributes are only initialized after calling
         # self.update_from_score()
 
         self.num_voices = self.p_displace_rev = self.voice_assmts = None
-        self.final_time = self.bg_clock_times = self.w_factor = None
+        self.final_time = self.bg_clock_times = self.shadows = None
         self.num_shadows = self.max_shadow_x_time = None
-        self.min_shadow_x_time = self.shadows = None
+        self.min_shadow_x_time = None
 
     def update_from_score(self, score, tempo_changes):
         self.num_voices = score.num_voices
@@ -969,53 +1185,35 @@ class Settings:
             for voice_i in range(self.num_voices):
                 if voice_i not in self.voice_order:
                     self.voice_order.append(voice_i)
-        # Original script contains the following lines (where "a" is the return
-        # value from midi_to_internal_data). Not sure why they were necessary,
-        # or if they may be again.
-        # temp_voice_order = []
-        # for i in voice_order:
-        #     if i <= len(a) - 1:
-        #         temp_voice_order.append(i)
-        # voice_order = temp_voice_order
+
         if self.voice_order_reverse:
             self.voice_order.reverse()
 
+        reversed_duplicate_voice_settings = {}
+        voice_init_order = list(range(self.num_voices))
         for src_i, dsts in self.duplicate_voice_settings.items():
             for dst_i in dsts:
-                if dst_i not in self.voice_settings:
-                    self.voice_settings[dst_i] = {}
-                for setting in self.voice_settings[src_i]:
-                    if setting not in self.voice_settings[dst_i]:
-                        self.voice_settings[dst_i][
-                            setting
-                        ] = self.voice_settings[src_i][setting]
+                reversed_duplicate_voice_settings[dst_i] = src_i
+                # TODO I'm not sure if this will catch all edge cases
+                #   Think more about it!
+                if voice_init_order.index(src_i) > voice_init_order.index(
+                    dst_i
+                ):
+                    voice_init_order.remove(src_i)
+                    voice_init_order.insert(0, src_i)
 
-        for voice_i in range(self.num_voices):
-            if voice_i not in self.voice_settings:
-                self.voice_settings[
-                    voice_i
-                ] = self.default_voice_settings.copy()
-            else:
-                for setting in self.default_voice_settings:
-                    if setting not in self.voice_settings[voice_i]:
-                        self.voice_settings[voice_i][
-                            setting
-                        ] = self.default_voice_settings[setting]
-            if self.voice_settings[voice_i]["color"] is None:
-                self.voice_settings[voice_i]["color"] = self.color_palette[
-                    voice_i % len(self.color_palette)
-                ]
-            elif len(self.voice_settings[voice_i]["color"]) < 4:
-                self.voice_settings[voice_i]["color"] = tuple(
-                    self.voice_settings[voice_i]["color"]
-                ) + (self.default_note_opacity,)
-            for size_axis in ("size_x", "size_y"):
-                # if size_axis not in self.voice_settings[voice_i]:
-                if not self.voice_settings[voice_i][size_axis]:
-                    self.voice_settings[voice_i][
-                        size_axis
-                    ] = self.voice_settings[voice_i]["size"]
-            del self.voice_settings[voice_i]["size"]
+        for voice_i in voice_init_order:
+            self.voice_settings[voice_i] = VoiceSettings(
+                voice_i,
+                self.voice_settings[reversed_duplicate_voice_settings[voice_i]]
+                if voice_i in reversed_duplicate_voice_settings
+                else self,
+                **(
+                    self.voice_settings[voice_i]
+                    if voice_i in self.voice_settings
+                    else {}
+                ),
+            )
 
         # get bg_clock_times
         self.bg_clock_times = []
@@ -1043,7 +1241,10 @@ class Settings:
                 if break_out:
                     break
 
-        self.w_factor = self.out_width / self.frame_len
+        self.shadows = any(
+            v.shadow_strength > 0 for v in self.voice_settings.values()
+        )
+
         self.num_shadows = len(self.shadow_positions)
         self.shadow_positions = [
             ShadowPositions(
@@ -1063,9 +1264,6 @@ class Settings:
             [s.shadow_x for s in self.shadow_positions]
             + [s.cline_shadow_x for s in self.shadow_positions]
             + [0,]
-        )
-        self.shadows = any(
-            v["shadow_strength"] > 0 for v in self.voice_settings.values()
         )
 
     def __getitem__(self, key):

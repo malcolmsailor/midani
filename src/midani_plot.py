@@ -11,40 +11,46 @@ import src.midani_score as midani_score
 import src.midani_time as midani_time
 
 
-def _rect_or_its_shadow_in_frame(now, note, settings):
+def _rect_or_its_shadow_in_frame(now, note, settings, voice_i):
     return (
-        note.start + settings.min_shadow_x_time - now <= settings.note_end
-        and now - note.end - settings.max_shadow_x_time <= settings.note_start
+        note.start + settings[voice_i].min_shadow_x_time - now
+        <= settings[voice_i].frame_note_end
+        and now - note.end - settings[voice_i].max_shadow_x_time
+        <= settings[voice_i].frame_note_start
     )
 
 
-def _line_or_its_shadow_in_frame(now, note, note_i, settings, voice_i):
+def _line_or_its_shadow_in_frame(now, note, note_i, settings, voice, voice_i):
 
     if (
-        note.start + settings.min_shadow_x_time - now <= settings.note_end
-        and now - note.end - settings.max_shadow_x_time <= settings.note_start
+        note.start + settings[voice_i].min_shadow_x_time - now
+        <= settings[voice_i].frame_note_end
+        and now - note.end - settings[voice_i].max_shadow_x_time
+        <= settings[voice_i].frame_note_start
     ):
         return True
     try:
-        prev = voice_i[note_i - 1]
+        prev = voice[note_i - 1]
     except IndexError:
         pass
     else:
         if (
-            prev.start + settings.min_shadow_x_time - now <= settings.line_end
-            and now - prev.start - settings.max_shadow_x_time
-            <= settings.line_start
+            prev.start + settings[voice_i].min_shadow_x_time - now
+            <= settings[voice_i].frame_line_end
+            and now - prev.start - settings[voice_i].max_shadow_x_time
+            <= settings[voice_i].frame_line_start
         ):
             return True
     try:
-        next_ = voice_i[note_i + 1]
+        next_ = voice[note_i + 1]
     except IndexError:
         pass
     else:
         if (
-            next_.start + settings.min_shadow_x_time - now <= settings.line_end
-            and now - next_.start - settings.max_shadow_x_time
-            <= settings.line_start
+            next_.start + settings[voice_i].min_shadow_x_time - now
+            <= settings[voice_i].frame_line_end
+            and now - next_.start - settings[voice_i].max_shadow_x_time
+            <= settings[voice_i].frame_line_start
         ):
             return True
     return False
@@ -53,19 +59,23 @@ def _line_or_its_shadow_in_frame(now, note, note_i, settings, voice_i):
 def get_voice_and_line_tuples(now, settings, table):
     rect_tuples = []
     line_tuples = []
-    if settings.bounce_type == "scalar":
-        bounce_term = max(1, settings.bounce_radius,)
-    else:
-        bounce_term = 0
     for voice_i, voice in zip(settings.voice_order, table):
-        color = settings[voice_i]["color"]
+        if settings[voice_i].bounce_type == "scalar":
+            bounce_term = max(1, settings[voice_i].bounce_radius,)
+        else:
+            bounce_term = 0
+        color = settings[voice_i].color
         rect_tuples.append([])
         line_tuples.append([])
         for note_i, note in enumerate(voice):
-            rect_in_frame = _rect_or_its_shadow_in_frame(now, note, settings)
+            rect_in_frame = _rect_or_its_shadow_in_frame(
+                now, note, settings, voice_i
+            )
             line_in_frame = (
-                _line_or_its_shadow_in_frame(now, note, note_i, settings, voice)
-                if settings[voice_i]["connection_lines"]
+                _line_or_its_shadow_in_frame(
+                    now, note, note_i, settings, voice, voice_i
+                )
+                if settings[voice_i].connection_lines
                 else False
             )
             if not rect_in_frame and not line_in_frame:
@@ -79,27 +89,31 @@ def get_voice_and_line_tuples(now, settings, table):
             scale_x_factor, scale_y_factor = table.scale_factors(
                 t_until_for_scale, voice_i
             )
-            highlight_factor = table.highlight_factor(t_until_attack)
-            if settings[voice_i]["connection_lines"]:
-                line_scale_factor = table.line_scale_factor(t_until_for_scale)
+            highlight_factor = table.highlight_factor(t_until_attack, voice_i)
+            if settings[voice_i].connection_lines:
+                line_scale_factor = table.line_scale_factor(
+                    t_until_for_scale, voice_i
+                )
             flutter = 0
-            if settings.max_flutter_size > 0:
+            if settings[voice_i].max_flutter_size > 0:
                 flutter += table.pitch_flutters[voice_i][note.pitch](now)
-            # (Following condition is not true if settings.bounce_len is
+            # (Following condition is not true if settings[voice_i].bounce_len is
             # zero, so no need to check that separately)
             if (
-                settings.bounce_radius > 0
-                and 0 < -t_until_attack < settings.bounce_len
+                settings[voice_i].bounce_radius > 0
+                and 0 < -t_until_attack < settings[voice_i].bounce_len
             ):
                 bounce = (
-                    settings.bounce_radius
+                    settings[voice_i].bounce_radius
                     * (
-                        (t_until_attack + settings.bounce_len)
-                        / settings.bounce_len
+                        (t_until_attack + settings[voice_i].bounce_len)
+                        / settings[voice_i].bounce_len
                     )  # proportion of bounce_len since attack
-                    * math.sin((-t_until_attack) * settings.bounce_sin_factor)
+                    * math.sin(
+                        (-t_until_attack) * settings[voice_i].bounce_sin_factor
+                    )
                 ) + bounce_term
-                if settings.bounce_type == "scalar":
+                if settings[voice_i].bounce_type == "scalar":
                     scale_x_factor *= bounce
                     scale_y_factor *= bounce
                 else:
@@ -130,17 +144,17 @@ def get_voice_and_line_tuples(now, settings, table):
 
 
 def _get_shadow_gradient(
-    shadow_i, shadow_color, main_color, hl_factor, settings
+    shadow_i, shadow_color, main_color, hl_factor, settings, voice_i
 ):
     shadow_n_strength = shadow_i / (
-        settings.num_shadows + settings.shadow_gradient_offset
+        settings[voice_i].num_shadows + settings[voice_i].shadow_gradient_offset
     )
     shadow_n_color = midani_colors.blend_colors(
         shadow_color, main_color, shadow_n_strength,
     )
-    if (hl_blend := hl_factor * settings.shadow_hl_strength) :
+    if (hl_blend := hl_factor * settings[voice_i].shadow_hl_strength) :
         shadow_n_color = midani_colors.blend_colors(
-            shadow_n_color, settings.highlight_color, hl_blend,
+            shadow_n_color, settings[voice_i].highlight_color, hl_blend,
         )
     return shadow_n_color
 
@@ -153,15 +167,15 @@ def draw_note_shadows(
         if (
             voice_i not in settings.voices_to_render
             or not voice
-            or not settings[voice_i]["rectangles"]
+            or not settings[voice_i].rectangles
         ):
             continue
         channel_i = settings.chan_assmts[voice_i]
         channel = table.channels[channel_i]
         shadow_color = midani_colors.blend_colors(
             window.bg_color,
-            settings[voice_i]["shadow_color"],
-            settings[voice_i]["shadow_strength"],
+            settings[voice_i].shadow_color,
+            settings[voice_i].shadow_strength,
         )
         shadow_n_color = shadow_color
 
@@ -169,24 +183,25 @@ def draw_note_shadows(
             half_width = (
                 rect.note.dur
                 * rect.scale_x_factor
-                * settings.shadow_scale ** shadow_n
+                * settings[voice_i].shadow_scale ** shadow_n
                 / 2
             )
             half_height = (
                 channel.note_height
                 * rect.scale_y_factor
-                * settings.shadow_scale ** shadow_n
+                * settings[voice_i].shadow_scale ** shadow_n
                 / 2
             )
             shadow_x = shadow_position.shadow_x
             shadow_y = shadow_position.shadow_y
-            if settings.shadow_gradients:
+            if settings[voice_i].shadow_gradients:
                 shadow_n_color = _get_shadow_gradient(
                     shadow_i,
                     shadow_color,
                     rect.color,
                     rect.highlight_factor,
                     settings,
+                    voice_i,
                 )
             bottom = channel.y_position(rect.pitch) - half_height + shadow_y
             top = channel.y_position(rect.pitch) + half_height + shadow_y
@@ -227,19 +242,25 @@ def draw_shadows(line_tuples, rect_tuples, window, settings, table, r_boss):
         )
 
 
-def _connection_line_conditions_apply(now, src, dst, settings):
-    if dst.note.start - now > settings.line_end:
+def _connection_line_conditions_apply(now, src, dst, settings, voice_i):
+    if dst.note.start - now > settings[voice_i].frame_line_end:
         return False
-    if now - src.note.end > settings.line_start:
+    if now - src.note.end > settings[voice_i].frame_line_start:
         return False
     if (
-        settings.no_connection_lines_between_simultaneous_notes
+        settings[voice_i].no_connection_lines_between_simultaneous_notes
         and src.note.start == dst.note.start
     ):
         return False
-    if dst.note.mid - src.note.mid > settings.max_connection_line_duration:
+    if (
+        dst.note.mid - src.note.mid
+        > settings[voice_i].max_connection_line_duration
+    ):
         return False
-    if abs(dst.pitch - src.pitch) > settings.max_connection_line_interval:
+    if (
+        abs(dst.pitch - src.pitch)
+        > settings[voice_i].max_connection_line_interval
+    ):
         return False
     return True
 
@@ -251,26 +272,26 @@ def draw_line_shadows(
         if (
             voice_i not in settings.voices_to_render
             or not voice
-            or not settings[voice_i]["connection_lines"]
+            or not settings[voice_i].connection_lines
         ):
             continue
         channel_i = settings.chan_assmts[voice_i]
         channel = table.channels[channel_i]
         shadow_color = midani_colors.blend_colors(
             window.bg_color,
-            settings[voice_i]["shadow_color"],
-            settings[voice_i]["shadow_strength"],
+            settings[voice_i].shadow_color,
+            settings[voice_i].shadow_strength,
         )
         for src, dst in zip(voice, voice[1:]):
             if not _connection_line_conditions_apply(
-                window.now, src, dst, settings
+                window.now, src, dst, settings, voice_i
             ):
                 continue
-            if settings.shadow_gradients:
+            if settings[voice_i].shadow_gradients:
                 src_color = midani_colors.blend_colors(
                     src.color,
-                    settings.con_line_offset_color,
-                    settings.con_line_offset_prop,
+                    settings[voice_i].con_line_offset_color,
+                    settings[voice_i].con_line_offset_prop,
                 )
                 shadow_n_color = _get_shadow_gradient(
                     shadow_i,
@@ -278,6 +299,7 @@ def draw_line_shadows(
                     src_color,
                     0,  # no highlighting of connection lines
                     settings,
+                    voice_i,
                 )
             else:
                 shadow_n_color = shadow_color
@@ -288,7 +310,7 @@ def draw_line_shadows(
                 + shadow_position.cline_shadow_y,
                 y2=channel.y_position(dst.pitch)
                 + shadow_position.cline_shadow_y,
-                width=settings.con_line_width * src.scale_factor,
+                width=settings[voice_i].con_line_width * src.scale_factor,
                 color=shadow_n_color,
             )
 
@@ -298,20 +320,20 @@ def draw_connection_lines(line_tuples, window, settings, table, r_boss):
         if (
             voice_i not in settings.voices_to_render
             or not voice
-            or not settings[voice_i]["connection_lines"]
+            or not settings[voice_i].connection_lines
         ):
             continue
         channel_i = settings.chan_assmts[voice_i]
         channel = table.channels[channel_i]
         for src, dst in zip(voice, voice[1:]):
             if not _connection_line_conditions_apply(
-                window.now, src, dst, settings
+                window.now, src, dst, settings, voice_i
             ):
                 continue
             color = midani_colors.blend_colors(
                 src.color,
-                settings.con_line_offset_color,
-                settings.con_line_offset_prop,
+                settings[voice_i].con_line_offset_color,
+                settings[voice_i].con_line_offset_prop,
             )
             r_boss.plot_line(
                 x1=src.note.mid,
@@ -319,7 +341,7 @@ def draw_connection_lines(line_tuples, window, settings, table, r_boss):
                 y1=channel.y_position(src.pitch),
                 y2=channel.y_position(dst.pitch),
                 color=color,
-                width=settings.con_line_width * src.scale_factor,
+                width=settings[voice_i].con_line_width * src.scale_factor,
             )
 
 
@@ -328,18 +350,20 @@ def draw_notes(rect_tuples, window, settings, table, r_boss):
         if (
             voice_i not in settings.voices_to_render
             or not voice
-            or not settings[voice_i]["rectangles"]
+            or not settings[voice_i].rectangles
         ):
             continue
         channel_i = settings.chan_assmts[voice_i]
         channel = table.channels[channel_i]
         for rect in voice:
             hl_strength_factor = (
-                rect.highlight_factor * settings.highlight_strength
+                rect.highlight_factor * settings[voice_i].highlight_strength
             )
             if hl_strength_factor > 0:
                 color = midani_colors.blend_colors(
-                    rect.color, settings.highlight_color, hl_strength_factor
+                    rect.color,
+                    settings[voice_i].highlight_color,
+                    hl_strength_factor,
                 )
             else:
                 color = rect.color
@@ -392,7 +416,7 @@ def plot(settings):
     now = window.get_first_now()
     while window.in_range(now):
         window.update(now)
-        # In original script, I get the current tempo here, because "bounce"
+        # Originally, I got the current tempo here, because "bounce"
         # was set in beats. But now, "bounce" is in seconds, so we have no
         # need for tempi.
         r_boss.init_png(window)

@@ -344,11 +344,15 @@ class PitchTable(PitchRange, list):
     def __init__(self, score, settings, tempo_changes, *args, **kwargs):
         super().__init__()
         self.settings = settings
-        self.equal_start_xy_size = (
-            settings.note_start_width == settings.note_start_height
+        self.equal_start_xy_size = tuple(
+            settings[voice_i].note_start_width
+            == settings[voice_i].note_start_height
+            for voice_i in range(settings.num_voices)
         )
-        self.equal_end_xy_size = (
-            settings.note_end_width == settings.note_end_height
+        self.equal_end_xy_size = tuple(
+            settings[voice_i].note_end_width
+            == settings[voice_i].note_end_height
+            for voice_i in range(settings.num_voices)
         )
         self.voice_ranges = []
         self.l_pitch = None
@@ -357,6 +361,7 @@ class PitchTable(PitchRange, list):
             chan_i: Channel(chan_i, settings)
             for chan_i in range(settings.num_channels)
         }
+        self.pitch_flutters = {}
         for voice_i in settings.voice_order:
             voice = score.voices[voice_i]
             chan_assmt = settings.chan_assmts[voice_i]
@@ -368,7 +373,6 @@ class PitchTable(PitchRange, list):
             voice_list = VoiceList()
             self.append(voice_list)
             if voice_i not in settings.voices_to_render:
-                #     self.voice_ranges.append((0, 0))
                 continue
             for note in voice:
                 attack_ctime = tempo_changes.ctime_from_btime(note.attack_time)
@@ -377,44 +381,61 @@ class PitchTable(PitchRange, list):
                 )
                 pitch = note.pitch + pitch_displacement
                 voice_list.append(Note(pitch, attack_ctime, end_dur_ctime))
-            if voice_list:
+
+            if voice_list:  # voice is not empty
                 self.channels[chan_assmt].update_from_pitch(voice_list.l_pitch)
                 self.channels[chan_assmt].update_from_pitch(voice_list.h_pitch)
+
+            if settings.flutter_per_voice:
+                voice_flutters = {}
+                if voice_list:
+                    for pitch in range(
+                        voice_list.l_pitch, voice_list.h_pitch + 1
+                    ):
+                        voice_flutters[pitch] = PitchFlutter(
+                            settings[voice_i].max_flutter_size,
+                            settings[voice_i].min_flutter_size,
+                            settings[voice_i].max_flutter_period,
+                            settings[voice_i].min_flutter_period,
+                        )
+                self.pitch_flutters[voice_i] = voice_flutters
         for channel in self.channels.values():
             if channel.l_pitch is not None:
                 self.update_from_pitch(channel.l_pitch)
                 self.update_from_pitch(channel.h_pitch)
 
-        for voice_i, voice in enumerate(self):
-            if "take_l_pitch_from_voice" in settings.voice_settings[voice_i]:
-                voice.l_pitch = self[
-                    settings.voice_settings[voice_i]["take_l_pitch_from_voice"]
-                ].l_pitch
-            if "take_h_pitch_from_voice" in settings.voice_settings[voice_i]:
-                voice.h_pitch = self[
-                    settings.voice_settings[voice_i]["take_h_pitch_from_voice"]
-                ].h_pitch
+        # TODO implement or delete
+        # for voice_i, voice in enumerate(self):
+        #     if "take_l_pitch_from_voice" in settings.voice_settings[voice_i]:
+        #         voice.l_pitch = self[
+        #             settings.voice_settings[voice_i]["take_l_pitch_from_voice"]
+        #         ].l_pitch
+        #     if "take_h_pitch_from_voice" in settings.voice_settings[voice_i]:
+        #         voice.h_pitch = self[
+        #             settings.voice_settings[voice_i]["take_h_pitch_from_voice"]
+        #         ].h_pitch
         # Get pitch_flutters
-        self.pitch_flutters = {}
-        for channel_i, voice_indices in settings.voice_assmts.items():
-            channel_flutters = {}
-            try:
-                pitch_r = range(
-                    self.channels[channel_i].l_pitch,
-                    self.channels[channel_i].h_pitch + 1,
-                )
-            except TypeError:  # channel is empty
-                pass
-            else:
-                for pitch in pitch_r:
-                    channel_flutters[pitch] = PitchFlutter(
-                        settings.max_flutter_size,
-                        settings.min_flutter_size,
-                        settings.max_flutter_period,
-                        settings.min_flutter_period,
+
+        if not settings.flutter_per_voice:
+            for channel_i, voice_indices in settings.voice_assmts.items():
+                channel_flutters = {}
+                try:
+                    pitch_r = range(
+                        self.channels[channel_i].l_pitch,
+                        self.channels[channel_i].h_pitch + 1,
                     )
-            for voice_i in voice_indices:
-                self.pitch_flutters[voice_i] = channel_flutters
+                except TypeError:  # channel is empty
+                    pass
+                else:
+                    for pitch in pitch_r:
+                        channel_flutters[pitch] = PitchFlutter(
+                            settings.max_flutter_size,
+                            settings.min_flutter_size,
+                            settings.max_flutter_period,
+                            settings.min_flutter_period,
+                        )
+                for voice_i in voice_indices:
+                    self.pitch_flutters[voice_i] = channel_flutters
 
     @staticmethod
     def _get_scale_factor(
@@ -429,67 +450,67 @@ class PitchTable(PitchRange, list):
         if t_until >= 0:
             return self._get_scale_factor(
                 t_until,
-                self.settings.note_end,
-                self.settings.note_end_width,
-                self.settings[voice_i]["size_x"],
-                self.settings.end_scale_function,
+                self.settings[voice_i].frame_note_end,
+                self.settings[voice_i].note_end_width,
+                self.settings[voice_i].note_width,
+                self.settings[voice_i].end_scale_function,
             )
         return self._get_scale_factor(
             -t_until,
-            self.settings.note_start,
-            self.settings.note_start_width,
-            self.settings[voice_i]["size_x"],
-            self.settings.start_scale_function,
+            self.settings[voice_i].frame_note_start,
+            self.settings[voice_i].note_start_width,
+            self.settings[voice_i].note_width,
+            self.settings[voice_i].start_scale_function,
         )
 
     def _scale_y_factor(self, t_until, voice_i):
         if t_until >= 0:
             return self._get_scale_factor(
                 t_until,
-                self.settings.note_end,
-                self.settings.note_end_height,
-                self.settings[voice_i]["size_y"],
-                self.settings.end_scale_function,
+                self.settings[voice_i].frame_note_end,
+                self.settings[voice_i].note_end_height,
+                self.settings[voice_i].note_height,
+                self.settings[voice_i].end_scale_function,
             )
         return self._get_scale_factor(
             -t_until,
-            self.settings.note_start,
-            self.settings.note_start_height,
-            self.settings[voice_i]["size_y"],
-            self.settings.start_scale_function,
+            self.settings[voice_i].frame_note_start,
+            self.settings[voice_i].note_start_height,
+            self.settings[voice_i].note_height,
+            self.settings[voice_i].start_scale_function,
         )
 
     def scale_factors(self, t_until, voice_i):
         scale_x_factor = self._scale_x_factor(t_until, voice_i)
         if t_until >= 0:
-            if self.equal_start_xy_size:
+            if self.equal_start_xy_size[voice_i]:
                 return scale_x_factor, scale_x_factor
-        elif self.equal_end_xy_size:
+        elif self.equal_end_xy_size[voice_i]:
             return scale_x_factor, scale_x_factor
         return scale_x_factor, self._scale_y_factor(t_until, voice_i)
 
-    def line_scale_factor(self, t_until):
+    def line_scale_factor(self, t_until, voice_i):
         if t_until >= 0:
             return self._get_scale_factor(
                 t_until,
-                self.settings.line_end,
-                self.settings.line_end_size,
+                self.settings[voice_i].frame_line_end,
+                self.settings[voice_i].line_end_size,
                 1,
-                self.settings.end_scale_function,
+                self.settings[voice_i].end_scale_function,
             )
         return self._get_scale_factor(
             -t_until,
-            self.settings.line_start,
-            self.settings.line_start_size,
+            self.settings[voice_i].frame_line_start,
+            self.settings[voice_i].line_start_size,
             1,
-            self.settings.start_scale_function,
+            self.settings[voice_i].start_scale_function,
         )
 
-    def highlight_factor(self, t_until_attack):
-        if self.settings.highlight_strength <= 0:
+    def highlight_factor(self, t_until_attack, voice_i):
+        if self.settings[voice_i].highlight_strength <= 0:
             return 0
-        if 0 <= t_until_attack <= self.settings.highlight_start:
-            return -t_until_attack / self.settings.highlight_start + 1
-        if 0 < -t_until_attack <= self.settings.highlight_end:
-            return t_until_attack / self.settings.highlight_end + 1
+        if 0 <= t_until_attack <= self.settings[voice_i].highlight_start:
+            return -t_until_attack / self.settings[voice_i].highlight_start + 1
+        if 0 < -t_until_attack <= self.settings[voice_i].highlight_end:
+            return t_until_attack / self.settings[voice_i].highlight_end + 1
         return 0

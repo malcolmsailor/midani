@@ -10,6 +10,9 @@
 
 # Things that could be added longterm
 
+- allow different shapes for notes
+- matplotlib rather than R
+- allow rotation of notes, channel skew, etc.
 So many, but a few are
 - line width on a per-voice basis
 - settings.shadow_scale applies to connection lines as well?

@@ -28,7 +28,7 @@ specified with the "midi_fname" keyword argument in a settings file provided wit
 SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
 
 
-def main(midi_path, audio_path, test_flag, user_settings_path):
+def main(midi_path, audio_path, test_flag, user_settings_path, use_eval):
     print("Midani: make piano-roll animations from midi files")
     print("==================================================")
     print("https://github.com/malcolmsailor/midani\n")
@@ -37,8 +37,10 @@ def main(midi_path, audio_path, test_flag, user_settings_path):
     else:
         print(f"Reading settings from {user_settings_path}")
         with open(user_settings_path, "r", encoding="utf-8") as inf:
-            # user_settings = ast.literal_eval(inf.read())
-            user_settings = eval(inf.read())  # TODO
+            if use_eval:
+                user_settings = eval(inf.read())
+            else:
+                user_settings = ast.literal_eval(inf.read())
     if midi_path is None:
         if "midi_fname" not in user_settings or not user_settings["midi_fname"]:
             print(NO_PATH_MSG)
@@ -99,5 +101,14 @@ if __name__ == "__main__":
         help="set frame rate to a maximum of 2 fps",
         action="store_true",
     )
+    parser.add_argument(
+        "-e",
+        "--eval",
+        help=(
+            "use 'eval()' rather than 'ast.literal_eval()' to  parse settings. "
+            "Use with caution!"
+        ),
+        action="store_true",
+    )
     args = parser.parse_args()
-    main(args.midi, args.audio, args.test, args.settings)
+    main(args.midi, args.audio, args.test, args.settings, args.eval)

@@ -5,7 +5,7 @@ See also the general documentation in README.md
 
 ## General usage
 
-To configure with custom settings, save a file containing only a python dictionary, and pass it as an argument with `-s`/`--settings`. In order to permit arithmetic expressions and conveniences like list comprehensions, this file will be parsed with `eval()` so don't do anything reckless with it (e.g., use settings from sources that you do not trust).
+To configure with custom settings, save a file containing only a python dictionary, and pass it as an argument with `-s`/`--settings`.
 
 ## Example
 
@@ -26,7 +26,40 @@ For example, if you wanted a "primary color" note color palette, with white back
 
 For more examples, see the files in `sample_settings/`.
 
+The settings file is ordinarily parsed with `ast.literal_eval()`, thus (to quote the Python docs) it "may only consist of the following Python literal structures: strings, bytes, numbers, tuples, lists, dicts, sets, booleans, and None." (If you get an error like `ValueError: malformed node or string`, then you are probably using expressions that `ast.literal_eval()` cannot parse.) If you wish to use conveniences like arithmetic expressions or list comprehensions, you can pass the `--eval` flag, and the settings file will instead be parsed with `eval()`. Don't do anything reckless with this! (E.g., use `--eval` with settings from sources that you do not trust.)
+
 ## Detailed settings
+
+There are two types of settings, "global" settings and "per-voice" settings:
+
+- Global settings always apply to the animation as a whole. An example is
+    `intro`, which sets the length of time before the music begins.
+    - Per-voice settings can be applied to individual "voices" (=tracks in the
+    input midi file). They can also be provided as global defaults which apply
+    whenever the setting is not explicitly set for an individual voice. An
+    example is `connection_lines`, which controls whether lines are drawn
+    connecting consecutive notes in a voice.
+
+An example of the usage of global and per-voice settings:
+
+```
+{
+    "intro": 5,  # Global setting
+    "voice_settings": {  # dict of per-voice settings
+        0: {
+            "connection_lines": True,  # Sets "connection_lines" for voice 0
+        }
+    },
+    "connection_lines": False,  # Sets global default for voices
+                                # This global default will not apply to
+                                # voice 0, which sets "connection_lines"
+                                # explicitly
+}
+```
+
+For the most part, the settings below each heading below are either all
+    global  or all per-voice. Which of these is the case is noted directly
+    below each heading, as are several special cases.
 
 When these settings contain terms like "start" and "end", these refer to
     positions *on each frame*. E.g., `note_start` is how far from the left side
@@ -42,6 +75,8 @@ Note on colors:
 
 
 ### General 
+
+All general settings are global.
 
 - **midi_fname**: str. Path to input midi file to animate. If a midi path is
             passed as a command-line argument to the script, this value will
@@ -64,10 +99,10 @@ Note on colors:
 - **process_video**: str. Possible values:
     - "yes": (Default) makes .mp4 video file using OpenCV
     - "no": doesn't make video file.
-    - "only": makes .mp4 video file using OpenCV and skips the rest of the
-                    script. (Note: in this case, the number of frames will be
-                    inferred from the number of files that match the png filename
-                    in `output_dirname`.)
+    - "only": makes .mp4 video file using OpenCV and skips the rest
+                    of the script. (Note: in this case, the number of frames
+                    will be inferred from the number of files that match the
+                    png filename in `output_dirname`.)
 - **video_fname**: str. Path to output video file. If not passed, the video
             will be written in `output_dirname` with the same basename as
             `midi_fname`. Has no effect if `process_video` == "no".
@@ -91,6 +126,8 @@ Note on colors:
 
 ### Frame 
 
+All frame settings are global.
+
 - **frame_len**: float. Length (in seconds) of each frame.
             (I.e., the time interval between the moment represented by the left
             side of the frame and the moment represented by the right side.)
@@ -107,6 +144,8 @@ Note on colors:
             *Default*: `0.5`
 
 ### Timing 
+
+All timing settings are global.
 
 - **intro**: float. Length of time in seconds that should precede `start_time`
             *Default*: `1.0`
@@ -174,6 +213,8 @@ Note on colors:
 
 ### Lyrics 
 
+All lyrics settings are global.
+
 - **lyrics**: dict of form float: str. The float keys are times in seconds;
             the string values is the lyric text that should occur at those times.
             Each lyric occurs until the time specified by the next lyric. To
@@ -193,7 +234,79 @@ Note on colors:
             `cex` argument to the R `text` command.
             *Default*: `3.0`
 
-### Voice settings 
+### Channels 
+
+All channels settings are global.
+
+- **num_channels**: int. Number of exclusive horizontal `channels` to place
+            voices into. (For example, the winds and the strings could be placed
+            into exclusive channels.)
+            *Default*: `1`
+- **channel_proportions**: tuple of floats. Relative heights of channels.
+            Channels are listed from top to bottom. Will be normalized, so
+            heights don't have to sum to 1 or any other particular value. If
+            this argument is omitted, then all channels will have the same
+            height. If this argument is included, but its length does not equal
+            `num_channels`, a ValueError will be raised.
+- **chan_assmts**: dictionary of form {int: int}. Assigns voices (keys) to
+            channels (values). Any missing voices will be assigned to channel 0.
+            If omitted, all voices are assigned to channel 0. Channel 0 is the
+            top channel.
+- **channel_settings**: dictionary of form {int: dict}, where the int key is
+            the index to a channel and the dictionary value provides per-channel
+            settings as specified below. Any channels or settings omitted will
+            be provided with the default settings.
+    - "l_padding": float between 0 and 1. Indicates how much padding
+                    should be provided below the lowest pitch of the channel
+                    and the bottom of the channel, as a proportion of the
+                    channel.
+                    *Default*: `0.1`
+    - "h_padding": float between 0 and 1. Indicates how much padding
+                    should be provided below the highest pitch of the channel
+                    and the top of the channel, as a proportion of the
+                    channel.
+                    *Default*: `0.1`
+
+### Background 
+
+The background color can be either constant, or it can change at
+        specified times. If it changes, it can either change suddenly or blend
+        linearly from one color to the next.
+
+All background settings are global.
+
+If `bg_beat_times` is empty, or if `bg_beat_times_length` == 0, or if
+        len(bg_colors) == 1, the background color will  be constant.
+
+- **bg_beat_times**: list of numbers. Sets the times, in beats, between the
+            arrival of each color in `bg_colors`. If 0 is not the first item
+            in the list, the bg_color until the first time in the list will
+            be the last color in `bg_colors`.
+            *Default*: `(0,)`
+- **bg_beat_times_length**: number. Sets the number of beats at which the list
+            of times in `bg_beat_times` will repeat. E.g., if `bg_beat_times`
+            is [0, 3] and `bg_beat_times_length` is 8, the effective background
+            beat times inferred will be [0, 3, 8, 11, 16, 19, ...]. Essentially
+            sets a "time signature" for `bg_beat_times`. If < than the largest
+            number in `bg_beat_times`, strange things may happen.
+            *Default*: `0`
+- **bg_colors**: a list of tuples of form (int, int, int, int), where each
+            tuple is an RGB color.
+            *Default*: `[(32, 32, 32, 255), (192, 192, 192, 255)]`
+- **bg_color_blend**: boolean. If True, background colors scale linearly from
+            one to the next. If False, background colors change suddenly.
+            *Default*: `True`
+- **intro_bg_color**: tuple of form (int, int, int). The RGB color at the
+            start of the intro (if any), or during the complete intro, if
+            `bg_color_blend` is False.
+- **outro_bg_color**: tuple of form (int, int, int). The RGB color at the
+            end of the outro (if any), or during the complete outro, if
+            `bg_color_blend` is False.
+
+### Global voice settings 
+
+These settings are all global; to set per-voice settings, use the
+        "voice_settings" argument described below.
 
 - **voices_to_render**: list-like of integer indices. Determines which
             "voices" (=tracks) in the input midi file to render. If empty, all
@@ -212,29 +325,19 @@ Note on colors:
             ordered from highest to lowest.
             *Default*: `False`
 - **voice_settings**: dictionary. Keys are integer indices to voices (=tracks)
-            in the input midi file. Values are themselves dictionaries with the
-            keys being the settings listed below. (See also
-            `duplicate_voice_settings` below.)
-            For all settings except "color", if the setting is not present in
-            the dictionary associated with a voice (or if there is no dictionary
-            for that voice), then the setting will have the value of the
-            "global" setting with the same name. (E.g., "rectangles" will be
-            assigned the value of `global_rectangles`.) For documentation of
-            what these settings do, see the "global" settings elsewhere in the
-            docstring for this class. If "color" is not  present, a color
-            from `color_palette` will be assigned to the voice.
-            Per-voice settings:
-    - "color"
-    - "connection_lines"
-    - "rectangles"
-    - "shadow_color"
-    - "shadow_strength"
-    - "size"
-    - "size_x"
-    - "size_y"
+            in the input midi file. Values are themselves dictionaries of
+            per-voice settings. See above for more on per-voice settings. See
+            also `duplicate_voice_settings` below.
+            Note that the per-voice setting "color" is a special case: if the
+            "color" argument is not explicitly provided for a voice, the voice
+            will be assigned the color from the global "color_palette" setting
+            at the position specified by its integer index (modulo the length of
+            the color palette).
 - **duplicate_voice_settings**: a dictionary of form {int, list of ints}. Keys
-            are indices to voices whose settings will be copied to the voices
-            whose index are in the associated list.
+            are "parent" voices and settings are "child" voices. Any per-voice
+            settings not explicitly set in the child voice will be taken from
+            the parent voice. If they are not found in the parent voice, the
+            search continues recursively until we reach the global settings.
 - **p_displace**: a dictionary of form {int, list of ints}. Keys are pitch
             intervals in semitones. Values are lists of indices to voices. The
             voices indicated will be displaced by the associated interval. This
@@ -257,11 +360,11 @@ Note on colors:
 
 ### Connection lines 
 
-- **global_connection_lines**: boolean. If True, "connection lines" are drawn
+All connection line settings are per-voice or global.
+
+- **connection_lines**: boolean. If True, "connection lines" are drawn
             between adjacent notes on the same track (subject to certain
-            conditions, controlled by the subsequent keyword arguments). Note
-            that this sets a default that can be overridden on a per-voice
-            basis.
+            conditions, controlled by the subsequent keyword arguments).
             *Default*: `True`
 - **con_line_offset_color**: tuple of form (int, int, int[, int]). An RGB
             color to blend with the color of the previous note, in order to
@@ -310,7 +413,9 @@ Note on colors:
 
 ### Notes (or "rectangles") 
 
-- **global_rectangles**: boolean. If True, a "rectangle" (the usual piano-roll
+All rectangle settings are per-voice or global.
+
+- **rectangles**: boolean. If True, a "rectangle" (the usual piano-roll
             representation) is drawn for each note. Note that this sets
             a default that can be overridden on a per-voice basis.
             *Default*: `True`
@@ -324,30 +429,28 @@ Note on colors:
             distance between the end of the frame and "now" as indicated by
             `frame_position`.
             *Default*: `1.0`
-- **global_note_size**: float. Factor by which notes should be scaled at
+- **note_size**: float. Factor by which notes should be scaled at
             moment "now". The base height of a note is 1 semitone, and the base
             width is its duration, so if > 1, rectangles will overlap each
             other, whereas if it is < 1, they will have extra spacing. If
-            either `global_note_width` or `global_note_height` are nonzero,
+            either `note_width` or `note_height` are nonzero,
             this argument is ignored in the width or height dimension,
-            respectively (or both). Note that this argument, as well as the
-            other 'global' note size arguments below, sets a default that can be
-            overridden on a per-voice basis.
+            respectively (or both).
             *Default*: `1.`
-- **global_note_width**: float. Overrides `global_note_size` in x
+- **note_width**: float. Overrides `note_size` in x
             dimension.
-- **global_note_height**: float. Overrides `global_note_size` in y
+- **note_height**: float. Overrides `note_size` in y
             dimension.
-- **note_start_width**: float. Amount by which `global_note_size` should be
+- **note_start_width**: float. Amount by which `note_size` should be
             scaled horizontally at `line_start`.
             *Default*: `1.0`
-- **note_start_height**: float. Amount by which `global_note_size` should be
+- **note_start_height**: float. Amount by which `note_size` should be
             scaled vertically at `line_start`.
             *Default*: `1.0`
-- **note_end_width**: float. Amount by which `global_note_size` should be
+- **note_end_width**: float. Amount by which `note_size` should be
             scaled horizontally at `line_end`.
             *Default*: `1.0`
-- **note_end_height**: float. Amount by which `global_note_size` should be
+- **note_end_height**: float. Amount by which `note_size` should be
             scaled vertically at `line_end`.
             *Default*: `1.0`
 - **start_scale_function, end_scale_function**: callables. These functions
@@ -358,6 +461,8 @@ Note on colors:
             *Default*: `lambda x: x (i.e., linear)`
 
 ### Highlight 
+
+All highlight settings are per-voice or global.
 
 - **highlight_strength**: float. Controls how strongly `highlight_color` is
             mixed with the current note color at moment "now".
@@ -378,14 +483,15 @@ Note on colors:
 
 ### Shadows 
 
+`shadow_positions` is a global setting. All other shadow settings are
+        per-voice or global.
+
 To turn on shadow rendering, ensure that `shadow_positions` is at least
         one tuple long and that at least one voice has a shadow_strength greater
         than 0.
 
-- **global_shadow_strength**: float. Controls how strongly `shadow_color` is
-            mixed with the current background color to form "shadows". Note
-            that this sets a default that can be overridden on a per-voice
-            basis.
+- **shadow_strength**: float. Controls how strongly `shadow_color` is
+            mixed with the current background color to form "shadows".
             *Default*: `0.6.`
 - **shadow_positions**: a list of 2- or 4-tuples of floats. Specifies shadow
             positions relative to notes/lines, in pixels (thus if the
@@ -400,10 +506,8 @@ To turn on shadow rendering, ensure that `shadow_positions` is at least
             4-tuples are of form (x, y, shadow_x, shadow_y), where x and y are
                 specified separately for notes and shadows.
             *Default*: `[]`
-- **global_shadow_color**: tuple of form (int, int, int, int). RGB color that
-            should be blended with background color to make shadows. Note
-            that this sets a default that can be overridden on a per-voice
-            basis.
+- **shadow_color**: tuple of form (int, int, int, int). RGB color that
+            should be blended with background color to make shadows.
             *Default*: `(128, 128, 128, 255)`
 - **shadow_scale**: float. How much to scale shadows relative to the objects
             they shadow. If there is more than one shadow per note (i.e., if
@@ -430,37 +534,6 @@ To turn on shadow rendering, ensure that `shadow_positions` is at least
             will be 3/9.)
             *Default*: `0.0`
 
-### Channels 
-
-- **num_channels**: int. Number of exclusive horizontal `channels` to place
-            voices into. (For example, the winds and the strings could be placed
-            into exclusive channels.)
-            *Default*: `1`
-- **channel_proportions**: tuple of floats. Relative heights of channels.
-            Channels are listed from top to bottom. Will be normalized, so
-            heights don't have to sum to 1 or any other particular value. If
-            this argument is omitted, then all channels will have the same
-            height. If this argument is included, but its length does not equal
-            `num_channels`, a ValueError will be raised.
-- **chan_assmts**: dictionary of form {int: int}. Assigns voices (keys) to
-            channels (values). Any missing voices will be assigned to channel 0.
-            If omitted, all voices are assigned to channel 0. Channel 0 is the
-            top channel.
-- **channel_settings**: dictionary of form {int: dict}, where the int key is
-            the index to a channel and the dictionary value provides per-channel
-            settings as specified below. Any channels or settings omitted will
-            be provided with the default settings.
-    - "l_padding": float between 0 and 1. Indicates how much padding
-                    should be provided below the lowest pitch of the channel
-                    and the bottom of the channel, as a proportion of the
-                    channel.
-                    *Default*: `0.1`
-    - "h_padding": float between 0 and 1. Indicates how much padding
-                    should be provided below the highest pitch of the channel
-                    and the top of the channel, as a proportion of the
-                    channel.
-                    *Default*: `0.1`
-
 ### Flutter 
 
 "Flutter" is constant sinusoidal up-down motion I added to make the
@@ -468,15 +541,32 @@ To turn on shadow rendering, ensure that `shadow_positions` is at least
         constant) flutter size (the vertical distance progressed) and period
         within the ranges defined by the parameters below.
 
+`flutter_per_voice` is a global setting. All other flutter settings are
+        per-voice or global.
+
+- **flutter_per_voice**: boolean. Global setting only. If False, then each
+            pitch has a globally assigned flutter. If True, then flutters are
+            assigned to pitches separately for each individual voice. Thus, if
+            this is True, unison pitches in different voices will move up and
+            down at a slightly different pace from one another, whereas if it
+            is False, they will move at the same pace, and thus one voice will
+            consistently occlude the voices behind it.
+            *Default*: `False.`
 - **max_flutter_size**: float. Set upper bound on flutter "size". Measured
-            in semitones.
+            in semitones. As a per-voice setting, only has an effect if
+            `flutter_per_voice` is True.
             *Default*: `0.6`
 - **min_flutter_size**: float. Set lower bound on flutter "size". Measured
-            in semitones.
+            in semitones. As a per-voice setting, only has an effect if
+            `flutter_per_voice` is True.
             *Default*: `0.3`
 - **max_flutter_period**: float. Set upper bound on flutter period in seconds.
+            As a per-voice setting, only has an effect if `flutter_per_voice`
+            is True.
             *Default*: `8.0`
 - **min_flutter_period**: float. Set lower bound on flutter period in seconds.
+            As a per-voice setting, only has an effect if `flutter_per_voice`
+            is True.
             *Default*: `4.0`
 
 ### Bounce 
@@ -484,6 +574,8 @@ To turn on shadow rendering, ensure that `shadow_positions` is at least
 "Bounce" is scaling or vertical motion that occurs at the attack of a
         note to visually accent the attack. The amount of "bounce" is scaled
         linearly from "now" until `bounce_len` seconds later.
+
+All bounce settings are per-voice or global.
 
 - **bounce_type**: string. Either "vertical" (note "bounces" up or down) or
             "scalar" (note is scaled in and out).
@@ -505,40 +597,6 @@ To turn on shadow rendering, ensure that `shadow_positions` is at least
             *Default*: `1.0`
 - **bounce_len**: float. Length of bounce in seconds.
             *Default*: `1.0`
-
-### Background 
-
-The background color can be either constant, or it can change at
-        specified times. If it changes, it can either change suddenly or blend
-        linearly from one color to the next.
-
-If `bg_beat_times` is empty, or if `bg_beat_times_length` == 0, or if
-        len(bg_colors) == 1, the background color will  be constant.
-
-- **bg_beat_times**: list of numbers. Sets the times, in beats, between the
-            arrival of each color in `bg_colors`. If 0 is not the first item
-            in the list, the bg_color until the first time in the list will
-            be the last color in `bg_colors`.
-            *Default*: `(0,)`
-- **bg_beat_times_length**: number. Sets the number of beats at which the list
-            of times in `bg_beat_times` will repeat. E.g., if `bg_beat_times`
-            is [0, 3] and `bg_beat_times_length` is 8, the effective background
-            beat times inferred will be [0, 3, 8, 11, 16, 19, ...]. Essentially
-            sets a "time signature" for `bg_beat_times`. If < than the largest
-            number in `bg_beat_times`, strange things may happen.
-            *Default*: `0`
-- **bg_colors**: a list of tuples of form (int, int, int, int), where each
-            tuple is an RGB color.
-            *Default*: `[(32, 32, 32, 255), (192, 192, 192, 255)]`
-- **bg_color_blend**: boolean. If True, background colors scale linearly from
-            one to the next. If False, background colors change suddenly.
-            *Default*: `True`
-- **intro_bg_color**: tuple of form (int, int, int). The RGB color at the
-            start of the intro (if any), or during the complete intro, if
-            `bg_color_blend` is False.
-- **outro_bg_color**: tuple of form (int, int, int). The RGB color at the
-            end of the outro (if any), or during the complete outro, if
-            `bg_color_blend` is False.
 
 ### Debugging 
 
