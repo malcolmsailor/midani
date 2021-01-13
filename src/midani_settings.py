@@ -36,9 +36,9 @@ GLOBAL_COLORS = (
     "annot_color",
     "lyrics_color",
 )
-COLOR_LISTS = ("color_palette",)
 
-BG_COLOR_LISTS = ("bg_colors",)
+PER_VOICE_COLOR_LISTS = ("color_loop",)
+GLOBAL_COLOR_LISTS = ("color_palette", "bg_colors")
 
 DEFAULT_OUTPUT_PATH = "output"
 DEFAULT_TEMP_R_PATH = ".temp_r_files"
@@ -76,6 +76,32 @@ def post_init_helper(obj):
     obj.bounce_radius = obj.bounce_size / 2
     obj.bounce_sin_factor = 2 * math.pi / obj.bounce_period
 
+    # Add transparency value to colors if absent
+    for color_name in obj._colors:  # pylint: disable=protected-access
+        if len(getattr(obj, color_name)) < 4:
+            setattr(
+                obj, color_name, tuple(list(getattr(obj, color_name)) + [255,]),
+            )
+
+    for color_list in obj._color_lists:  # pylint: disable=protected-access
+        if color_list == "bg_colors":
+            opacity = 255
+        else:
+            try:
+                opacity = obj.default_note_opacity
+            except AttributeError:
+                opacity = obj.global_parent.default_note_opacity
+        val = getattr(obj, color_list)
+        if val is None:
+            continue
+        setattr(
+            obj,
+            color_list,
+            tuple(
+                tuple(list(tup) + [opacity,]) if len(tup) < 4 else tup
+                for tup in val
+            ),
+        )
     # TODO allow different shadow positions on a per-voice basis?
     # self.num_shadows = len(self.shadow_positions)
     # # The next line tells us whether we need to update shadow positions
@@ -111,6 +137,8 @@ class VoiceSettings:
     """
 
     allowed_kwargs = (
+        "color_loop",
+        "color_loop_strength",
         "connection_lines",
         "con_line_offset_color",
         "con_line_offset_prop",
@@ -167,6 +195,9 @@ class VoiceSettings:
         "bounce_sin_factor",
     ) + allowed_kwargs
 
+    _colors = PER_VOICE_COLORS
+    _color_lists = PER_VOICE_COLOR_LISTS
+
     def __init__(self, voice_i, parent, **kwargs):
         self.parent = parent
         if isinstance(parent, Settings):
@@ -181,19 +212,12 @@ class VoiceSettings:
                 )
             setattr(self, arg, val)
         self.getattr_func = self._getattr
-        if not hasattr(self, "color"):
-            self.color = parent.color_palette[
-                voice_i % len(parent.color_palette)
+        if "color" not in kwargs:
+            self.color = self.global_parent.color_palette[
+                voice_i % len(self.global_parent.color_palette)
             ]
         elif len(self.color) < 4:
             self.color = tuple(self.color) + (self.default_note_opacity)
-        for color_name in PER_VOICE_COLORS:
-            if len(getattr(self, color_name)) < 4:
-                setattr(
-                    self,
-                    color_name,
-                    tuple(list(getattr(self, color_name)) + [255,]),
-                )
         if "note_size" in dir(self):
             if (
                 "note_width" not in dir(self)
@@ -544,11 +568,12 @@ class Settings:
             in the input midi file. Values are themselves dictionaries of
             per-voice settings. See above for more on per-voice settings. See
             also `duplicate_voice_settings` below.
-            Note that the per-voice setting "color" is a special case: if the
-            "color" argument is not explicitly provided for a voice, the voice
-            will be assigned the color from the global "color_palette" setting
+            Note that the per-voice setting `color` is a special case: if the
+            `color` argument is not explicitly provided for a voice, the voice
+            will be assigned the color from the global `color_palette` setting
             at the position specified by its integer index (modulo the length of
-            the color palette).
+            the color palette), rather than any global value for `color`, which
+            has never has any effect.
         duplicate_voice_settings: a dictionary of form {int, list of ints}. Keys
             are "parent" voices and settings are "child" voices. Any per-voice
             settings not explicitly set in the child voice will be taken from
@@ -568,7 +593,7 @@ class Settings:
             color will be assigned. Default is 16 colors drawn at random from
             matplotlib's `viridis` colorscheme.
         default_note_opacity: int from 0 to 255. Specifies the opacity of any
-            note color that does not have an explicitly set opacity value.
+            note color that does not have an explicitly set opacity.
             (I.e., of any note color specified with a 3-tuple rather than a
             4-tuple.)
 
@@ -633,6 +658,22 @@ class Settings:
 
         All rectangle settings are per-voice or global.
 
+        color: tuple of form (int, int, int, int) or (int, int, int). Only has
+            an effect as a per-voice setting. If a voice does not have an
+            explicit value for `color`, it will take its color from the
+            global setting `color_palette` (see above).
+        color_loop: a list of tuple of form (int, int, int, int) or
+            (int, int, int). Ints are from 0 to 255 and the fourth optional
+            integer species the transparency (if omitted, the opacity is
+            specified by default_note_opacity). If passed, then each note's
+            color will be set by blending the overall voice color with a color
+            in this loop; the strength of the blend is controlled by
+            `color_loop_strength` below.
+        color_loop_strength: float between 0 and 1. Controls how strongly
+            the colors in `color_loop` are mixed with the overall color
+            of the current voice. If 0, `color_loop` has no effect; if
+            1, `color_loop`.
+            Default: 0.5
         rectangles: boolean. If True, a "rectangle" (the usual piano-roll
             representation) is drawn for each note. Note that this sets
             a default that can be overridden on a per-voice basis.
@@ -917,6 +958,9 @@ class Settings:
         (253, 231, 36),
         (53, 183, 120),
     )
+    color: typing.Any = None
+    color_loop: typing.Sequence[typing.Tuple[int, int, int, int]] = None
+    color_loop_strength: float = 0.5
     default_note_opacity: int = 255
 
     connection_lines: bool = True
@@ -998,6 +1042,9 @@ class Settings:
     outro_bg_color: tuple = None
     script_path: str = None  # for internal use only
 
+    _colors = GLOBAL_COLORS + PER_VOICE_COLORS
+    _color_lists = GLOBAL_COLOR_LISTS + PER_VOICE_COLOR_LISTS
+
     def __post_init__(self):
         self.global_parent = self
         # Attributes defined in post_init_helper:
@@ -1005,7 +1052,10 @@ class Settings:
         self.frame_line_start = self.frame_line_end = None
         self.shadow_hl_strength = None
         self.bounce_radius = self.bounce_sin_factor = None
-        post_init_helper(self)
+        # End attributes defined in post_init_helper
+        if self.color is not None:
+            print("Notice: passing a global value for 'color' has no effect")
+
         if not self.midi_fname:
             raise ValueError("no 'midi_fname' keyword argument to Settings()")
         if not self.script_path:
@@ -1016,27 +1066,7 @@ class Settings:
             self.intro_bg_color = self.bg_colors[-1]
         if self.outro_bg_color is None:
             self.outro_bg_color = self.intro_bg_color
-        # Add transparency value to colors if absent
-        for color_name in GLOBAL_COLORS + PER_VOICE_COLORS:
-            if len(getattr(self, color_name)) < 4:
-                setattr(
-                    self,
-                    color_name,
-                    tuple(list(getattr(self, color_name)) + [255,]),
-                )
-        for color_list_list, opacity in [
-            (COLOR_LISTS, self.default_note_opacity),
-            (BG_COLOR_LISTS, 255),
-        ]:
-            for color_list in color_list_list:
-                setattr(
-                    self,
-                    color_list,
-                    tuple(
-                        tuple(list(tup) + [opacity,]) if len(tup) < 4 else tup
-                        for tup in getattr(self, color_list)
-                    ),
-                )
+        post_init_helper(self)
         if not self.channel_proportions:
             self.channel_proportions = tuple(
                 1 for _ in range(self.num_channels)

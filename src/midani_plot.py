@@ -64,7 +64,8 @@ def get_voice_and_line_tuples(now, settings, table):
             bounce_term = max(1, settings[voice_i].bounce_radius,)
         else:
             bounce_term = 0
-        color = settings[voice_i].color
+        voice_color = settings[voice_i].color
+        color_loop = settings[voice_i].color_loop
         rect_tuples.append([])
         line_tuples.append([])
         for note_i, note in enumerate(voice):
@@ -118,6 +119,14 @@ def get_voice_and_line_tuples(now, settings, table):
                     scale_y_factor *= bounce
                 else:
                     flutter += bounce
+            if color_loop is not None:
+                color = midani_colors.blend_colors(
+                    voice_color,
+                    color_loop[note_i % len(color_loop)],
+                    settings[voice_i].color_loop_strength,
+                )
+            else:
+                color = voice_color
             if rect_in_frame:
                 rect_tuples[-1].append(
                     midani_misc_classes.RectTuple(
