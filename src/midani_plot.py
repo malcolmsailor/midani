@@ -404,7 +404,7 @@ def draw_annotations(window, settings, r_boss):
                 y += 0.025
 
 
-def plot(settings):
+def plot(settings, frame_list=None):
     score = midani_score.read_score(settings)
     tempo_changes = midani_time.TempoChanges(score)
     settings.update_from_score(score, tempo_changes)
@@ -413,7 +413,11 @@ def plot(settings):
     r_boss = midani_r.RBoss(settings)
     window = midani_misc_classes.Window(settings)
     lyricist = midani_annotations.Lyricist(settings)
-    now = window.get_first_now()
+    if frame_list is not None:
+        frame_iter = iter(frame_list)
+        now = next(frame_iter)
+    else:
+        now = window.get_first_now()
     while window.in_range(now):
         window.update(now)
         # Originally, I got the current tempo here, because "bounce"
@@ -430,6 +434,12 @@ def plot(settings):
         draw_notes(rect_tuples, window, settings, table, r_boss)
         draw_lyrics(window, lyricist, settings, r_boss)
         draw_annotations(window, settings, r_boss)
-        now += settings.frame_increment
+        if frame_list is not None:
+            try:
+                now = next(frame_iter)
+            except StopIteration:
+                break
+        else:
+            now += settings.frame_increment
     r_boss.run_r()
     return r_boss.png_fnumber

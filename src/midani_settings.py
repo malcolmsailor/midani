@@ -326,7 +326,8 @@ class Settings:
             will not be deleted (and so can be inspected).
             Default: True.
         clean_up_png_files: bool. If False, the png files output by this script
-            will not be deleted (and so can be inspected).
+            will not be deleted (and so can be inspected). If `process_video`
+            is "no", then this setting is ignored.
             Default: True.
         tet: int. Set temperament.
             Default: 12 (for 12-tone equal temperament.)

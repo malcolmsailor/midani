@@ -28,7 +28,9 @@ specified with the "midi_fname" keyword argument in a settings file provided wit
 SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
 
 
-def main(midi_path, audio_path, test_flag, user_settings_path, use_eval):
+def main(
+    midi_path, audio_path, test_flag, user_settings_path, use_eval, frame_list
+):
     print("Midani: make piano-roll animations from midi files")
     print("==================================================")
     print("https://github.com/malcolmsailor/midani\n")
@@ -62,8 +64,8 @@ def main(midi_path, audio_path, test_flag, user_settings_path, use_eval):
     settings = midani_settings.Settings(
         script_path=SCRIPT_PATH, **user_settings
     )
-    if settings.process_video != "only":
-        n_frames = midani_plot.plot(settings)
+    if frame_list is not None or settings.process_video != "only":
+        n_frames = midani_plot.plot(settings, frame_list)
     else:
         png_pattern = re.compile(
             os.path.basename(settings.png_fname_base) + r"\d+\.png"
@@ -75,13 +77,32 @@ def main(midi_path, audio_path, test_flag, user_settings_path, use_eval):
                 if re.match(png_pattern, f)
             ]
         )
-    if settings.process_video != "no":
+    if frame_list is None and settings.process_video != "no":
         midani_av.process_video(settings, n_frames)
 
         if settings.audio_fname:
             midani_av.add_audio(settings)
 
         print(f"The output file is\n{settings.video_fname}")
+    if frame_list is not None:
+        print("The output files are:")
+        for i in range(n_frames):
+            print(
+                f"{settings.png_fname_base}"
+                f"{str(i + 1).zfill(settings.png_fnum_digits)}.png"
+            )
+
+
+def get_frames(in_str):
+    bits = in_str.split(",")
+    try:
+        return tuple(float(bit) for bit in bits)
+    except ValueError:
+        sys.exit(
+            "Fatal error: Didn't understand '--frames'/'-f' argument "
+            f"'{in_str}'. Pass a comma separated list with no spaces, e.g., "
+            "'--frames 0.25' or '--frames 2,4,6.5'"
+        )
 
 
 if __name__ == "__main__":
@@ -110,5 +131,17 @@ if __name__ == "__main__":
         ),
         action="store_true",
     )
+    parser.add_argument(
+        "-f",
+        "--frames",
+        help=(
+            "a comma-separated list of numbers (with no spaces); specifies a "
+            "list of individual frames to be drawn"
+        ),
+        type=get_frames,
+        default=None,
+    )
     args = parser.parse_args()
-    main(args.midi, args.audio, args.test, args.settings, args.eval)
+    main(
+        args.midi, args.audio, args.test, args.settings, args.eval, args.frames
+    )
