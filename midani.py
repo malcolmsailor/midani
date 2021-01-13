@@ -86,10 +86,10 @@ def main(
         print(f"The output file is\n{settings.video_fname}")
     if frame_list is not None:
         print("The output files are:")
-        for i in range(n_frames):
+        for i in range(1, n_frames):
             print(
                 f"{settings.png_fname_base}"
-                f"{str(i + 1).zfill(settings.png_fnum_digits)}.png"
+                f"{str(i).zfill(settings.png_fnum_digits)}.png"
             )
 
 
