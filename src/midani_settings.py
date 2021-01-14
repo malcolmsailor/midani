@@ -288,7 +288,9 @@ class VoiceSettings:
         post_init_helper(self)
         if "bracket_settings" in dir(self):
             for name, kwargs in self.bracket_settings.items():
-                self.bracket_settings[name] = BracketSettings(**kwargs)
+                self.bracket_settings[name] = BracketSettings(
+                    **(self.global_parent.default_bracket_settings | kwargs)
+                )
             if self.parent.bracket_settings is not None:
                 for name, br_setting in self.parent.bracket_settings.items():
                     if name in self.bracket_settings:
@@ -957,15 +959,18 @@ class Settings:
                     should begin at the first note, the start index is 0.
                 - end index: specifies the index to the note at which the
                     bracket should end. Zero-indexed. E.g., if the bracket
-                    should end at the fifth note, the end index is 4. NB: end
-                    index should be greater than start index.
+                    should end at the fifth note, the end index is 4.
+                    NB: end index should be greater than start index.
+                    NB also: if the index does not exist, the bracket will
+                    not be drawn and the script will print a warning.
                 - bracket text: specifies what text the bracket should
                     be annotated with. If you don't want any text annotation,
                     pass an empty string.
                 - bracket type: a key from the dictionary passed as
                     `bracket_settings` (see below).
-            Note that if passed globally, this setting has no effect. It only
-            an effect on a per-voice basis.
+            Brackets passed globally will be plotted in all voices. Unless
+            the voices are in rhythmic unison, this may result in incoherent
+            results!
         bracket_settings: a dictionary of form (str: dict). The strings are
             labels that are used by `brackets` to fetch the settings to apply
             to each bracket. The dicts define the settings for brackets, as
@@ -1010,6 +1015,12 @@ class Settings:
                     text annotations from the brackets. Positive values shift
                     the text away from the notes.
                     Default: 0.2
+        default_bracket_settings: dict. It is often useful to define a setting
+            like "text_y_offset" for all brackets. Any bracket setting for a
+            particular bracket type that is not found in `bracket_settings`
+            will be fetched from this dict. Only if not found will the
+            default values above under `bracket_settings` be applied.
+            This is a global-only setting.
         add_annotations: list of strings. Annotate each frame according to the
             values in this list. Possible values:
                 "time" : clock time (intro times are negative)
@@ -1192,6 +1203,7 @@ class Settings:
     # start, end, text, settings_name
     brackets: typing.Sequence[typing.Tuple[int, int, str, str]] = None
     bracket_settings: typing.Dict[str, dict] = None
+    default_bracket_settings: dict = dataclasses.field(default_factory=dict)
 
     script_path: str = None  # for internal use only
 
@@ -1208,10 +1220,10 @@ class Settings:
         # End attributes defined in post_init_helper
         if self.color is not None:
             print("Notice: passing a global value for 'color' has no effect")
-        if self.brackets is not None:
-            # LONGTERM allow global brackets
-            print("Notice: passing a global value for 'brackets' has no effect")
-            self.brackets = None
+        # if self.brackets is not None:
+        #     # LONGTERM allow global brackets
+        #     print("Notice: passing a global value for 'brackets' has no effect")
+        #     self.brackets = None
 
         if not self.midi_fname:
             raise ValueError("no 'midi_fname' keyword argument to Settings()")
@@ -1307,7 +1319,9 @@ class Settings:
 
         if self.bracket_settings is not None:
             for name, kwargs in self.bracket_settings.items():
-                self.bracket_settings[name] = BracketSettings(**kwargs)
+                self.bracket_settings[name] = BracketSettings(
+                    **(self.default_bracket_settings | kwargs)
+                )
 
         # The following attributes are only initialized after calling
         # self.update_from_score()

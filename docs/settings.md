@@ -649,15 +649,18 @@ All bounce settings are per-voice or global.
                     should begin at the first note, the start index is 0.
                 - end index: specifies the index to the note at which the
                     bracket should end. Zero-indexed. E.g., if the bracket
-                    should end at the fifth note, the end index is 4. NB: end
-                    index should be greater than start index.
+                    should end at the fifth note, the end index is 4.
+                    NB: end index should be greater than start index.
+                    NB also: if the index does not exist, the bracket will
+                    not be drawn and the script will print a warning.
                 - bracket text: specifies what text the bracket should
                     be annotated with. If you don't want any text annotation,
                     pass an empty string.
                 - bracket type: a key from the dictionary passed as
                     `bracket_settings` (see below).
-            Note that if passed globally, this setting has no effect. It only
-            an effect on a per-voice basis.
+            Brackets passed globally will be plotted in all voices. Unless
+            the voices are in rhythmic unison, this may result in incoherent
+            results!
 - **bracket_settings**: a dictionary of form (str: dict). The strings are
             labels that are used by `brackets` to fetch the settings to apply
             to each bracket. The dicts define the settings for brackets, as
@@ -702,6 +705,12 @@ All bounce settings are per-voice or global.
                     text annotations from the brackets. Positive values shift
                     the text away from the notes.
                     *Default*: `0.2`
+- **default_bracket_settings**: dict. It is often useful to define a setting
+            like "text_y_offset" for all brackets. Any bracket setting for a
+            particular bracket type that is not found in `bracket_settings`
+            will be fetched from this dict. Only if not found will the
+            default values above under `bracket_settings` be applied.
+            This is a global-only setting.
 - **add_annotations**: list of strings. Annotate each frame according to the
             values in this list. Possible values:
     - "time": clock time (intro times are negative)

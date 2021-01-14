@@ -451,12 +451,26 @@ def draw_brackets(table, window, settings, r_boss):
             continue
         channel_i = settings.chan_assmts[voice_i]
         channel = table.channels[channel_i]
-        for src_i, dst_i, bracket_text, bracket_type in settings[
-            voice_i
-        ].brackets:
+        for src_i, dst_i, bracket_text, bracket_type in (
+            settings[voice_i].brackets + settings.brackets
+        ):
             bracket_settings = settings[voice_i].bracket_settings[bracket_type]
-            x1 = voice[src_i].start + bracket_settings.x_offset
-            x2 = voice[dst_i].end - bracket_settings.x_offset
+            try:
+                x1 = voice[src_i].start + bracket_settings.x_offset
+            except IndexError:
+                print(
+                    f"Warning: index {src_i} does not exist in voice "
+                    f"{voice_i}, skipping bracket"
+                )
+                continue
+            try:
+                x2 = voice[dst_i].end - bracket_settings.x_offset
+            except IndexError:
+                print(
+                    f"Warning: index {dst_i} does not exist in voice "
+                    f"{voice_i}, skipping bracket"
+                )
+                continue
             if x2 < window.start:
                 continue
             if x1 > window.end:
