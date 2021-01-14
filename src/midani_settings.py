@@ -44,6 +44,14 @@ GLOBAL_COLOR_LISTS = ("color_palette", "bg_colors")
 DEFAULT_OUTPUT_PATH = "output"
 DEFAULT_TEMP_R_PATH = ".temp_r_files"
 
+# LONGTERM put gap between repeated notes on same pitch
+
+Bracket = collections.namedtuple(
+    "Bracket",
+    ("start", "end", "type", "text", "loop", "loop_end"),
+    defaults=("", None, None),
+)
+
 
 @dataclasses.dataclass
 class BracketSettings:
@@ -106,6 +114,9 @@ def post_init_helper(obj):
     obj.shadow_hl_strength = obj.highlight_strength * obj.highlight_shadows
     obj.bounce_radius = obj.bounce_size / 2
     obj.bounce_sin_factor = 2 * math.pi / obj.bounce_period
+    for bracket_i, bracket in enumerate(obj.brackets):
+        if not isinstance(bracket, Bracket):
+            obj.brackets[bracket_i] = Bracket(*bracket)
 
     add_transparencies(obj)
 
@@ -233,6 +244,7 @@ class VoiceSettings:
         "bounce_len",
         "brackets",
         "bracket_settings",
+        "default_bracket_settings",
     )
 
     allowed_attributes = (
@@ -289,7 +301,11 @@ class VoiceSettings:
         if "bracket_settings" in dir(self):
             for name, kwargs in self.bracket_settings.items():
                 self.bracket_settings[name] = BracketSettings(
-                    **(self.global_parent.default_bracket_settings | kwargs)
+                    **(
+                        self.parent.default_bracket_settings
+                        | self.default_bracket_settings
+                        | kwargs
+                    )
                 )
             if self.parent.bracket_settings is not None:
                 for name, br_setting in self.parent.bracket_settings.items():
@@ -948,26 +964,40 @@ class Settings:
         Annotations
         ===========
 
-        "brackets" and "bracket_settings" are per-voice. The other settings
-        below are global.
+        "brackets", "bracket_settings", and "default_bracket_settings" are
+        per-voice. The other settings below are global.
 
-        brackets: a sequence of tuples of form (int, int, str, str). This
+        brackets: a sequence of tuples. This
             setting specifies a series of brackets to draw (e.g., for music
-            analytical illustrations). The tuple fields are as follows:
-                - start index: specifies the index to the note at which the
+            analytical illustrations). The tuples have 3 mandatory fields and
+            3 subsequent optional fields. The tuple fields are as follows:
+                - start: either a float or an int. Both start and end must have
+                    same type. If a float, specifies
+                    the time at which the bracket should start. If an int,
+                    specifies the index to the note at which the
                     bracket should start. Zero-indexed. E.g., if the bracket
                     should begin at the first note, the start index is 0.
-                - end index: specifies the index to the note at which the
+                - end: either a float or an int. Both start and end must have
+                    same type. If a float, specifies
+                    the time at which the bracket should start. If an int,
+                    specifies the index to the note at which the
                     bracket should end. Zero-indexed. E.g., if the bracket
                     should end at the fifth note, the end index is 4.
-                    NB: end index should be greater than start index.
-                    NB also: if the index does not exist, the bracket will
-                    not be drawn and the script will print a warning.
-                - bracket text: specifies what text the bracket should
-                    be annotated with. If you don't want any text annotation,
-                    pass an empty string.
-                - bracket type: a key from the dictionary passed as
+                    NB: end should be greater than index.
+                    NB also: if an integer index does not exist, the bracket
+                    will not be drawn and the script will print a warning.
+                - type: a key from the dictionary passed as
                     `bracket_settings` (see below).
+                - text: optional str. Specifies what text the bracket
+                    should be annotated with. Default: ""
+                - loop: optional float. Only implemented if start and end are
+                    floats. If passed, then the bracket will be repeated at
+                    intervals defined by this float, until the end of the
+                    file, or until the time defined by the next parameter.
+                - loop_end: optional float. Only implemented if start and end
+                    are floats. Defines a time at which the bracket should
+                    cease looping; the loop will stop when the next bracket's
+                    start time is greater than this value.
             Brackets passed globally will be plotted in all voices. Unless
             the voices are in rhythmic unison, this may result in incoherent
             results!
@@ -986,7 +1016,10 @@ class Settings:
                 "height" : float. The vertical size of the bracket, in
                     semitones.
                     Default: 1.0
-                "tight" : bool. If True, the bracket will be placed just below
+                "tight" : bool. This parameter is only implemented for brackets
+                    whose start and end points are indicated a note indices
+                    (i.e., as integers, rather than as floats). If True, the
+                    bracket will be placed just below
                     or above the lowest or highest notes that occur during its
                     duration (at a vertical offset defined by "y_offset"
                     below). Otherwise, its vertical placement will be determined
@@ -1020,7 +1053,6 @@ class Settings:
             particular bracket type that is not found in `bracket_settings`
             will be fetched from this dict. Only if not found will the
             default values above under `bracket_settings` be applied.
-            This is a global-only setting.
         add_annotations: list of strings. Annotate each frame according to the
             values in this list. Possible values:
                 "time" : clock time (intro times are negative)
@@ -1200,8 +1232,18 @@ class Settings:
     intro_bg_color: tuple = (0, 0, 0, 255)
     outro_bg_color: tuple = None
 
-    # start, end, text, settings_name
-    brackets: typing.Sequence[typing.Tuple[int, int, str, str]] = None
+    brackets: typing.Sequence[
+        typing.Union[  # pylint: disable=unsubscriptable-object
+            typing.Tuple[int, int, str],
+            typing.Tuple[int, int, str, str],
+            typing.Tuple[int, int, str, str, float],
+            typing.Tuple[int, int, str, str, float, float],
+            typing.Tuple[float, float, str],
+            typing.Tuple[float, float, str, str],
+            typing.Tuple[float, float, str, str, float],
+            typing.Tuple[float, float, str, str, float, float],
+        ]
+    ] = dataclasses.field(default_factory=list)
     bracket_settings: typing.Dict[str, dict] = None
     default_bracket_settings: dict = dataclasses.field(default_factory=dict)
 
@@ -1220,10 +1262,8 @@ class Settings:
         # End attributes defined in post_init_helper
         if self.color is not None:
             print("Notice: passing a global value for 'color' has no effect")
-        # if self.brackets is not None:
-        #     # LONGTERM allow global brackets
-        #     print("Notice: passing a global value for 'brackets' has no effect")
-        #     self.brackets = None
+        if not isinstance(self.brackets, list):
+            self.brackets = list(self.brackets)
 
         if not self.midi_fname:
             raise ValueError("no 'midi_fname' keyword argument to Settings()")

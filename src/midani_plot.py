@@ -441,6 +441,71 @@ def draw_annotations(window, settings, r_boss):
                 y += 0.025
 
 
+class NoBracket(Exception):
+    """Raised in yield_bracket_coords() when there is no bracket."""
+
+
+def yield_bracket_coords(bracket, voice, voice_i, bracket_settings, window):
+    def _check_index(attr):
+        val = getattr(bracket, attr)
+        if isinstance(val, int):
+            try:
+                return getattr(voice[val], attr)
+            except IndexError:
+                print(
+                    f"Warning: index {val} does not exist in voice "
+                    f"{voice_i}, skipping bracket"
+                )
+                raise NoBracket  # pylint: disable=raise-missing-from
+        return None
+
+    def _check_coords(x1, x2):
+        if x2 < window.start:
+            raise NoBracket
+        if x1 > window.end:
+            raise NoBracket
+
+    start_offset = bracket_settings.x_offset
+    end_offset = -bracket_settings.x_offset
+    start = _check_index("start")
+    end = _check_index("end")
+    if start is not None and end is not None:
+        x1 = start + start_offset
+        x2 = end + end_offset
+        try:
+            _check_coords(x1, x2)
+        except NoBracket:
+            pass
+        else:
+            yield x1, x2
+    else:  # start and end should be floats... I should perhaps type-check that earlier
+        x1 = bracket.start + start_offset
+        x2 = bracket.end + end_offset
+        try:
+            _check_coords(x1, x2)
+        except NoBracket:
+            pass
+        else:
+            yield x1, x2
+        if bracket.loop is not None:
+            loop_end = (
+                window.stop_time
+                if bracket.loop_end is None
+                else bracket.loop_end
+            )
+            start = bracket.start
+            while start < loop_end:
+                start += bracket.loop
+                x1 = start + start_offset
+                x2 += bracket.loop
+                try:
+                    _check_coords(x1, x2)
+                except NoBracket:
+                    pass
+                else:
+                    yield x1, x2
+
+
 def draw_brackets(table, window, settings, r_boss):
     for voice_i, voice in zip(settings.voice_order, table):
         if (
@@ -451,73 +516,74 @@ def draw_brackets(table, window, settings, r_boss):
             continue
         channel_i = settings.chan_assmts[voice_i]
         channel = table.channels[channel_i]
-        for src_i, dst_i, bracket_text, bracket_type in (
-            settings[voice_i].brackets + settings.brackets
-        ):
-            bracket_settings = settings[voice_i].bracket_settings[bracket_type]
-            try:
-                x1 = voice[src_i].start + bracket_settings.x_offset
-            except IndexError:
-                print(
-                    f"Warning: index {src_i} does not exist in voice "
-                    f"{voice_i}, skipping bracket"
-                )
-                continue
-            try:
-                x2 = voice[dst_i].end - bracket_settings.x_offset
-            except IndexError:
-                print(
-                    f"Warning: index {dst_i} does not exist in voice "
-                    f"{voice_i}, skipping bracket"
-                )
-                continue
-            if x2 < window.start:
-                continue
-            if x1 > window.end:
-                continue
-            if bracket_settings.above:
-                if bracket_settings.tight:
-                    y1 = (
-                        max(note.pitch for note in voice[src_i : dst_i + 1])
-                        + bracket_settings.y_offset
-                    )
+        for bracket in settings[voice_i].brackets + settings.brackets:
+            bracket_settings = settings[voice_i].bracket_settings[bracket.type]
+            for x1, x2 in yield_bracket_coords(
+                bracket, voice, voice_i, bracket_settings, window
+            ):
+                if bracket_settings.above:
+                    if (
+                        isinstance(bracket.start, int)
+                        and isinstance(bracket.end, int)
+                        and bracket_settings.tight
+                    ):
+                        y1 = (
+                            max(
+                                note.pitch
+                                for note in voice[
+                                    bracket.start : bracket.end + 1
+                                ]
+                            )
+                            + bracket_settings.y_offset
+                        )
+                    else:
+                        y1 = table[voice_i].h_pitch + bracket_settings.y_offset
+                    y2 = y1 + bracket_settings.height
                 else:
-                    y1 = table[voice_i].h_pitch + bracket_settings.y_offset
-                y2 = y1 + bracket_settings.height
-                # TODO make sure window has enough offset
-            else:
-                if bracket_settings.tight:
-                    y1 = (
-                        min(note.pitch for note in voice[src_i : dst_i + 1])
-                        - bracket_settings.y_offset
-                    )
+                    if (
+                        # If I ever implement validation earlier, then it
+                        # shouldn't be necessary to check that these are
+                        # *both* ints
+                        isinstance(bracket.start, int)
+                        and isinstance(bracket.end, int)
+                        and bracket_settings.tight
+                    ):
+                        y1 = (
+                            min(
+                                note.pitch
+                                for note in voice[
+                                    bracket.start : bracket.end + 1
+                                ]
+                            )
+                            - bracket_settings.y_offset
+                        )
+                    else:
+                        y1 = table[voice_i].l_pitch - bracket_settings.y_offset
+                    y2 = y1 - bracket_settings.height
+                r_boss.bracket(
+                    x1=x1,
+                    x2=x2,
+                    y1=channel.y_position(y1),
+                    y2=channel.y_position(y2),
+                    color=bracket_settings.color,
+                    width=bracket_settings.line_width,
+                )
+                if not bracket.text:
+                    continue
+                if bracket_settings.above:
+                    adj = "c(0.5, 0)"
+                    y2 += bracket_settings.text_y_offset
                 else:
-                    y1 = table[voice_i].l_pitch - bracket_settings.y_offset
-                y2 = y1 - bracket_settings.height
-            r_boss.bracket(
-                x1=x1,
-                x2=x2,
-                y1=channel.y_position(y1),
-                y2=channel.y_position(y2),
-                color=bracket_settings.color,
-                width=bracket_settings.line_width,
-            )
-            if not bracket_text:
-                continue
-            if bracket_settings.above:
-                adj = "c(0.5, 0)"
-                y2 += bracket_settings.text_y_offset
-            else:
-                adj = "c(0.5, 1)"
-                y2 -= bracket_settings.text_y_offset
-            r_boss.text(
-                bracket_text,
-                (x2 - x1) / 2 + x1,
-                channel.y_position(y2),
-                bracket_settings.color,
-                size=3.0,
-                adj=adj,
-            )
+                    adj = "c(0.5, 1)"
+                    y2 -= bracket_settings.text_y_offset
+                r_boss.text(
+                    bracket.text,
+                    (x2 - x1) / 2 + x1,
+                    channel.y_position(y2),
+                    bracket_settings.color,
+                    size=bracket_settings.text_size,
+                    adj=adj,
+                )
 
 
 def plot(settings, frame_list=None):

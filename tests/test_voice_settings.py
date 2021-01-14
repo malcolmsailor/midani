@@ -30,6 +30,7 @@ def test_voice_settings():
                     "1": {"line_width": 2.0, "x_offset": 1},
                     "2": {},
                 },
+                "default_bracket_settings": {"text_y_offset": 2},
             },
             1: {"note_start": 0},
         },
@@ -38,7 +39,7 @@ def test_voice_settings():
         "note_end_width": 2,
         "duplicate_voice_settings": {0: [1,]},
         "bracket_settings": {"1": {"line_width": 7}, "3": {"line_width": 0.5}},
-        "default_bracket_settings": {"x_offset": 2},
+        "default_bracket_settings": {"x_offset": 2, "text_y_offset": 1},
     }
     try:
         settings = midani_settings.Settings(**settings_kwargs)
@@ -92,6 +93,9 @@ def test_voice_settings():
         assert (
             settings[1].bracket_settings["1"].x_offset == 1
         ), 'settings[1].bracket_settings["1"].x_offset != 1'
+        assert (
+            settings[1].bracket_settings["2"].text_y_offset == 2
+        ), 'settings[1].bracket_settings["2"].text_y_offset != 2'
     except:  # pylint: disable=bare-except
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(

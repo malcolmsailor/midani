@@ -638,26 +638,40 @@ All bounce settings are per-voice or global.
 
 ### Annotations 
 
-"brackets" and "bracket_settings" are per-voice. The other settings
-        below are global.
+"brackets", "bracket_settings", and "default_bracket_settings" are
+        per-voice. The other settings below are global.
 
-- **brackets**: a sequence of tuples of form (int, int, str, str). This
+- **brackets**: a sequence of tuples. This
             setting specifies a series of brackets to draw (e.g., for music
-            analytical illustrations). The tuple fields are as follows:
-                - start index: specifies the index to the note at which the
+            analytical illustrations). The tuples have 3 mandatory fields and
+            3 subsequent optional fields. The tuple fields are as follows:
+                - start: either a float or an int. Both start and end must have
+                    same type. If a float, specifies
+                    the time at which the bracket should start. If an int,
+                    specifies the index to the note at which the
                     bracket should start. Zero-indexed. E.g., if the bracket
                     should begin at the first note, the start index is 0.
-                - end index: specifies the index to the note at which the
+                - end: either a float or an int. Both start and end must have
+                    same type. If a float, specifies
+                    the time at which the bracket should start. If an int,
+                    specifies the index to the note at which the
                     bracket should end. Zero-indexed. E.g., if the bracket
                     should end at the fifth note, the end index is 4.
-                    NB: end index should be greater than start index.
-                    NB also: if the index does not exist, the bracket will
-                    not be drawn and the script will print a warning.
-                - bracket text: specifies what text the bracket should
-                    be annotated with. If you don't want any text annotation,
-                    pass an empty string.
-                - bracket type: a key from the dictionary passed as
+                    NB: end should be greater than index.
+                    NB also: if an integer index does not exist, the bracket
+                    will not be drawn and the script will print a warning.
+                - type: a key from the dictionary passed as
                     `bracket_settings` (see below).
+                - text: optional str. Specifies what text the bracket
+                    should be annotated with. Default: ""
+                - loop: optional float. Only implemented if start and end are
+                    floats. If passed, then the bracket will be repeated at
+                    intervals defined by this float, until the end of the
+                    file, or until the time defined by the next parameter.
+                - loop_end: optional float. Only implemented if start and end
+                    are floats. Defines a time at which the bracket should
+                    cease looping; the loop will stop when the next bracket's
+                    start time is greater than this value.
             Brackets passed globally will be plotted in all voices. Unless
             the voices are in rhythmic unison, this may result in incoherent
             results!
@@ -676,7 +690,10 @@ All bounce settings are per-voice or global.
     - "height": float. The vertical size of the bracket, in
                     semitones.
                     *Default*: `1.0`
-    - "tight": bool. If True, the bracket will be placed just below
+    - "tight": bool. This parameter is only implemented for brackets
+                    whose start and end points are indicated a note indices
+                    (i.e., as integers, rather than as floats). If True, the
+                    bracket will be placed just below
                     or above the lowest or highest notes that occur during its
                     duration (at a vertical offset defined by "y_offset"
                     below). Otherwise, its vertical placement will be determined
@@ -710,7 +727,6 @@ All bounce settings are per-voice or global.
             particular bracket type that is not found in `bracket_settings`
             will be fetched from this dict. Only if not found will the
             default values above under `bracket_settings` be applied.
-            This is a global-only setting.
 - **add_annotations**: list of strings. Annotate each frame according to the
             values in this list. Possible values:
     - "time": clock time (intro times are negative)
