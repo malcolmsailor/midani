@@ -329,11 +329,12 @@ These settings are all global; to set per-voice settings, use the
             in the input midi file. Values are themselves dictionaries of
             per-voice settings. See above for more on per-voice settings. See
             also `duplicate_voice_settings` below.
-            Note that the per-voice setting "color" is a special case: if the
-            "color" argument is not explicitly provided for a voice, the voice
-            will be assigned the color from the global "color_palette" setting
+            Note that the per-voice setting `color` is a special case: if the
+            `color` argument is not explicitly provided for a voice, the voice
+            will be assigned the color from the global `color_palette` setting
             at the position specified by its integer index (modulo the length of
-            the color palette).
+            the color palette), rather than any global value for `color`, which
+            has never has any effect.
 - **duplicate_voice_settings**: a dictionary of form {int, list of ints}. Keys
             are "parent" voices and settings are "child" voices. Any per-voice
             settings not explicitly set in the child voice will be taken from
@@ -353,7 +354,7 @@ These settings are all global; to set per-voice settings, use the
             color will be assigned. Default is 16 colors drawn at random from
             matplotlib's `viridis` colorscheme.
 - **default_note_opacity**: int from 0 to 255. Specifies the opacity of any
-            note color that does not have an explicitly set opacity value.
+            note color that does not have an explicitly set opacity.
             (I.e., of any note color specified with a 3-tuple rather than a
             4-tuple.)
 
@@ -416,6 +417,22 @@ All connection line settings are per-voice or global.
 
 All rectangle settings are per-voice or global.
 
+- **color**: tuple of form (int, int, int, int) or (int, int, int). Only has
+            an effect as a per-voice setting. If a voice does not have an
+            explicit value for `color`, it will take its color from the
+            global setting `color_palette` (see above).
+- **color_loop**: a list of tuple of form (int, int, int, int) or
+            (int, int, int). Ints are from 0 to 255 and the fourth optional
+            integer species the transparency (if omitted, the opacity is
+            specified by default_note_opacity). If passed, then each note's
+            color will be set by blending the overall voice color with a color
+            in this loop; the strength of the blend is controlled by
+            `color_loop_strength` below.
+- **color_loop_strength**: float between 0 and 1. Controls how strongly
+            the colors in `color_loop` are mixed with the overall color
+            of the current voice. If 0, `color_loop` has no effect; if
+            1, `color_loop`.
+            *Default*: `0.5`
 - **rectangles**: boolean. If True, a "rectangle" (the usual piano-roll
             representation) is drawn for each note. Note that this sets
             a default that can be overridden on a per-voice basis.

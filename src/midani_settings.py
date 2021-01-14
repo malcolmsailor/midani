@@ -145,6 +145,8 @@ class VoiceSettings:
         "max_connection_line_duration",
         "max_connection_line_interval",
         "no_connection_lines_between_simultaneous_notes",
+        "connection_line_start_offset",
+        "connection_line_end_offset",
         "line_start",
         "line_end",
         "con_line_width",
@@ -630,6 +632,20 @@ class Settings:
             connection lines are not drawn between simultaneous notes in the
             same part.
             Default: True
+        connection_line_start_offset: float. How far, in seconds, from the
+            start of each note the x coordinate of the endpoint of the line
+            joining it to the previous note should be. If, for a particular
+            note, this value leads to an x coordinate that is greater than the
+            midpoint of the note, it will be ignored in favor of the midpoint
+            of the note. If not passed, then the start is always the midpoint
+            of each note.
+        connection_line_end_offset: float. How far, in seconds, from the
+            end of each note the x coordinate of the endpoint of the line
+            joining it to the next note should be. If, for a particular note,
+            this value leads to an x coordinate that is smaller than the
+            midpoint of the note, it will be ignored in favor of the midpoint
+            of the note. If not passed, then the end is always the midpoint
+            of each note.
         line_start: floats in closed interval [0, 1]. Determine where in the
             frame connection lines are first drawn, as a proportion of the
             distance between the start of the frame and "now" as indicated by
@@ -969,6 +985,8 @@ class Settings:
     max_connection_line_duration: float = 0.25
     max_connection_line_interval: float = None
     no_connection_lines_between_simultaneous_notes: bool = True
+    connection_line_start_offset: float = None
+    connection_line_end_offset: float = None
 
     line_start: float = 1.0
     line_end: float = 1.0

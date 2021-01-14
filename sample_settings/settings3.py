@@ -30,6 +30,8 @@
     "line_end_size": 0,
     "max_connection_line_interval": 64,
     "max_connection_line_duration": 4,
+    "connection_line_end_offset": 0.1,
+    "connection_line_start_offset": 0.1,
     "num_channels": 4,
     "chan_assmts": {0: 0, 1: 1, 2: 2, 3: 3,},
     "bounce_size": 0.3,

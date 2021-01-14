@@ -16,6 +16,8 @@
     "con_line_offset_color": (0, 0, 0),
     "con_line_offset_prop": 0.4,
     "max_connection_line_duration": 1,
+    "connection_line_start_offset": 0.1,
+    "connection_line_end_offset": 0.1,
     "shadow_scale": 0.95,
     "end_time": 2,
 }

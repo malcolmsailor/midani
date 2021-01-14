@@ -284,6 +284,8 @@ def draw_line_shadows(
             or not settings[voice_i].connection_lines
         ):
             continue
+        line_start_offset = settings[voice_i].connection_line_start_offset
+        line_end_offset = settings[voice_i].connection_line_end_offset
         channel_i = settings.chan_assmts[voice_i]
         channel = table.channels[channel_i]
         shadow_color = midani_colors.blend_colors(
@@ -312,9 +314,19 @@ def draw_line_shadows(
                 )
             else:
                 shadow_n_color = shadow_color
+            x1 = (
+                src.note.mid
+                if line_end_offset is None
+                else max(src.note.end - line_end_offset, src.note.mid)
+            )
+            x2 = (
+                dst.note.mid
+                if line_start_offset is None
+                else min(dst.note.start + line_start_offset, dst.note.mid)
+            )
             r_boss.plot_line(
-                x1=src.note.mid + shadow_position.cline_shadow_x,
-                x2=dst.note.mid + shadow_position.cline_shadow_x,
+                x1=x1 + shadow_position.cline_shadow_x,
+                x2=x2 + shadow_position.cline_shadow_x,
                 y1=channel.y_position(src.pitch)
                 + shadow_position.cline_shadow_y,
                 y2=channel.y_position(dst.pitch)
@@ -334,6 +346,8 @@ def draw_connection_lines(line_tuples, window, settings, table, r_boss):
             continue
         channel_i = settings.chan_assmts[voice_i]
         channel = table.channels[channel_i]
+        line_start_offset = settings[voice_i].connection_line_start_offset
+        line_end_offset = settings[voice_i].connection_line_end_offset
         for src, dst in zip(voice, voice[1:]):
             if not _connection_line_conditions_apply(
                 window.now, src, dst, settings, voice_i
@@ -344,9 +358,19 @@ def draw_connection_lines(line_tuples, window, settings, table, r_boss):
                 settings[voice_i].con_line_offset_color,
                 settings[voice_i].con_line_offset_prop,
             )
+            x1 = (
+                src.note.mid
+                if line_end_offset is None
+                else max(src.note.end - line_end_offset, src.note.mid)
+            )
+            x2 = (
+                dst.note.mid
+                if line_start_offset is None
+                else min(dst.note.start + line_start_offset, dst.note.mid)
+            )
             r_boss.plot_line(
-                x1=src.note.mid,
-                x2=dst.note.mid,
+                x1=x1,
+                x2=x2,
                 y1=channel.y_position(src.pitch),
                 y2=channel.y_position(dst.pitch),
                 color=color,
