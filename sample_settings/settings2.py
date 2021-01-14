@@ -1,7 +1,7 @@
 {
     "midi_fname": "sample_music/effrhy_131.mid",
     "audio_fname": "sample_music/effrhy_131.mp3",
-    "video_fname": "output/effrhy_131_settings2.mp4",
+    "video_fname": "effrhy_131_settings2.mp4",
     "shadow_gradients": True,
     "shadow_positions": [
         (3, -3),

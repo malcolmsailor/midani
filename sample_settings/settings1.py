@@ -1,7 +1,7 @@
 {
     "midi_fname": "sample_music/effrhy_732.mid",
     "audio_fname": "sample_music/effrhy_732.mp3",
-    "video_fname": "output/effrhy_732_settings1.mp4",
+    "video_fname": "effrhy_732_settings1.mp4",
     "midi_channels_to_voices": True,
     "midi_tracks_to_voices": False,
     "frame_len": 8,

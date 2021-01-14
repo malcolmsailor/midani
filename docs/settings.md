@@ -91,9 +91,12 @@ All general settings are global.
             `midi_channels_to_voices` to be True.)
             *Default*: `False`
 - **output_dirname**: str. path to folder where output images will be created.
-            If a relative path, will be created relative to the script
-            directory. If the path does not exist, it will be created.
-            *Default*: `"output"`
+            If a relative path, will be created relative to the current
+            directory, unless the path begins with the string "MIDANI_DIR",
+            in which case "MIDANI_DIR" will be replaced with the directory
+            of the midani script. If the path does not exist, it will be
+            created.
+            *Default*: `"MIDANI_DIR/output"`
 - **resolution**: tuple of form (int, int). Resolution of output frames.
             Default (1280, 720)
 - **process_video**: str. Possible values:
@@ -103,9 +106,12 @@ All general settings are global.
                     of the script. (Note: in this case, the number of frames
                     will be inferred from the number of files that match the
                     png filename in `output_dirname`.)
-- **video_fname**: str. Path to output video file. If not passed, the video
-            will be written in `output_dirname` with the same basename as
-            `midi_fname`. Has no effect if `process_video` == "no".
+- **video_fname**: str. Path to output video file. If a basename (i.e., with
+            no directory component), will be written in directory
+            `ourput_dirname`. If not passed, the video will be written in
+            `output_dirname` with the same filename as
+            `midi_fname`, except for the extension ".mp4". Has no effect if
+            `process_video` == "no".
 - **audio_fname**: str. Path to input audio file. If passed, this audio file
             will be added to the output video file using ffmpeg. If ffmpeg is
             not found, a warning will be printed instead and no audio will be

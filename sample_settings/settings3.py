@@ -1,7 +1,7 @@
 {
     "midi_fname": "sample_music/effrhy_264.mid",
     "audio_fname": "sample_music/effrhy_264.mp3",
-    "video_fname": "output/effrhy_264_settings3.mp4",
+    "video_fname": "effrhy_264_settings3.mp4",
     "midi_channels_to_voices": True,
     "midi_tracks_to_voices": False,
     "color_palette": [  # "summer"

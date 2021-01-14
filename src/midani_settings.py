@@ -386,9 +386,12 @@ class Settings:
             `midi_channels_to_voices` to be True.)
             Default: False
         output_dirname: str. path to folder where output images will be created.
-            If a relative path, will be created relative to the script
-            directory. If the path does not exist, it will be created.
-            Default: "output"
+            If a relative path, will be created relative to the current
+            directory, unless the path begins with the string "MIDANI_DIR",
+            in which case "MIDANI_DIR" will be replaced with the directory
+            of the midani script. If the path does not exist, it will be
+            created.
+            Default: "MIDANI_DIR/output"
         resolution: tuple of form (int, int). Resolution of output frames.
             Default (1280, 720)
         process_video: str. Possible values:
@@ -398,9 +401,12 @@ class Settings:
                     of the script. (Note: in this case, the number of frames
                     will be inferred from the number of files that match the
                     png filename in `output_dirname`.)
-        video_fname: str. Path to output video file. If not passed, the video
-            will be written in `output_dirname` with the same basename as
-            `midi_fname`. Has no effect if `process_video` == "no".
+        video_fname: str. Path to output video file. If a basename (i.e., with
+            no directory component), will be written in directory
+            `ourput_dirname`. If not passed, the video will be written in
+            `output_dirname` with the same filename as
+            `midi_fname`, except for the extension ".mp4". Has no effect if
+            `process_video` == "no".
         audio_fname: str. Path to input audio file. If passed, this audio file
             will be added to the output video file using ffmpeg. If ffmpeg is
             not found, a warning will be printed instead and no audio will be
@@ -1019,7 +1025,7 @@ class Settings:
     midi_fname: str = ""
     midi_tracks_to_voices: bool = True
     midi_channels_to_voices: bool = False
-    output_dirname: str = None  # doc
+    output_dirname: str = None
     resolution: typing.Tuple[int, int] = (1280, 720)
     _temp_r_dirname: str = DEFAULT_TEMP_R_PATH
     process_video: str = "yes"
@@ -1263,9 +1269,9 @@ class Settings:
             self.output_dirname = os.path.join(
                 self.script_path, DEFAULT_OUTPUT_PATH
             )
-        elif not os.path.isabs(self.output_dirname):
+        elif self.output_dirname.startswith("MIDANI_DIR"):
             self.output_dirname = os.path.join(
-                self.script_path, self.output_dirname
+                self.script_path, self.output_dirname.replace("MIDANI_DIR", "")
             )
         self.png_fname_base = os.path.join(
             self.output_dirname,
@@ -1273,9 +1279,12 @@ class Settings:
         )
         self.png_fnum_digits = 5
         if not self.video_fname:
+            self.video_fname = (
+                os.path.splitext(os.path.basename(self.midi_fname))[0] + ".mp4"
+            )
+        if self.video_fname == os.path.basename(self.video_fname):
             self.video_fname = os.path.join(
-                self.output_dirname,
-                os.path.splitext(os.path.basename(self.midi_fname))[0] + ".mp4",
+                self.output_dirname, self.video_fname
             )
         if self._test:
             bits = os.path.splitext(self.video_fname)
