@@ -23,13 +23,18 @@ def test_voice_settings():
         ),
         "script_path": SCRIPT_PATH,
         "voice_settings": {
-            0: {"note_start": 1, "note_end": 1.5},
+            0: {
+                "note_start": 1,
+                "note_end": 1.5,
+                "bracket_settings": {"1": {"line_width": 2.0}, "2": {}},
+            },
             1: {"note_start": 0},
         },
         "note_start": 0.5,
         "note_end": 2,
         "note_end_width": 2,
         "duplicate_voice_settings": {0: [1,]},
+        "bracket_settings": {"1": {"line_width": 7}, "3": {"line_width": 0.5}},
     }
     try:
         settings = midani_settings.Settings(**settings_kwargs)
@@ -54,6 +59,29 @@ def test_voice_settings():
         assert (
             settings[0].frame_note_start != settings.frame_note_start
         ), "settings[0].frame_note_start == settings.frame_note_start"
+        assert (
+            settings[0].bracket_settings["3"] is settings.bracket_settings["3"]
+        ), (
+            'settings[0].bracket_settings["3"] '
+            'is not settings.bracket_settings["3"]'
+        )
+        assert (
+            settings[0].bracket_settings["1"]
+            is settings[1].bracket_settings["1"]
+        ), (
+            'settings[0].bracket_settings["1"] '
+            'is not settings[1].bracket_settings["1"]'
+        )
+        assert (
+            settings[0].bracket_settings["1"].line_width
+            != settings.bracket_settings["1"].line_width
+        ), (
+            'settings[0].bracket_settings["1"].line_width '
+            '== settings.bracket_settings["1"].line_width'
+        )
+        assert (  # This assertion will fail if I change the default value (5.0)
+            settings[0].bracket_settings["2"].line_width == 5.0
+        ), 'settings[0].bracket_settings["2"].line_width != 5.0'
     except:  # pylint: disable=bare-except
         exc_type, exc_value, exc_traceback = sys.exc_info()
         traceback.print_exception(

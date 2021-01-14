@@ -59,6 +59,7 @@ def _line_or_its_shadow_in_frame(now, note, note_i, settings, voice, voice_i):
 def get_voice_and_line_tuples(now, settings, table):
     rect_tuples = []
     line_tuples = []
+    # start_indices = []
     for voice_i, voice in zip(settings.voice_order, table):
         if settings[voice_i].bounce_type == "scalar":
             bounce_term = max(1, settings[voice_i].bounce_radius,)
@@ -68,6 +69,7 @@ def get_voice_and_line_tuples(now, settings, table):
         color_loop = settings[voice_i].color_loop
         rect_tuples.append([])
         line_tuples.append([])
+        # start_indices.append(None)
         for note_i, note in enumerate(voice):
             rect_in_frame = _rect_or_its_shadow_in_frame(
                 now, note, settings, voice_i
@@ -81,6 +83,8 @@ def get_voice_and_line_tuples(now, settings, table):
             )
             if not rect_in_frame and not line_in_frame:
                 continue
+            # if rect_in_frame and start_indices[-1] is None:
+            #     start_indices[-1] = note_i
 
             t_until_attack = note.start - now
             if settings.scale_notes_from_attack:
@@ -437,6 +441,71 @@ def draw_annotations(window, settings, r_boss):
                 y += 0.025
 
 
+def draw_brackets(table, window, settings, r_boss):
+    for voice_i, voice in zip(settings.voice_order, table):
+        if (
+            voice_i not in settings.voices_to_render
+            or not voice
+            or settings[voice_i].brackets is None
+        ):
+            continue
+        channel_i = settings.chan_assmts[voice_i]
+        channel = table.channels[channel_i]
+        for src_i, dst_i, bracket_text, bracket_type in settings[
+            voice_i
+        ].brackets:
+            bracket_settings = settings[voice_i].bracket_settings[bracket_type]
+            x1 = voice[src_i].start + bracket_settings.x_offset
+            x2 = voice[dst_i].end - bracket_settings.x_offset
+            if x2 < window.start:
+                continue
+            if x1 > window.end:
+                continue
+            if bracket_settings.above:
+                if bracket_settings.tight:
+                    y1 = (
+                        max(note.pitch for note in voice[src_i : dst_i + 1])
+                        + bracket_settings.y_offset
+                    )
+                else:
+                    y1 = table[voice_i].h_pitch + bracket_settings.y_offset
+                y2 = y1 + bracket_settings.height
+                # TODO make sure window has enough offset
+            else:
+                if bracket_settings.tight:
+                    y1 = (
+                        min(note.pitch for note in voice[src_i : dst_i + 1])
+                        - bracket_settings.y_offset
+                    )
+                else:
+                    y1 = table[voice_i].l_pitch - bracket_settings.y_offset
+                y2 = y1 - bracket_settings.height
+            r_boss.bracket(
+                x1=x1,
+                x2=x2,
+                y1=channel.y_position(y1),
+                y2=channel.y_position(y2),
+                color=bracket_settings.color,
+                width=bracket_settings.line_width,
+            )
+            if not bracket_text:
+                continue
+            if bracket_settings.above:
+                adj = "c(0.5, 0)"
+                y2 += bracket_settings.text_y_offset
+            else:
+                adj = "c(0.5, 1)"
+                y2 -= bracket_settings.text_y_offset
+            r_boss.text(
+                bracket_text,
+                (x2 - x1) / 2 + x1,
+                channel.y_position(y2),
+                bracket_settings.color,
+                size=3.0,
+                adj=adj,
+            )
+
+
 def plot(settings, frame_list=None):
     score = midani_score.read_score(settings)
     tempo_changes = midani_time.TempoChanges(score)
@@ -467,6 +536,7 @@ def plot(settings, frame_list=None):
         draw_notes(rect_tuples, window, settings, table, r_boss)
         draw_lyrics(window, lyricist, settings, r_boss)
         draw_annotations(window, settings, r_boss)
+        draw_brackets(table, window, settings, r_boss)
         if frame_list is not None:
             try:
                 now = next(frame_iter)

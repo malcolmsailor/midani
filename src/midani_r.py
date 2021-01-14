@@ -106,10 +106,18 @@ class RBoss:
         )
         self.line_count += 1
 
-    def text(self, text, x, y, color, size=1.0):
+    def text(self, text, x, y, color, size=1.0, adj="NULL"):
         self.outf.write(
             f'text(c({x}), c({y}), "{text}", '
-            f'col = "{self.hex_color(color)}", cex={size})\n'
+            f'col = "{self.hex_color(color)}", cex={size}, adj={adj})\n'
+            # f'col = "{self.hex_color(color)}", cex={size})\n'
+        )
+        self.line_count += 1
+
+    def bracket(self, x1, x2, y1, y2, color, width):
+        self.outf.write(
+            f"lines(c({x1},{x1},{x2},{x2}), c({y1},{y2},{y2},{y1}), "
+            f'col = "{self.hex_color(color)}", lwd = {width})\n'
         )
         self.line_count += 1
 

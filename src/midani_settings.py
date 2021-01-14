@@ -28,6 +28,7 @@ PER_VOICE_COLORS = (
     "shadow_color",
     "highlight_color",
     "con_line_offset_color",
+    # "bracket_color",
 )
 
 GLOBAL_COLORS = (
@@ -42,6 +43,36 @@ GLOBAL_COLOR_LISTS = ("color_palette", "bg_colors")
 
 DEFAULT_OUTPUT_PATH = "output"
 DEFAULT_TEMP_R_PATH = ".temp_r_files"
+
+
+@dataclasses.dataclass
+class BracketSettings:
+    """Stores settings for brackets.
+    """
+
+    # LONGTERM should there be a way of specifying global defaults for the
+    # brackets? (So if we want all brackets to be the same height, we
+    # don't have to specify individually for each one?)
+    above: bool = False
+    color: typing.Union[  # pylint: disable=unsubscriptable-object
+        typing.Tuple[int, int, int], typing.Tuple[int, int, int, int]
+    ] = (
+        255,
+        255,
+        255,
+    )
+    line_width: float = 5.0
+    height: float = 1.0
+    y_offset: float = 1.0
+    x_offset: float = 0.0
+    text_size: float = 3.0
+    text_y_offset: float = 0.2
+    tight: bool = False
+
+    _colors = ("color",)
+
+    def __post_init__(self):
+        add_transparencies(self)
 
 
 def post_init_helper(obj):
@@ -76,33 +107,9 @@ def post_init_helper(obj):
     obj.bounce_radius = obj.bounce_size / 2
     obj.bounce_sin_factor = 2 * math.pi / obj.bounce_period
 
-    # Add transparency value to colors if absent
-    for color_name in obj._colors:  # pylint: disable=protected-access
-        if len(getattr(obj, color_name)) < 4:
-            setattr(
-                obj, color_name, tuple(list(getattr(obj, color_name)) + [255,]),
-            )
+    add_transparencies(obj)
 
-    for color_list in obj._color_lists:  # pylint: disable=protected-access
-        if color_list == "bg_colors":
-            opacity = 255
-        else:
-            try:
-                opacity = obj.default_note_opacity
-            except AttributeError:
-                opacity = obj.global_parent.default_note_opacity
-        val = getattr(obj, color_list)
-        if val is None:
-            continue
-        setattr(
-            obj,
-            color_list,
-            tuple(
-                tuple(list(tup) + [opacity,]) if len(tup) < 4 else tup
-                for tup in val
-            ),
-        )
-    # TODO allow different shadow positions on a per-voice basis?
+    # LONGTERM allow different shadow positions on a per-voice basis?
     # self.num_shadows = len(self.shadow_positions)
     # # The next line tells us whether we need to update shadow positions
     # if not all(
@@ -127,6 +134,48 @@ def post_init_helper(obj):
     #     + [s.cline_shadow_x for s in self.shadow_positions]
     #     + [0,]
     # )
+
+
+def add_transparencies(obj):
+    """ Add transparency value to colors if absent.
+    """
+    try:
+        obj._colors  # pylint: disable=protected-access
+    except AttributeError:
+        pass
+    else:
+        for color_name in obj._colors:  # pylint: disable=protected-access
+            if len(getattr(obj, color_name)) < 4:
+                setattr(
+                    obj,
+                    color_name,
+                    tuple(list(getattr(obj, color_name)) + [255,]),
+                )
+
+    try:
+        obj._color_lists  # pylint: disable=protected-access
+    except AttributeError:
+        pass
+    else:
+        for color_list in obj._color_lists:  # pylint: disable=protected-access
+            if color_list == "bg_colors":
+                opacity = 255
+            else:
+                try:
+                    opacity = obj.default_note_opacity
+                except AttributeError:
+                    opacity = obj.global_parent.default_note_opacity
+            val = getattr(obj, color_list)
+            if val is None:
+                continue
+            setattr(
+                obj,
+                color_list,
+                tuple(
+                    tuple(list(tup) + [opacity,]) if len(tup) < 4 else tup
+                    for tup in val
+                ),
+            )
 
 
 class VoiceSettings:
@@ -182,6 +231,8 @@ class VoiceSettings:
         "bounce_size",
         "bounce_period",
         "bounce_len",
+        "brackets",
+        "bracket_settings",
     )
 
     allowed_attributes = (
@@ -235,6 +286,15 @@ class VoiceSettings:
                 self.note_height = self.note_size
 
         post_init_helper(self)
+        if "bracket_settings" in dir(self):
+            for name, kwargs in self.bracket_settings.items():
+                self.bracket_settings[name] = BracketSettings(**kwargs)
+            if self.parent.bracket_settings is not None:
+                for name, br_setting in self.parent.bracket_settings.items():
+                    if name in self.bracket_settings:
+                        continue
+                    self.bracket_settings[name] = br_setting
+
         self.getattr_func = self._getattr2
 
     def _getattr(self, name):
@@ -877,9 +937,73 @@ class Settings:
         bounce_len: float. Length of bounce in seconds.
             Default: 1.0
 
-        Debugging
-        =========
+        Annotations
+        ===========
 
+        "brackets" and "bracket_settings" are per-voice. The other settings
+        below are global.
+
+        brackets: a sequence of tuples of form (int, int, str, str). This
+            setting specifies a series of brackets to draw (e.g., for music
+            analytical illustrations). The tuple fields are as follows:
+                - start index: specifies the index to the note at which the
+                    bracket should start. Zero-indexed. E.g., if the bracket
+                    should begin at the first note, the start index is 0.
+                - end index: specifies the index to the note at which the
+                    bracket should end. Zero-indexed. E.g., if the bracket
+                    should end at the fifth note, the end index is 4. NB: end
+                    index should be greater than start index.
+                - bracket text: specifies what text the bracket should
+                    be annotated with. If you don't want any text annotation,
+                    pass an empty string.
+                - bracket type: a key from the dictionary passed as
+                    `bracket_settings` (see below).
+            Note that if passed globally, this setting has no effect. It only
+            an effect on a per-voice basis.
+        bracket_settings: a dictionary of form (str: dict). The strings are
+            labels that are used by `brackets` to fetch the settings to apply
+            to each bracket. The dicts define the settings for brackets, as
+            follows:
+                "color" : a 3-tuple or 4-tuple of ints.
+                    Default: (255, 255, 255)
+                "above" : bool. If True, the brackets are drawn *above* the
+                    specified voice. Otherwise, they are drawn below.
+                    Default: False
+                "line_width" : float. How wide the line making up the bracket
+                    should be. This parameter is passed directly through to R.
+                    Default: 5.0
+                "height" : float. The vertical size of the bracket, in
+                    semitones.
+                    Default: 1.0
+                "tight" : bool. If True, the bracket will be placed just below
+                    or above the lowest or highest notes that occur during its
+                    duration (at a vertical offset defined by "y_offset"
+                    below). Otherwise, its vertical placement will be determined
+                    by the highest or lowest notes that occur during the entire
+                    voice (thus, all brackets with the same "y_offset" in a
+                    voice will be at the same vertical position).
+                    Default: False
+                "y_offset" : float. Sets an offset for the brackets' vertical
+                    positions, measured in semitones. Positive values shift the
+                    brackets away from the notes. Thus if "above" is True,
+                    positive values will shift the brackets upward, whereas if
+                    "above" is False, they will shift them downward.
+                    Default: 1.0
+                "x_offset" : float. Sets an offset for the brackets' horizontal
+                    endpoints, measured in seconds. Positive values shift the
+                    endpoints inwards, whereas negative values shift them
+                    outwards. If you have specified many brackets that are
+                    immediately adjacent to one another, you may want to
+                    specify a small positive value for this setting, so that
+                    the brackets will not elide with one another.
+                    Default: 0.0
+                "text_size" : float. The font size for the text annotations.
+                    This parameter is passed directly through to R.
+                    Default: 3.0
+                "text_y_offset" : float. Determines the vertical distance of the
+                    text annotations from the brackets. Positive values shift
+                    the text away from the notes.
+                    Default: 0.2
         add_annotations: list of strings. Annotate each frame according to the
             values in this list. Possible values:
                 "time" : clock time (intro times are negative)
@@ -1058,6 +1182,11 @@ class Settings:
     bg_color_blend: bool = True
     intro_bg_color: tuple = (0, 0, 0, 255)
     outro_bg_color: tuple = None
+
+    # start, end, text, settings_name
+    brackets: typing.Sequence[typing.Tuple[int, int, str, str]] = None
+    bracket_settings: typing.Dict[str, dict] = None
+
     script_path: str = None  # for internal use only
 
     _colors = GLOBAL_COLORS + PER_VOICE_COLORS
@@ -1073,6 +1202,10 @@ class Settings:
         # End attributes defined in post_init_helper
         if self.color is not None:
             print("Notice: passing a global value for 'color' has no effect")
+        if self.brackets is not None:
+            # LONGTERM allow global brackets
+            print("Notice: passing a global value for 'brackets' has no effect")
+            self.brackets = None
 
         if not self.midi_fname:
             raise ValueError("no 'midi_fname' keyword argument to Settings()")
@@ -1163,6 +1296,10 @@ class Settings:
         if self.note_height is None:
             self.note_height = self.note_size
 
+        if self.bracket_settings is not None:
+            for name, kwargs in self.bracket_settings.items():
+                self.bracket_settings[name] = BracketSettings(**kwargs)
+
         # The following attributes are only initialized after calling
         # self.update_from_score()
 
@@ -1243,8 +1380,6 @@ class Settings:
         for src_i, dsts in self.duplicate_voice_settings.items():
             for dst_i in dsts:
                 reversed_duplicate_voice_settings[dst_i] = src_i
-                # TODO I'm not sure if this will catch all edge cases
-                #   Think more about it!
                 if voice_init_order.index(src_i) > voice_init_order.index(
                     dst_i
                 ):
