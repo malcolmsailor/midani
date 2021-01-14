@@ -630,8 +630,72 @@ All bounce settings are per-voice or global.
 - **bounce_len**: float. Length of bounce in seconds.
             *Default*: `1.0`
 
-### Debugging 
+### Annotations 
 
+"brackets" and "bracket_settings" are per-voice. The other settings
+        below are global.
+
+- **brackets**: a sequence of tuples of form (int, int, str, str). This
+            setting specifies a series of brackets to draw (e.g., for music
+            analytical illustrations). The tuple fields are as follows:
+                - start index: specifies the index to the note at which the
+                    bracket should start. Zero-indexed. E.g., if the bracket
+                    should begin at the first note, the start index is 0.
+                - end index: specifies the index to the note at which the
+                    bracket should end. Zero-indexed. E.g., if the bracket
+                    should end at the fifth note, the end index is 4. NB: end
+                    index should be greater than start index.
+                - bracket text: specifies what text the bracket should
+                    be annotated with. If you don't want any text annotation,
+                    pass an empty string.
+                - bracket type: a key from the dictionary passed as
+                    `bracket_settings` (see below).
+            Note that if passed globally, this setting has no effect. It only
+            an effect on a per-voice basis.
+- **bracket_settings**: a dictionary of form (str: dict). The strings are
+            labels that are used by `brackets` to fetch the settings to apply
+            to each bracket. The dicts define the settings for brackets, as
+            follows:
+    - "color": a 3-tuple or 4-tuple of ints.
+                    *Default*: `(255, 255, 255)`
+    - "above": bool. If True, the brackets are drawn *above* the
+                    specified voice. Otherwise, they are drawn below.
+                    *Default*: `False`
+    - "line_width": float. How wide the line making up the bracket
+                    should be. This parameter is passed directly through to R.
+                    *Default*: `5.0`
+    - "height": float. The vertical size of the bracket, in
+                    semitones.
+                    *Default*: `1.0`
+    - "tight": bool. If True, the bracket will be placed just below
+                    or above the lowest or highest notes that occur during its
+                    duration (at a vertical offset defined by "y_offset"
+                    below). Otherwise, its vertical placement will be determined
+                    by the highest or lowest notes that occur during the entire
+                    voice (thus, all brackets with the same "y_offset" in a
+                    voice will be at the same vertical position).
+                    *Default*: `False`
+    - "y_offset": float. Sets an offset for the brackets' vertical
+                    positions, measured in semitones. Positive values shift the
+                    brackets away from the notes. Thus if "above" is True,
+                    positive values will shift the brackets upward, whereas if
+                    "above" is False, they will shift them downward.
+                    *Default*: `1.0`
+    - "x_offset": float. Sets an offset for the brackets' horizontal
+                    endpoints, measured in seconds. Positive values shift the
+                    endpoints inwards, whereas negative values shift them
+                    outwards. If you have specified many brackets that are
+                    immediately adjacent to one another, you may want to
+                    specify a small positive value for this setting, so that
+                    the brackets will not elide with one another.
+                    *Default*: `0.0`
+    - "text_size": float. The font size for the text annotations.
+                    This parameter is passed directly through to R.
+                    *Default*: `3.0`
+    - "text_y_offset": float. Determines the vertical distance of the
+                    text annotations from the brackets. Positive values shift
+                    the text away from the notes.
+                    *Default*: `0.2`
 - **add_annotations**: list of strings. Annotate each frame according to the
             values in this list. Possible values:
     - "time": clock time (intro times are negative)
