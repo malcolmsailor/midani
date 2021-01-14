@@ -390,6 +390,20 @@ All connection line settings are per-voice or global.
             connection lines are not drawn between simultaneous notes in the
             same part.
             *Default*: `True`
+- **connection_line_start_offset**: float. How far, in seconds, from the
+            start of each note the x coordinate of the endpoint of the line
+            joining it to the previous note should be. If, for a particular
+            note, this value leads to an x coordinate that is greater than the
+            midpoint of the note, it will be ignored in favor of the midpoint
+            of the note. If not passed, then the start is always the midpoint
+            of each note.
+- **connection_line_end_offset**: float. How far, in seconds, from the
+            end of each note the x coordinate of the endpoint of the line
+            joining it to the next note should be. If, for a particular note,
+            this value leads to an x coordinate that is smaller than the
+            midpoint of the note, it will be ignored in favor of the midpoint
+            of the note. If not passed, then the end is always the midpoint
+            of each note.
 - **line_start**: floats in closed interval [0, 1]. Determine where in the
             frame connection lines are first drawn, as a proportion of the
             distance between the start of the frame and "now" as indicated by
