@@ -144,7 +144,7 @@ def get_voice_and_line_tuples(now, settings, table):
                         note,
                         line_scale_factor,
                         flutter,
-                        color,
+                        voice_color,
                         highlight_factor,
                     )
                 )
