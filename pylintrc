@@ -4,7 +4,10 @@ ignore=midani_tests.py,
     note_classes.py,
     mal_misc.py,
     midi_funcs.py,
-    tuning.py,sample_settings,
+    tuning.py,
+
+ignore-patterns=sample_settings.*\.py,
+    multiple_settings.*\.py,
 
 [MESSAGES CONTROL]
 

@@ -10,7 +10,6 @@ https://github.com/malcolmsailor/midani
 """
 
 import argparse
-import ast
 import os
 import re
 import sys
@@ -36,20 +35,17 @@ SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
 
 
 def main(
-    midi_path, audio_path, test_flag, user_settings_path, use_eval, frame_list
+    midi_path, audio_path, test_flag, user_settings_paths, use_eval, frame_list
 ):
     print("Midani: make piano-roll animations from midi files")
     print("==================================================")
     print("https://github.com/malcolmsailor/midani\n")
-    if user_settings_path is None:
+    if user_settings_paths is None:
         user_settings = {}
     else:
-        print(f"Reading settings from {user_settings_path}")
-        with open(user_settings_path, "r", encoding="utf-8") as inf:
-            if use_eval:
-                user_settings = eval(inf.read())
-            else:
-                user_settings = ast.literal_eval(inf.read())
+        user_settings = midani_settings.read_settings_files_into_dict(
+            user_settings_paths, use_eval
+        )
     if midi_path is None:
         if "midi_fname" not in user_settings or not user_settings["midi_fname"]:
             print(NO_PATH_MSG)
@@ -121,7 +117,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "-s",
         "--settings",
-        help="path to settings file containing a Python dictionary",
+        nargs="*",
+        help="path to settings files, each containing a Python dictionary",
     )
     parser.add_argument(
         "-t",

@@ -75,7 +75,7 @@ optional arguments:
 
 For full documentation of the various settings available, and for how to set per-voice settings, see `docs/settings.md`.
 
-To configure with custom settings, save a file containing only a python dictionary, and pass it as an argument with `-s`/`--settings`.
+To configure with custom settings, save one or more files, each containing only a python dictionary, and pass them as arguments with `-s`/`--settings`. (Usually, only one settings file is necessary, but you might want to use more than one if, for instance, you want to define a general style shared between several animations, but nevertheless tweak the settings for each individual midi file. When the same setting is found in multiple settings files, the setting in the last-listed file has precedence.)
 
 For example, if you wanted a "primary color" note color palette, with white background color, you could save the following dictionary in a file called `example.py` and then invoke the script with `--settings example.py`:
 
@@ -94,7 +94,7 @@ For example, if you wanted a "primary color" note color palette, with white back
 
 For more examples, see the files in `sample_settings/`.
 
-The settings file is ordinarily parsed with `ast.literal_eval()`, thus (to quote the Python docs) it "may only consist of the following Python literal structures: strings, bytes, numbers, tuples, lists, dicts, sets, booleans, and None." (If you get an error like `ValueError: malformed node or string`, then you are probably using expressions that `ast.literal_eval()` cannot parse.) If you wish to use conveniences like arithmetic expressions or list comprehensions, you can pass the `--eval` flag, and the settings file will instead be parsed with `eval()`. Don't do anything reckless with this! (E.g., use `--eval` with settings from sources that you do not trust.)
+The settings files are ordinarily parsed with `ast.literal_eval()`, thus (to quote the Python docs) they "may only consist of the following Python literal structures: strings, bytes, numbers, tuples, lists, dicts, sets, booleans, and None." (If you get an error like `ValueError: malformed node or string`, then you are probably using expressions that `ast.literal_eval()` cannot parse.) If you wish to use conveniences like arithmetic expressions or list comprehensions, you can pass the `--eval` flag, and the settings files will instead be parsed with `eval()`. Don't do anything reckless with this! (E.g., use `--eval` with settings from sources that you do not trust.)
 
 ## Miscellany
 

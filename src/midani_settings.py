@@ -1,6 +1,7 @@
 """Provides Settings object for controlling animation parameters.
 """
 
+import ast
 import collections
 import dataclasses
 import itertools
@@ -47,7 +48,29 @@ GLOBAL_COLOR_LISTS = ("color_palette", "bg_colors")
 DEFAULT_OUTPUT_PATH = "output"
 DEFAULT_TEMP_R_PATH = ".temp_r_files"
 
-# LONGTERM put gap between repeated notes on same pitch
+
+def read_settings_files_into_dict(settings_paths, use_eval):
+    def _merge(dict1, dict2):
+        for key, val in dict2.items():
+            if (
+                isinstance(val, dict)
+                and key in dict1
+                and isinstance(dict1[key], dict)
+            ):
+                dict2[key] = _merge(dict1[key], val)
+        return dict1 | dict2
+
+    out = {}
+    for user_settings_path in settings_paths:
+        print(f"Reading settings from {user_settings_path}")
+        with open(user_settings_path, "r", encoding="utf-8") as inf:
+            if use_eval:
+                user_settings = eval(inf.read())
+            else:
+                user_settings = ast.literal_eval(inf.read())
+        out = _merge(out, user_settings)
+    return out
+
 
 Bracket = collections.namedtuple(
     "Bracket",

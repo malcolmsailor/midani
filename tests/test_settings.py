@@ -1,4 +1,4 @@
-"""Tests voice settings attribute access.
+"""Some tests for midani_settings.
 """
 import os
 import sys
@@ -14,6 +14,35 @@ import src.midani_time as midani_time  # pylint: disable=wrong-import-position
 
 
 SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
+
+
+def test_read_settings_files_into_dict():
+    settings_paths = (
+        "tests/test_settings/multiple_settings1.py",
+        "tests/test_settings/multiple_settings2.py",
+    )
+    out_dict = midani_settings.read_settings_files_into_dict(
+        settings_paths, False
+    )
+    try:
+        assert out_dict["intro"] == 5, 'out_dict["intro"] != 5'
+        assert (
+            out_dict["voice_settings"][1]["color_loop"] == 2
+        ), 'out_dict["voice_settings"][1]["color_loop"] != 2'
+        for key, val in (
+            ("color_loop", 4),
+            ("connection_lines", False),
+            ("line_start", 0.4),
+        ):
+            assert (
+                out_dict["voice_settings"][0][key] == val
+            ), 'out_dict["voice_settings"][0][key] != val'
+    except:  # pylint: disable=bare-except
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        traceback.print_exception(
+            exc_type, exc_value, exc_traceback, file=sys.stdout
+        )
+        breakpoint()
 
 
 def test_voice_settings():
@@ -105,4 +134,5 @@ def test_voice_settings():
 
 
 if __name__ == "__main__":
+    test_read_settings_files_into_dict()
     test_voice_settings()
