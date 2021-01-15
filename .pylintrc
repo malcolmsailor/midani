@@ -6,8 +6,10 @@ ignore=midani_tests.py,
     midi_funcs.py,
     tuning.py,
 
-ignore-patterns=sample_settings.*\.py,
-    multiple_settings.*\.py,
+# It appears that if ignore-patterns has a trailing comma,
+#   pytest will not run pylint
+ignore-patterns=sample_settings,
+    multiple_settings
 
 [MESSAGES CONTROL]
 
