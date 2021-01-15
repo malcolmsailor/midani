@@ -9,7 +9,8 @@ ignore=midani_tests.py,
 # It appears that if ignore-patterns has a trailing comma,
 #   pytest will not run pylint
 ignore-patterns=sample_settings,
-    multiple_settings
+    multiple_settings,
+    frame_settings
 
 [MESSAGES CONTROL]
 
