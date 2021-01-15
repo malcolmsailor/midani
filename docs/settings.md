@@ -382,8 +382,9 @@ All connection line settings are per-voice or global.
             `con_line_offset_color`.
             *Default*: `0.0`
 - **max_connection_line_duration**: float. Maximum time interval in seconds
-            between middle of one note and middle of next for which a
-            connection line will be drawn.
+            over which connection lines will be drawn. (Where the start and
+            end points of the lines are situated depends on
+            connection_line_end_offset and connection_line_start_offset)
             NB that if a note that is long starts just before a note that is
             short, the line may appear to go "backwards" from the former to the
             latter.
@@ -440,19 +441,18 @@ All rectangle settings are per-voice or global.
 - **color**: tuple of form (int, int, int, int) or (int, int, int). Only has
             an effect as a per-voice setting. If a voice does not have an
             explicit value for `color`, it will take its color from the
-            global setting `color_palette` (see above).
-- **color_loop**: a list of tuple of form (int, int, int, int) or
-            (int, int, int). Ints are from 0 to 255 and the fourth optional
-            integer species the transparency (if omitted, the opacity is
-            specified by default_note_opacity). If passed, then each note's
-            color will be set by blending the overall voice color with a color
-            in this loop; the strength of the blend is controlled by
-            `color_loop_strength` below.
-- **color_loop_strength**: float between 0 and 1. Controls how strongly
-            the colors in `color_loop` are mixed with the overall color
-            of the current voice. If 0, `color_loop` has no effect; if
-            1, `color_loop`.
-            *Default*: `0.5`
+            global setting `color_palette` (see above). On the other hand,
+            if a sequence of colors is passed to "color_loop", this argument
+            is ignored.
+- **color_loop**: an int, or a sequence of tuples of colors.
+            If an int (the recommended usage for most use cases), a loop of that
+            length will be created of variations on the color specified by
+            `color` (or the relevant value in `color_palette`). The amount of
+            variation is controlled by `color_loop_var_amount`.
+            If a sequence, then explicitly sets a loop of colors.
+- **color_loop_var_amount**: number. Controls how much variation to apply
+            to create the colors in `color_loop`.
+            *Default*: `128`
 - **rectangles**: boolean. If True, a "rectangle" (the usual piano-roll
             representation) is drawn for each note. Note that this sets
             a default that can be overridden on a per-voice basis.
@@ -480,16 +480,16 @@ All rectangle settings are per-voice or global.
 - **note_height**: float. Overrides `note_size` in y
             dimension.
 - **note_start_width**: float. Amount by which `note_size` should be
-            scaled horizontally at `line_start`.
+            scaled horizontally at `note_start`.
             *Default*: `1.0`
 - **note_start_height**: float. Amount by which `note_size` should be
-            scaled vertically at `line_start`.
+            scaled vertically at `note_start`.
             *Default*: `1.0`
 - **note_end_width**: float. Amount by which `note_size` should be
-            scaled horizontally at `line_end`.
+            scaled horizontally at `note_end`.
             *Default*: `1.0`
 - **note_end_height**: float. Amount by which `note_size` should be
-            scaled vertically at `line_end`.
+            scaled vertically at `note_end`.
             *Default*: `1.0`
 - **start_scale_function, end_scale_function**: callables. These functions
             will be called to determine how note and line size is scaled between

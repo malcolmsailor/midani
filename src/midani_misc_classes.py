@@ -90,11 +90,11 @@ class Window:
         self.frame_len = settings.frame_len
         self.frame_position = settings.frame_position
         self.start_time = settings.start_time
+        self.end_time = settings.end_time
         self.stop_time = settings.end_time + settings.outro
         self.end_bg_time = min(settings.end_time, settings.final_time)
         self.intro = settings.intro
         self.outro = self.stop_time - self.end_bg_time
-        self.start_time = settings.start_time
         self.bg_colors = settings.bg_colors
         self.intro_bg_color = settings.intro_bg_color
         self.outro_bg_color = settings.outro_bg_color

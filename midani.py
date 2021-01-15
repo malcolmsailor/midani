@@ -1,3 +1,7 @@
+#!/usr/local/bin/python3
+
+# TODO is there a portable shebang for python scripts?
+
 """Make piano-roll animations from midi files.
 
 (c) 2020 Malcolm Sailor
@@ -26,6 +30,9 @@ specified with the "midi_fname" keyword argument in a settings file provided wit
 -s/--settings."""
 
 SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
+
+
+# TODO allow reading in multiple midi files at once (so one can be for analysis)
 
 
 def main(

@@ -5,9 +5,12 @@ import collections
 import dataclasses
 import itertools
 import math
+import numbers
 import os
 import random
 import typing
+
+import src.midani_colors as midani_colors
 
 DEFAULT_CHANNEL_SETTINGS = {
     "l_padding": 0.1,
@@ -122,6 +125,7 @@ def post_init_helper(obj):
 
     # LONGTERM allow different shadow positions on a per-voice basis?
     # self.num_shadows = len(self.shadow_positions)
+    #
     # # The next line tells us whether we need to update shadow positions
     # if not all(
     #     [isinstance(item, ShadowPositions) for item in self.shadow_positions]
@@ -177,7 +181,7 @@ def add_transparencies(obj):
                 except AttributeError:
                     opacity = obj.global_parent.default_note_opacity
             val = getattr(obj, color_list)
-            if val is None:
+            if val is None or isinstance(val, int):
                 continue
             setattr(
                 obj,
@@ -198,7 +202,7 @@ class VoiceSettings:
 
     allowed_kwargs = (
         "color_loop",
-        "color_loop_strength",
+        "color_loop_var_amount",
         "connection_lines",
         "con_line_offset_color",
         "con_line_offset_prop",
@@ -283,6 +287,33 @@ class VoiceSettings:
             ]
         elif len(self.color) < 4:
             self.color = tuple(self.color) + (self.default_note_opacity)
+        if isinstance(
+            self.color_loop,  # pylint: disable=access-member-before-definition
+            int,
+        ):
+            min_n = -min(self.color[:3])
+            max_n = 255 - max(self.color[:3])
+            out = []
+            for _ in range(
+                self.color_loop  # pylint: disable=access-member-before-definition
+            ):
+                out.append(
+                    tuple(
+                        [
+                            c1 + c2
+                            for c1, c2 in zip(
+                                self.color,
+                                midani_colors.get_color_vary_ns(
+                                    self.color_loop_var_amount,
+                                    min_n=min_n,
+                                    max_n=max_n,
+                                ),
+                            )
+                        ]
+                    )
+                )
+            self.color_loop = out
+
         if "note_size" in dir(self):
             if (
                 "note_width" not in dir(self)
@@ -702,8 +733,9 @@ class Settings:
             `con_line_offset_color`.
             Default: 0.0
         max_connection_line_duration: float. Maximum time interval in seconds
-            between middle of one note and middle of next for which a
-            connection line will be drawn.
+            over which connection lines will be drawn. (Where the start and
+            end points of the lines are situated depends on
+            connection_line_end_offset and connection_line_start_offset)
             NB that if a note that is long starts just before a note that is
             short, the line may appear to go "backwards" from the former to the
             latter.
@@ -761,19 +793,18 @@ class Settings:
         color: tuple of form (int, int, int, int) or (int, int, int). Only has
             an effect as a per-voice setting. If a voice does not have an
             explicit value for `color`, it will take its color from the
-            global setting `color_palette` (see above).
-        color_loop: a list of tuple of form (int, int, int, int) or
-            (int, int, int). Ints are from 0 to 255 and the fourth optional
-            integer species the transparency (if omitted, the opacity is
-            specified by default_note_opacity). If passed, then each note's
-            color will be set by blending the overall voice color with a color
-            in this loop; the strength of the blend is controlled by
-            `color_loop_strength` below.
-        color_loop_strength: float between 0 and 1. Controls how strongly
-            the colors in `color_loop` are mixed with the overall color
-            of the current voice. If 0, `color_loop` has no effect; if
-            1, `color_loop`.
-            Default: 0.5
+            global setting `color_palette` (see above). On the other hand,
+            if a sequence of colors is passed to "color_loop", this argument
+            is ignored.
+        color_loop: an int, or a sequence of tuples of colors.
+            If an int (the recommended usage for most use cases), a loop of that
+            length will be created of variations on the color specified by
+            `color` (or the relevant value in `color_palette`). The amount of
+            variation is controlled by `color_loop_var_amount`.
+            If a sequence, then explicitly sets a loop of colors.
+        color_loop_var_amount: number. Controls how much variation to apply
+            to create the colors in `color_loop`.
+            Default: 128
         rectangles: boolean. If True, a "rectangle" (the usual piano-roll
             representation) is drawn for each note. Note that this sets
             a default that can be overridden on a per-voice basis.
@@ -801,16 +832,16 @@ class Settings:
         note_height: float. Overrides `note_size` in y
             dimension.
         note_start_width: float. Amount by which `note_size` should be
-            scaled horizontally at `line_start`.
+            scaled horizontally at `note_start`.
             Default: 1.0
         note_start_height: float. Amount by which `note_size` should be
-            scaled vertically at `line_start`.
+            scaled vertically at `note_start`.
             Default: 1.0
         note_end_width: float. Amount by which `note_size` should be
-            scaled horizontally at `line_end`.
+            scaled horizontally at `note_end`.
             Default: 1.0
         note_end_height: float. Amount by which `note_size` should be
-            scaled vertically at `line_end`.
+            scaled vertically at `note_end`.
             Default: 1.0
         start_scale_function, end_scale_function: callables. These functions
             will be called to determine how note and line size is scaled between
@@ -1148,8 +1179,8 @@ class Settings:
         (53, 183, 120),
     )
     color: typing.Any = None
-    color_loop: typing.Sequence[typing.Tuple[int, int, int, int]] = None
-    color_loop_strength: float = 0.5
+    color_loop: int = None
+    color_loop_var_amount: numbers.Number = 128
     default_note_opacity: int = 255
 
     connection_lines: bool = True
@@ -1158,6 +1189,8 @@ class Settings:
     max_connection_line_duration: float = 0.25
     max_connection_line_interval: float = None
     no_connection_lines_between_simultaneous_notes: bool = True
+    # LONGTERM connection line offsets aren't fully implemented because
+    #   they don't take rect scaling into account
     connection_line_start_offset: float = None
     connection_line_end_offset: float = None
 

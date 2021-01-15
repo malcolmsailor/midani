@@ -59,7 +59,6 @@ def _line_or_its_shadow_in_frame(now, note, note_i, settings, voice, voice_i):
 def get_voice_and_line_tuples(now, settings, table):
     rect_tuples = []
     line_tuples = []
-    # start_indices = []
     for voice_i, voice in zip(settings.voice_order, table):
         if settings[voice_i].bounce_type == "scalar":
             bounce_term = max(1, settings[voice_i].bounce_radius,)
@@ -69,7 +68,6 @@ def get_voice_and_line_tuples(now, settings, table):
         color_loop = settings[voice_i].color_loop
         rect_tuples.append([])
         line_tuples.append([])
-        # start_indices.append(None)
         for note_i, note in enumerate(voice):
             rect_in_frame = _rect_or_its_shadow_in_frame(
                 now, note, settings, voice_i
@@ -83,9 +81,6 @@ def get_voice_and_line_tuples(now, settings, table):
             )
             if not rect_in_frame and not line_in_frame:
                 continue
-            # if rect_in_frame and start_indices[-1] is None:
-            #     start_indices[-1] = note_i
-
             t_until_attack = note.start - now
             if settings.scale_notes_from_attack:
                 t_until_for_scale = t_until_attack
@@ -124,11 +119,7 @@ def get_voice_and_line_tuples(now, settings, table):
                 else:
                     flutter += bounce
             if color_loop is not None:
-                color = midani_colors.blend_colors(
-                    voice_color,
-                    color_loop[note_i % len(color_loop)],
-                    settings[voice_i].color_loop_strength,
-                )
+                color = color_loop[note_i % len(color_loop)]
             else:
                 color = voice_color
             if rect_in_frame:
@@ -265,10 +256,23 @@ def _connection_line_conditions_apply(now, src, dst, settings, voice_i):
         and src.note.start == dst.note.start
     ):
         return False
-    if (
-        dst.note.mid - src.note.mid
-        > settings[voice_i].max_connection_line_duration
-    ):
+    x1 = (
+        src.note.mid
+        if settings[voice_i].connection_line_end_offset is None
+        else max(
+            src.note.end - settings[voice_i].connection_line_end_offset,
+            src.note.mid,
+        )
+    )
+    x2 = (
+        dst.note.mid
+        if settings[voice_i].connection_line_start_offset is None
+        else min(
+            dst.note.start + settings[voice_i].connection_line_start_offset,
+            dst.note.mid,
+        )
+    )
+    if x2 - x1 > settings[voice_i].max_connection_line_duration:
         return False
     if (
         abs(dst.pitch - src.pitch)
@@ -489,21 +493,23 @@ def yield_bracket_coords(bracket, voice, voice_i, bracket_settings, window):
             yield x1, x2
         if bracket.loop is not None:
             loop_end = (
-                window.stop_time
+                window.end_time
                 if bracket.loop_end is None
                 else bracket.loop_end
             )
             start = bracket.start
-            while start < loop_end:
+            while True:
                 start += bracket.loop
-                x1 = start + start_offset
                 x2 += bracket.loop
+                x1 = start + start_offset
                 try:
                     _check_coords(x1, x2)
                 except NoBracket:
                     pass
                 else:
                     yield x1, x2
+                if start >= loop_end:
+                    break
 
 
 def draw_brackets(table, window, settings, r_boss):
