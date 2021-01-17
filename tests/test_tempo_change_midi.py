@@ -22,7 +22,7 @@ TEMPOS = [120, 144, 160, 176]
 
 @dataclasses.dataclass
 class DummySettings:  # pylint: disable=missing-class-docstring
-    midi_fname: str
+    midi_fname: tuple
     tet: int = 12
     midi_tracks_to_voices: bool = True
     midi_channels_to_voices: bool = False
@@ -53,7 +53,7 @@ def test_tempo_changes():
         os.makedirs(OUT_DIR)
     mid.save(OUT_PATH)
 
-    settings = DummySettings(OUT_PATH)
+    settings = DummySettings((OUT_PATH,))
     score = midani_score.read_score(settings)
     tempo_changes = midani_time.TempoChanges(score)
     times = [

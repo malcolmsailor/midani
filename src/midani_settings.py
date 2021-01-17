@@ -224,6 +224,7 @@ class VoiceSettings:
     """
 
     allowed_kwargs = (
+        "color",
         "color_loop",
         "color_loop_var_amount",
         "connection_lines",
@@ -445,10 +446,14 @@ class Settings:
 
         All general settings are global.
 
-        midi_fname: str. Path to input midi file to animate. If a midi path is
-            passed as a command-line argument to the script, this value will
+        midi_fname: str. Path to input midi file to be animated. If a midi path
+            is passed as a command-line argument to the script, this value will
             be ignored. If this value is not set, nor is a command-line path
             passed, the script will abort---it will have nothing to animate!
+
+            It is also possible to pass a list of files. In that case, the
+            tempos will be taken from the first file, but the notes will be
+            taken from all files.
         midi_tracks_to_voices: bool. If True, different tracks in the input
             midi will be mapped to different "voices" in the animation.
             Default: True
@@ -476,8 +481,9 @@ class Settings:
         video_fname: str. Path to output video file. If a basename (i.e., with
             no directory component), will be written in directory
             `ourput_dirname`. If not passed, the video will be written in
-            `output_dirname` with the same filename as
-            `midi_fname`, except for the extension ".mp4". Has no effect if
+            `output_dirname` with the same filename as `midi_fname`, except for
+            the extension ".mp4". (If `midi_fname` is a list, then it will be
+            named after the first item in the list.) Has no effect if
             `process_video` == "no".
         audio_fname: str. Path to input audio file. If passed, this audio file
             will be added to the output video file using ffmpeg. If ffmpeg is
@@ -718,7 +724,9 @@ class Settings:
             are "parent" voices and settings are "child" voices. Any per-voice
             settings not explicitly set in the child voice will be taken from
             the parent voice. If they are not found in the parent voice, the
-            search continues recursively until we reach the global settings.
+            search continues recursively until we reach the global settings. An
+            exception is `color`, which must be specified explicitly for each
+            voice, or it is taken from the global `color_palette`.
         p_displace: a dictionary of form {int, list of ints}. Keys are pitch
             intervals in semitones. Values are lists of indices to voices. The
             voices indicated will be displaced by the associated interval. This
@@ -1052,9 +1060,10 @@ class Settings:
                     are floats. Defines a time at which the bracket should
                     cease looping; the loop will stop when the next bracket's
                     start time is greater than this value.
-            Brackets passed globally will be plotted in all voices. Unless
-            the voices are in rhythmic unison, this may result in incoherent
-            results!
+            Brackets passed globally will be plotted in all voices, *unless*
+            `bracket_settings` is not passed globally, in which case voices that
+            do not have `bracket_settings` passed explicitly will not have
+            brackets plotted.
         bracket_settings: a dictionary of form (str: dict). The strings are
             labels that are used by `brackets` to fetch the settings to apply
             to each bracket. The dicts define the settings for brackets, as
@@ -1119,7 +1128,9 @@ class Settings:
             Default: False.
     """
 
-    midi_fname: str = ""
+    midi_fname: typing.Union[  # pylint: disable=unsubscriptable-object
+        str, typing.Sequence[str]
+    ] = ""
     midi_tracks_to_voices: bool = True
     midi_channels_to_voices: bool = False
     output_dirname: str = None
@@ -1318,11 +1329,14 @@ class Settings:
         # End attributes defined in post_init_helper
         if self.color is not None:
             print("Notice: passing a global value for 'color' has no effect")
+            self.color = None
         if not isinstance(self.brackets, list):
             self.brackets = list(self.brackets)
 
         if not self.midi_fname:
             raise ValueError("no 'midi_fname' keyword argument to Settings()")
+        if isinstance(self.midi_fname, str):
+            self.midi_fname = (self.midi_fname,)
         if not self.script_path:
             raise ValueError("no 'script_path' keyword argument to Settings()")
         if self.seed is not None:
@@ -1383,12 +1397,13 @@ class Settings:
             )
         self.png_fname_base = os.path.join(
             self.output_dirname,
-            os.path.splitext(os.path.basename(self.midi_fname))[0],
+            os.path.splitext(os.path.basename(self.midi_fname[0]))[0],
         )
         self.png_fnum_digits = 5
         if not self.video_fname:
             self.video_fname = (
-                os.path.splitext(os.path.basename(self.midi_fname))[0] + ".mp4"
+                os.path.splitext(os.path.basename(self.midi_fname[0]))[0]
+                + ".mp4"
             )
         if self.video_fname == os.path.basename(self.video_fname):
             self.video_fname = os.path.join(
@@ -1497,7 +1512,19 @@ class Settings:
         reversed_duplicate_voice_settings = {}
         voice_init_order = list(range(self.num_voices))
         for src_i, dsts in self.duplicate_voice_settings.items():
+            if src_i >= self.num_voices:
+                print(
+                    f"Warning: voice {src_i} in `duplicate_voice_settings` "
+                    "does not exist in score"
+                )
+                continue
             for dst_i in dsts:
+                if dst_i >= self.num_voices:
+                    print(
+                        f"Warning: voice {dst_i} in `duplicate_voice_settings` "
+                        "does not exist in score"
+                    )
+                    continue
                 reversed_duplicate_voice_settings[dst_i] = src_i
                 if voice_init_order.index(src_i) > voice_init_order.index(
                     dst_i

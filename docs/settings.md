@@ -78,10 +78,14 @@ Note on colors:
 
 All general settings are global.
 
-- **midi_fname**: str. Path to input midi file to animate. If a midi path is
-            passed as a command-line argument to the script, this value will
+- **midi_fname**: str. Path to input midi file to be animated. If a midi path
+            is passed as a command-line argument to the script, this value will
             be ignored. If this value is not set, nor is a command-line path
             passed, the script will abort---it will have nothing to animate!
+
+    It is also possible to pass a list of files. In that case, the
+            tempos will be taken from the first file, but the notes will be
+            taken from all files.
 - **midi_tracks_to_voices**: bool. If True, different tracks in the input
             midi will be mapped to different "voices" in the animation.
             *Default*: `True`
@@ -109,8 +113,9 @@ All general settings are global.
 - **video_fname**: str. Path to output video file. If a basename (i.e., with
             no directory component), will be written in directory
             `ourput_dirname`. If not passed, the video will be written in
-            `output_dirname` with the same filename as
-            `midi_fname`, except for the extension ".mp4". Has no effect if
+            `output_dirname` with the same filename as `midi_fname`, except for
+            the extension ".mp4". (If `midi_fname` is a list, then it will be
+            named after the first item in the list.) Has no effect if
             `process_video` == "no".
 - **audio_fname**: str. Path to input audio file. If passed, this audio file
             will be added to the output video file using ffmpeg. If ffmpeg is
@@ -345,7 +350,9 @@ These settings are all global; to set per-voice settings, use the
             are "parent" voices and settings are "child" voices. Any per-voice
             settings not explicitly set in the child voice will be taken from
             the parent voice. If they are not found in the parent voice, the
-            search continues recursively until we reach the global settings.
+            search continues recursively until we reach the global settings. An
+            exception is `color`, which must be specified explicitly for each
+            voice, or it is taken from the global `color_palette`.
 - **p_displace**: a dictionary of form {int, list of ints}. Keys are pitch
             intervals in semitones. Values are lists of indices to voices. The
             voices indicated will be displaced by the associated interval. This
@@ -672,9 +679,10 @@ All bounce settings are per-voice or global.
                     are floats. Defines a time at which the bracket should
                     cease looping; the loop will stop when the next bracket's
                     start time is greater than this value.
-            Brackets passed globally will be plotted in all voices. Unless
-            the voices are in rhythmic unison, this may result in incoherent
-            results!
+            Brackets passed globally will be plotted in all voices, *unless*
+            `bracket_settings` is not passed globally, in which case voices that
+            do not have `bracket_settings` passed explicitly will not have
+            brackets plotted.
 - **bracket_settings**: a dictionary of form (str: dict). The strings are
             labels that are used by `brackets` to fetch the settings to apply
             to each bracket. The dicts define the settings for brackets, as

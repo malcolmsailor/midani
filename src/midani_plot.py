@@ -517,7 +517,13 @@ def draw_brackets(table, window, settings, r_boss):
         if (
             voice_i not in settings.voices_to_render
             or not voice
-            or settings[voice_i].brackets is None
+            or (
+                None
+                in (
+                    settings[voice_i].brackets,
+                    settings[voice_i].bracket_settings,
+                )
+            )
         ):
             continue
         channel_i = settings.chan_assmts[voice_i]
@@ -543,7 +549,7 @@ def draw_brackets(table, window, settings, r_boss):
                             + bracket_settings.y_offset
                         )
                     else:
-                        y1 = table[voice_i].h_pitch + bracket_settings.y_offset
+                        y1 = voice.h_pitch + bracket_settings.y_offset
                     y2 = y1 + bracket_settings.height
                 else:
                     if (
@@ -564,7 +570,7 @@ def draw_brackets(table, window, settings, r_boss):
                             - bracket_settings.y_offset
                         )
                     else:
-                        y1 = table[voice_i].l_pitch - bracket_settings.y_offset
+                        y1 = voice.l_pitch - bracket_settings.y_offset
                     y2 = y1 - bracket_settings.height
                 r_boss.bracket(
                     x1=x1,

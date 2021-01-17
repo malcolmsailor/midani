@@ -339,6 +339,10 @@ class Channel(PitchRange):
 
 class PitchTable(PitchRange, list):
     """Reads a Score and then builds a "pitch table" for use in plotting.
+
+    Note that voices in this list are in order "voice_order" so if we use
+    the indices in "voice_order" to get items from it, we will fetch the wrong
+    items.
     """
 
     def __init__(self, score, settings, tempo_changes, *args, **kwargs):

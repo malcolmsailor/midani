@@ -1,5 +1,6 @@
 """Some tests for midani_settings.
 """
+import random
 import os
 import sys
 import traceback
@@ -13,7 +14,7 @@ import src.midani_score as midani_score  # pylint: disable=wrong-import-position
 import src.midani_time as midani_time  # pylint: disable=wrong-import-position
 
 
-SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
+SCRIPT_DIR = os.path.dirname((os.path.realpath(__file__)))
 
 
 def test_read_settings_files_into_dict():
@@ -48,9 +49,9 @@ def test_read_settings_files_into_dict():
 def test_voice_settings():
     settings_kwargs = {
         "midi_fname": os.path.join(
-            SCRIPT_PATH, "../sample_music/effrhy_105.mid"
+            SCRIPT_DIR, "../sample_music/effrhy_105.mid"
         ),
-        "script_path": SCRIPT_PATH,
+        "script_path": SCRIPT_DIR,
         "voice_settings": {
             0: {
                 "note_start": 1,
@@ -133,6 +134,44 @@ def test_voice_settings():
         breakpoint()
 
 
+def test_voice_order():
+    # This test might seem trivial but weird stuff is going on so I wanted
+    #   to double-check
+    midi_fname = os.path.join(SCRIPT_DIR, "../sample_music/effrhy_105.mid")
+    for _ in range(2):
+        voice_order = list(range(16))  # Number of tracks in effrhy_105
+        random.shuffle(voice_order)
+        try:
+            settings_dict = {
+                "midi_fname": midi_fname,
+                "voice_order": voice_order,
+                "script_path": SCRIPT_DIR,
+            }
+            settings = midani_settings.Settings(**settings_dict)
+            score = midani_score.read_score(settings)
+            tempo_changes = midani_time.TempoChanges(score)
+            settings.update_from_score(score, tempo_changes)
+            assert (
+                voice_order == settings.voice_order
+            ), "voice_order != settings.voice_order"
+            settings_dict["voice_order_reverse"] = True
+            settings = midani_settings.Settings(**settings_dict)
+            score = midani_score.read_score(settings)
+            tempo_changes = midani_time.TempoChanges(score)
+            settings.update_from_score(score, tempo_changes)
+            voice_order.reverse()
+            assert (
+                voice_order == settings.voice_order
+            ), "voice_order != settings.voice_order"
+        except:  # pylint: disable=bare-except
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            traceback.print_exception(
+                exc_type, exc_value, exc_traceback, file=sys.stdout
+            )
+            breakpoint()
+
+
 if __name__ == "__main__":
     test_read_settings_files_into_dict()
     test_voice_settings()
+    test_voice_order()
