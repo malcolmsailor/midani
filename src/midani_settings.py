@@ -1393,7 +1393,8 @@ class Settings:
             )
         elif self.output_dirname.startswith("MIDANI_DIR"):
             self.output_dirname = os.path.join(
-                self.script_path, self.output_dirname.replace("MIDANI_DIR", "")
+                self.script_path,
+                self.output_dirname.replace("MIDANI_DIR", "", 1),
             )
         self.png_fname_base = os.path.join(
             self.output_dirname,
