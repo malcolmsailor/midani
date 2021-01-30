@@ -31,9 +31,6 @@ specified with the "midi_fname" keyword argument in a settings file provided wit
 SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
 
 
-# TODO allow reading in multiple midi files at once (so one can be for analysis)
-
-
 def main(
     midi_path, audio_path, test_flag, user_settings_paths, use_eval, frame_list
 ):

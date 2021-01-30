@@ -216,7 +216,6 @@ class Window:
         # self._pixel_start = self._pixel_now - self._left_pixel_width
         # self._pixel_end = self._pixel_now + self._right_pixel_width
 
-    # TODO delete start and end?
     @property
     def start(self):  # pylint: disable=missing-docstring
         return self._start
