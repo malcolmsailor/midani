@@ -14,7 +14,6 @@ import typing
 import src.midani_colors as midani_colors
 
 
-# TODO take frame names from video_fname
 # TODO delete now_line
 
 DEFAULT_CHANNEL_SETTINGS = {
@@ -1402,11 +1401,6 @@ class Settings:
                 self.script_path,
                 self.output_dirname.replace("MIDANI_DIR", "", 1),
             )
-        self.png_fname_base = os.path.join(
-            self.output_dirname,
-            os.path.splitext(os.path.basename(self.midi_fname[0]))[0],
-        )
-        self.png_fnum_digits = 5
         if not self.video_fname:
             self.video_fname = (
                 os.path.splitext(os.path.basename(self.midi_fname[0]))[0]
@@ -1416,6 +1410,13 @@ class Settings:
             self.video_fname = os.path.join(
                 self.output_dirname, self.video_fname
             )
+        self.png_fname_base = os.path.join(
+            self.output_dirname,
+            os.path.splitext(os.path.basename(self.video_fname))[0],
+        )
+        if self.png_fname_base[-1].isdigit():
+            self.png_fname_base += "_"
+        self.png_fnum_digits = 5
         if self._test:
             bits = os.path.splitext(self.video_fname)
             self.video_fname = bits[0] + "_TEST" + bits[1]
