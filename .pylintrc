@@ -1,16 +1,23 @@
 [MASTER]
 
-ignore=midani_tests.py,
-    note_classes.py,
-    mal_misc.py,
-    midi_funcs.py,
-    tuning.py,
+# ignoring directories doesn't seem to work here, use PylintIgnorePaths below
+ignore=midani_tests.py
 
 # It appears that if ignore-patterns has a trailing comma,
 #   pytest will not run pylint
-ignore-patterns=sample_settings,
-    multiple_settings,
-    frame_settings
+ignore-patterns=sample_settings
+
+# From https://github.com/PyCQA/pylint/issues/2686#issuecomment-621927895
+init-hook=
+    sys.path.append(os.getcwd());
+    from src.third_party.pylint_ignore import PylintIgnorePaths;
+    PylintIgnorePaths(
+        "tests/third_party",
+        "tests/test_settings",
+        "src/from_my_other_projects",
+        "src/third_party",
+    )
+
 
 [MESSAGES CONTROL]
 
