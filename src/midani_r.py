@@ -78,6 +78,11 @@ class RBoss:
                 bg_color=self.hex_color(window.bg_color),
                 window_start=window.start,
                 window_end=window.end,
+                # The next lines are part of an abortive attempt to express
+                # x coordinates in pixels, which I foolishly started before
+                # committing other changes...
+                # window_start=window.pixel_start,
+                # window_end=window.pixel_end,
                 window_bottom=window.bottom,
                 window_top=window.top,
             )

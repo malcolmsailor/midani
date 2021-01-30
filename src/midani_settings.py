@@ -13,6 +13,10 @@ import typing
 
 import src.midani_colors as midani_colors
 
+
+# TODO take frame names from video_fname
+# TODO delete now_line
+
 DEFAULT_CHANNEL_SETTINGS = {
     "l_padding": 0.1,
     "h_padding": 0.1,
@@ -1327,6 +1331,7 @@ class Settings:
         self.shadow_hl_strength = None
         self.bounce_radius = self.bounce_sin_factor = None
         # End attributes defined in post_init_helper
+        self.out_width, self.out_height = self.resolution
         if self.color is not None:
             print("Notice: passing a global value for 'color' has no effect")
             self.color = None
@@ -1370,7 +1375,8 @@ class Settings:
 
         prop_sum = sum(self.channel_proportions)
         self.channel_heights = [
-            prop / prop_sum for prop in self.channel_proportions
+            round(prop / prop_sum * self.out_height)
+            for prop in self.channel_proportions
         ]
         self.channel_offsets = [
             sum(self.channel_heights[i + 1 :]) for i in range(self.num_channels)
@@ -1420,7 +1426,6 @@ class Settings:
                 "If any of start_bar, end_bar, or final_bar is "
                 "nonzero, bar_length must be nonzero as well."
             )
-        self.out_width, self.out_height = self.resolution
 
         self.w_factor = self.out_width / self.frame_len
 
@@ -1577,12 +1582,15 @@ class Settings:
         )
 
         self.num_shadows = len(self.shadow_positions)
+        # LONGTERM move this logic into the ShadowPositions class
         self.shadow_positions = [
             ShadowPositions(
                 shadow_x=s[0] / self.w_factor,
-                shadow_y=s[1] / self.out_height,
+                # shadow_y=s[1] / self.out_height,
+                shadow_y=s[1],
                 cline_shadow_x=(s[2] if len(s) > 2 else s[0]) / self.w_factor,
-                cline_shadow_y=(s[3] if len(s) > 3 else s[1]) / self.out_height,
+                # cline_shadow_y=(s[3] if len(s) > 3 else s[1]) / self.out_height,
+                cline_shadow_y=(s[3] if len(s) > 3 else s[1]),
             )
             for s in self.shadow_positions
         ]

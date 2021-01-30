@@ -103,6 +103,13 @@ class Window:
         self.bg_time_i = -1
         self.bg_color_constant = not self.bg_times
         self.outro_has_begun = False
+        self._top = settings.out_height
+        # The next lines are part of an abortive attempt to express
+        # x coordinates in pixels, which I foolishly started before
+        # committing other changes...
+        # self._pixel_width = settings.out_width
+        # self._left_pixel_width = int(self._pixel_width * self.frame_position)
+        # self._right_pixel_width = self._pixel_width - self._left_pixel_width
         # The following attributes are only initialized later
         self.last_now = self.next_bg_time = self.prev_bg_time = None
         self._now = self._start = self._end = None
@@ -202,7 +209,14 @@ class Window:
         self._now = now
         self._start = now - self.frame_len * self.frame_position
         self._end = now + self.frame_len * (1 - self.frame_position)
+        # The next lines are part of an abortive attempt to express
+        # x coordinates in pixels, which I foolishly started before
+        # committing other changes...
+        # self._pixel_now = round(now / self.frame_len * self._pixel_width)
+        # self._pixel_start = self._pixel_now - self._left_pixel_width
+        # self._pixel_end = self._pixel_now + self._right_pixel_width
 
+    # TODO delete start and end?
     @property
     def start(self):  # pylint: disable=missing-docstring
         return self._start
@@ -211,17 +225,27 @@ class Window:
     def end(self):  # pylint: disable=missing-docstring
         return self._end
 
+    # The next lines are part of an abortive attempt to express
+    # x coordinates in pixels, which I foolishly started before
+    # committing other changes...
+    # @property
+    # def pixel_start(self):  # pylint: disable=missing-docstring
+    #     return self._pixel_start
+    #
+    # @property
+    # def pixel_end(self):  # pylint: disable=missing-docstring
+    #     return self._pixel_end
+
     @property
     def bottom(self):
-        # I believe all other calculations in the *y* axis are normalized so
-        # there's no reason to ever return anything other than 0
+        # For now, at least, this is always just 0
         return 0
 
     @property
     def top(self):
-        # I believe all other calculations in the *y* axis are normalized so
-        # there's no reason to ever return anything other than 1
-        return 1
+        # For now, at least, this is always just the height of the frame in
+        # pixels, stored in _top
+        return self._top
 
     @property
     def range(self):
@@ -242,6 +266,22 @@ class Window:
     @property
     def in_outro(self):
         return self._now > self.end_bg_time
+
+    def y_position(self, y):
+        """Given y between 0 and 1, returns its coordinates in pixels.
+
+        *Note* y coordinates should be taken from Channel.y_position
+        """
+        return round(y * self._top)
+
+    # The next lines are part of an abortive attempt to express
+    # x coordinates in pixels, which I foolishly started before
+    # committing other changes...
+    # def x_width(self, x):
+    #     return round(x * self._pixel_width / self.frame_len)
+    #
+    # def x_position(self, x):
+    #     return round(x * self._pixel_width / self.frame_len)
 
 
 class PitchRange:
@@ -324,17 +364,28 @@ class Channel(PitchRange):
         self.h_factor = settings.out_height / self.height
 
     def proportion(self, pitch):
-        return (
-            (pitch - self.l_pitch) / self.pitch_range * self.non_padding
-            + self.l_padding
-        ) * self.height
+        return round(
+            (
+                (pitch - self.l_pitch) / self.pitch_range * self.non_padding
+                + self.l_padding
+            )
+            * self.height
+        )
 
     @property
     def note_height(self):  # pylint: disable=missing-docstring
         return 1 / self.pitch_range * self.height * self.non_padding
 
     def y_position(self, pitch):
+        """Returns the y position of a pitch in the frame, in pixels.
+        """
         return self.proportion(pitch) + self.offset
+
+    def pixel_height(self, height):
+        return round(
+            (self.proportion(self.l_pitch + 1) - self.proportion(self.l_pitch))
+            * height
+        )
 
 
 class PitchTable(PitchRange, list):

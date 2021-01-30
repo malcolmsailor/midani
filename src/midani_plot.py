@@ -122,6 +122,8 @@ def get_voice_and_line_tuples(now, settings, table):
                 color = color_loop[note_i % len(color_loop)]
             else:
                 color = voice_color
+            # LONGTERM why store these tuples in a list instead of plotting
+            #   them directly from this function?
             if rect_in_frame:
                 rect_tuples[-1].append(
                     midani_misc_classes.RectTuple(
@@ -190,14 +192,25 @@ def draw_note_shadows(
                 * settings[voice_i].shadow_scale ** shadow_n
                 / 2
             )
-            half_height = (
-                channel.note_height
-                * rect.scale_y_factor
-                * settings[voice_i].shadow_scale ** shadow_n
-                / 2
+            # half_height = (
+            #     channel.note_height
+            #     * rect.scale_y_factor
+            #     * settings[voice_i].shadow_scale ** shadow_n
+            #     / 2
+            # )
+            height = channel.pixel_height(
+                rect.scale_y_factor * settings[voice_i].shadow_scale ** shadow_n
             )
-            shadow_x = shadow_position.shadow_x
+            lower_half = height // 2
+            upper_half = height - lower_half
             shadow_y = shadow_position.shadow_y
+            # bottom = channel.y_position(rect.pitch) - half_height + shadow_y
+            # top = channel.y_position(rect.pitch) + half_height + shadow_y
+            bottom = channel.y_position(rect.pitch) - lower_half + shadow_y
+            top = channel.y_position(rect.pitch) + upper_half + shadow_y
+            if bottom >= top:
+                continue
+            shadow_x = shadow_position.shadow_x
             if settings[voice_i].shadow_gradients:
                 shadow_n_color = _get_shadow_gradient(
                     shadow_i,
@@ -207,10 +220,6 @@ def draw_note_shadows(
                     settings,
                     voice_i,
                 )
-            bottom = channel.y_position(rect.pitch) - half_height + shadow_y
-            top = channel.y_position(rect.pitch) + half_height + shadow_y
-            if bottom >= top:
-                continue
             r_boss.plot_rect(
                 max(window.start, rect.note.mid + shadow_x - half_width,),
                 min(window.end, rect.note.mid + shadow_x + half_width,),
@@ -409,12 +418,26 @@ def draw_notes(rect_tuples, window, settings, table, r_boss):
             else:
                 color = rect.color
             half_width = 0.5 * rect.note.dur * rect.scale_x_factor
-            half_height = 0.5 * rect.scale_y_factor
+            # The next lines are part of an abortive attempt to express
+            # x coordinates in pixels, which I foolishly started before
+            # committing other changes...
+            # width = window.x_width(rect.note.dur * rect.scale_x_factor)
+            # left_width = width // 2
+            # right_width = width - left_width
+            # x_mid = window.x_position(rect.note.mid)
+            height = channel.pixel_height(rect.scale_y_factor)
+            lower_half = height // 2
+            upper_half = height - lower_half
             r_boss.plot_rect(
                 x1=max(window.start, rect.note.mid - half_width),
                 x2=min(window.end, rect.note.mid + half_width),
-                y1=channel.y_position(rect.pitch - half_height),
-                y2=channel.y_position(rect.pitch + half_height),
+                # The next lines are part of an abortive attempt to express
+                # x coordinates in pixels, which I foolishly started before
+                # committing other changes...
+                # x1=max(window.pixel_start, x_mid - left_width),
+                # x2=min(window.pixel_end, x_mid + right_width),
+                y1=channel.y_position(rect.pitch) - lower_half,
+                y2=channel.y_position(rect.pitch) + upper_half,
                 color=color,
             )
 
@@ -428,7 +451,7 @@ def draw_lyrics(window, lyricist, settings, r_boss):
     r_boss.text(
         text=lyric,
         x=x,
-        y=y,
+        y=window.y_position(y),
         color=settings.lyrics_color,
         size=settings.lyrics_size,
     )
@@ -440,7 +463,10 @@ def draw_annotations(window, settings, r_boss):
         if annot in midani_annotations.ANNOT:
             for line in midani_annotations.ANNOT[annot](window).split("\n"):
                 r_boss.text(
-                    text=line, x=window.now, y=y, color=settings.annot_color,
+                    text=line,
+                    x=window.now,
+                    y=window.y_position(y),
+                    color=settings.annot_color,
                 )
                 y += 0.025
 
