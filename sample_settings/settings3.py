@@ -35,7 +35,4 @@
     "num_channels": 4,
     "chan_assmts": {0: 0, 1: 1, 2: 2, 3: 3,},
     "bounce_size": 0.3,
-    # "intro": 0.1,
-    # "outro": 0,
-    # "end_time": 3,
 }
