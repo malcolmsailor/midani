@@ -189,7 +189,7 @@ def draw_note_shadows(
             half_width = (
                 rect.note.dur
                 * rect.scale_x_factor
-                * settings[voice_i].shadow_scale ** shadow_n
+                * settings[voice_i].shadow_scale_x ** shadow_n
                 / 2
             )
             # half_height = (
@@ -199,7 +199,8 @@ def draw_note_shadows(
             #     / 2
             # )
             height = channel.pixel_height(
-                rect.scale_y_factor * settings[voice_i].shadow_scale ** shadow_n
+                rect.scale_y_factor
+                * settings[voice_i].shadow_scale_y ** shadow_n
             )
             lower_half = height // 2
             upper_half = height - lower_half

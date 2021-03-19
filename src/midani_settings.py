@@ -295,6 +295,8 @@ class VoiceSettings:
         "shadow_strength",
         "shadow_color",
         "shadow_scale",
+        "shadow_scale_x",
+        "shadow_scale_y",
         "highlight_shadows",
         "shadow_gradients",
         "shadow_gradient_offset",
@@ -973,8 +975,12 @@ class Settings:
             they shadow. If there is more than one shadow per note (i.e., if
             `len(shadow_positions) > 1`), then each shadow will be scaled by
             `shadow_scale**n` where n is its position in the list (starting
-            from 1).
+            from 1). Can be overridden by `shadow_scale_x` or `shadow_scale_y`.
             Default: 1.0
+        shadow_scale_x: float. Like shadow_scale, but in the horizontal
+            dimension only. Overrides any value specified by `shadow_scale`.
+        shadow_scale_y: float. Like shadow_scale, but in the vertical
+            dimension only. Overrides any value specified by `shadow_scale`.
         highlight_shadows: boolean. Controls whether shadows are highlighted
             similarly to notes.
             Default: False
@@ -1302,6 +1308,8 @@ class Settings:
     ] = dataclasses.field(default_factory=DEFAULT_SHADOW_POSITIONS)
     shadow_color: tuple = (128, 128, 128, 255)
     shadow_scale: float = 1.0
+    shadow_scale_x: float = None
+    shadow_scale_y: float = None
 
     shadow_gradients: bool = True
     shadow_gradient_offset: float = 5
@@ -1472,6 +1480,11 @@ class Settings:
             self.note_width = self.note_size
         if self.note_height is None:
             self.note_height = self.note_size
+
+        if self.shadow_scale_x is None:
+            self.shadow_scale_x = self.shadow_scale
+        if self.shadow_scale_y is None:
+            self.shadow_scale_y = self.shadow_scale
 
         if self.bracket_settings is not None:
             for name, kwargs in self.bracket_settings.items():
