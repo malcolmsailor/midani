@@ -537,9 +537,9 @@ class PitchTable(PitchRange, list):
     def scale_factors(self, t_until, voice_i):
         scale_x_factor = self._scale_x_factor(t_until, voice_i)
         if t_until >= 0:
-            if self.equal_start_xy_size[voice_i]:
+            if self.equal_end_xy_size[voice_i]:
                 return scale_x_factor, scale_x_factor
-        elif self.equal_end_xy_size[voice_i]:
+        elif self.equal_start_xy_size[voice_i]:
             return scale_x_factor, scale_x_factor
         return scale_x_factor, self._scale_y_factor(t_until, voice_i)
 
