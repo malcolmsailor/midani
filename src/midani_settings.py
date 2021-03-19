@@ -13,8 +13,9 @@ import typing
 
 import src.midani_colors as midani_colors
 
-
+# TODO document scaled pixels
 # TODO delete now_line
+# TODO make folders if they don't exist
 
 DEFAULT_CHANNEL_SETTINGS = {
     "l_padding": 0.1,
@@ -25,11 +26,34 @@ TEMP_R_SCRIPT = "midani{:06d}.R"
 
 DEFAULT_SHADOW_POSITIONS = lambda: []
 
-ShadowPositions = collections.namedtuple(
-    "ShadowPositions",
-    ["shadow_x", "shadow_y", "cline_shadow_x", "cline_shadow_y"],
-    defaults=[None, None],
-)
+DEFAULT_PIXEL_WIDTH = 1280
+
+
+class ShadowPositions:
+    def __init__(
+        self,
+        pixel_width,
+        frame_len,
+        shadow_x,
+        shadow_y,
+        cline_shadow_x=None,
+        cline_shadow_y=None,
+    ):
+        self.shadow_x = shadow_x * frame_len / DEFAULT_PIXEL_WIDTH
+        self.shadow_y = shadow_y * pixel_width / DEFAULT_PIXEL_WIDTH
+        if cline_shadow_x is None:
+            self.cline_shadow_x = self.shadow_x
+        else:
+            self.cline_shadow_x = (
+                cline_shadow_x * frame_len / DEFAULT_PIXEL_WIDTH
+            )
+        if cline_shadow_y is None:
+            self.cline_shadow_y = self.shadow_y
+        else:
+            self.cline_shadow_y = (
+                cline_shadow_y * pixel_width / DEFAULT_PIXEL_WIDTH
+            )
+
 
 PER_VOICE_COLORS = (
     "shadow_color",
@@ -90,6 +114,11 @@ class BracketSettings:
     # LONGTERM should there be a way of specifying global defaults for the
     # brackets? (So if we want all brackets to be the same height, we
     # don't have to specify individually for each one?)
+
+    # pixel_width is used to normalize line_width and text_size
+    # it shouldn't be provided separately by the user, but should be
+    # taken from the frame resolution setting
+    pixel_width: int
     above: bool = False
     color: typing.Union[  # pylint: disable=unsubscriptable-object
         typing.Tuple[int, int, int], typing.Tuple[int, int, int, int]
@@ -109,6 +138,10 @@ class BracketSettings:
     _colors = ("color",)
 
     def __post_init__(self):
+        # LONGTERM replace this with calls to pixel_normalize inside
+        # VoiceSettings or Settings?
+        self.line_width *= self.pixel_width / DEFAULT_PIXEL_WIDTH
+        self.text_size *= self.pixel_width / DEFAULT_PIXEL_WIDTH
         add_transparencies(self)
 
 
@@ -327,7 +360,7 @@ class VoiceSettings:
                 out.append(
                     tuple(
                         [
-                            c1 + c2
+                            min(255, max(c1 + c2, 0))
                             for c1, c2 in zip(
                                 self.color,
                                 midani_colors.get_color_vary_ns(
@@ -359,11 +392,12 @@ class VoiceSettings:
         if "bracket_settings" in dir(self):
             for name, kwargs in self.bracket_settings.items():
                 self.bracket_settings[name] = BracketSettings(
+                    self.out_width,
                     **(
                         self.parent.default_bracket_settings
                         | self.default_bracket_settings
                         | kwargs
-                    )
+                    ),
                 )
             if self.parent.bracket_settings is not None:
                 for name, br_setting in self.parent.bracket_settings.items():
@@ -1127,6 +1161,9 @@ class Settings:
         annot_color: tuple of form (int, int, int[, int]). Color for
             annotations.
             Default: (255, 255, 255, 255).
+        annot_size: float. Sets annot size by scaling the annot with the
+            `cex` argument to the R `text` command.
+            Default: 1.0
         now_line: boolean. If True, adds a line to each frame indicating "now".
             Default: False.
     """
@@ -1148,6 +1185,7 @@ class Settings:
     seed: int = None
     add_annotations: list = dataclasses.field(default_factory=list)
     annot_color: typing.Tuple[int, int, int] = (255, 255, 255, 255)
+    annot_size: float = 1.0
     now_line: bool = False
     _test: bool = False  # append "_test to output filename"
 
@@ -1438,7 +1476,7 @@ class Settings:
         if self.bracket_settings is not None:
             for name, kwargs in self.bracket_settings.items():
                 self.bracket_settings[name] = BracketSettings(
-                    **(self.default_bracket_settings | kwargs)
+                    self.out_width, **(self.default_bracket_settings | kwargs)
                 )
 
         # The following attributes are only initialized after calling
@@ -1583,17 +1621,9 @@ class Settings:
         )
 
         self.num_shadows = len(self.shadow_positions)
-        # LONGTERM move this logic into the ShadowPositions class
         self.shadow_positions = [
-            ShadowPositions(
-                shadow_x=s[0] / self.w_factor,
-                # shadow_y=s[1] / self.out_height,
-                shadow_y=s[1],
-                cline_shadow_x=(s[2] if len(s) > 2 else s[0]) / self.w_factor,
-                # cline_shadow_y=(s[3] if len(s) > 3 else s[1]) / self.out_height,
-                cline_shadow_y=(s[3] if len(s) > 3 else s[1]),
-            )
-            for s in self.shadow_positions
+            ShadowPositions(self.out_width, self.frame_len, *shadow_p)
+            for shadow_p in self.shadow_positions
         ]
         self.max_shadow_x_time = max(
             [s.shadow_x for s in self.shadow_positions]
@@ -1605,6 +1635,15 @@ class Settings:
             + [s.cline_shadow_x for s in self.shadow_positions]
             + [0,]
         )
+        self.pixel_normalize_attr("con_line_width")
+        self.pixel_normalize_attr("lyrics_size")
+        self.pixel_normalize_attr("annot_size")
+
+    def pixel_normalize(self, val):
+        return val * self.out_width / DEFAULT_PIXEL_WIDTH
+
+    def pixel_normalize_attr(self, attr):
+        setattr(self, attr, self.pixel_normalize(getattr(self, attr)))
 
     def __getitem__(self, key):
         return self.voice_settings[key]

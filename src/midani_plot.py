@@ -467,6 +467,7 @@ def draw_annotations(window, settings, r_boss):
                     x=window.now,
                     y=window.y_position(y),
                     color=settings.annot_color,
+                    size=settings.annot_size,
                 )
                 y += 0.025
 

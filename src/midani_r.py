@@ -111,11 +111,10 @@ class RBoss:
         )
         self.line_count += 1
 
-    def text(self, text, x, y, color, size=1.0, adj="NULL"):
+    def text(self, text, x, y, color, size, adj="NULL"):
         self.outf.write(
             f'text(c({x}), c({y}), "{text}", '
             f'col = "{self.hex_color(color)}", cex={size}, adj={adj})\n'
-            # f'col = "{self.hex_color(color)}", cex={size})\n'
         )
         self.line_count += 1
 
