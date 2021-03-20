@@ -495,10 +495,14 @@ class PitchTable(PitchRange, list):
     def _get_scale_factor(
         time, end_or_start, start_or_end_size, voice_size, scale_func
     ):
-        return (
-            (1 - scale_func(time / end_or_start)) * (1 - start_or_end_size)
-            + start_or_end_size
-        ) * voice_size
+        return max(
+            0,
+            (
+                (1 - scale_func(time / end_or_start)) * (1 - start_or_end_size)
+                + start_or_end_size
+            )
+            * voice_size,
+        )
 
     def _scale_x_factor(self, t_until, voice_i):
         if t_until >= 0:
