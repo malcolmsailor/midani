@@ -1,22 +1,11 @@
-#!/usr/local/bin/python3
-
-# TODO is there a portable shebang for python scripts?
-
-"""Make piano-roll animations from midi files.
-
-(c) 2020 Malcolm Sailor
-
-https://github.com/malcolmsailor/midani
-"""
-
 import argparse
 import os
 import re
 import sys
 
-import src.midani_av as midani_av
-import src.midani_plot as midani_plot
-import src.midani_settings as midani_settings
+import midani.midani_av as midani_av
+import midani.midani_plot as midani_plot
+import midani.midani_settings as midani_settings
 
 NO_PATH_MSG = """Nothing to animate! Either
     - pass path to a midi file as a command-line argument with "-m" or "--midi"
@@ -31,12 +20,66 @@ specified with the "midi_fname" keyword argument in a settings file provided wit
 SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
 
 
-def main(
-    midi_path, audio_path, test_flag, user_settings_paths, use_eval, frame_list
-):
+def parse_args():
+    parser = argparse.ArgumentParser(description=ARGPARSE_DESCRIPTION)
+    parser.add_argument("-m", "--midi", help="path to midi file to animate")
+    parser.add_argument(
+        "-a", "--audio", help="path to audio file to add to video"
+    )
+    parser.add_argument(
+        "-s",
+        "--settings",
+        nargs="*",
+        help="path to settings files, each containing a Python dictionary",
+    )
+    parser.add_argument(
+        "-t",
+        "--test",
+        help="set frame rate to a maximum of 2 fps",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-e",
+        "--eval",
+        help=(
+            "use 'eval()' rather than 'ast.literal_eval()' to  parse settings. "
+        ),
+        action="store_true",
+    )
+    parser.add_argument(
+        "-f",
+        "--frames",
+        help=(
+            "a comma-separated list of numbers (with no spaces); specifies a "
+            "list of individual frames to be drawn"
+        ),
+        type=get_frames,
+        default=None,
+    )
+    args = parser.parse_args()
+    return (
+        args.midi,
+        args.audio,
+        args.test,
+        args.settings,
+        args.eval,
+        args.frames,
+    )
+
+
+def main():
+
     print("Midani: make piano-roll animations from midi files")
     print("==================================================")
     print("https://github.com/malcolmsailor/midani\n")
+    (
+        midi_path,
+        audio_path,
+        test_flag,
+        user_settings_paths,
+        use_eval,
+        frame_list,
+    ) = parse_args()
     if user_settings_paths is None:
         user_settings = {}
     else:
@@ -106,42 +149,4 @@ def get_frames(in_str):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=ARGPARSE_DESCRIPTION)
-    parser.add_argument("-m", "--midi", help="path to midi file to animate")
-    parser.add_argument(
-        "-a", "--audio", help="path to audio file to add to video"
-    )
-    parser.add_argument(
-        "-s",
-        "--settings",
-        nargs="*",
-        help="path to settings files, each containing a Python dictionary",
-    )
-    parser.add_argument(
-        "-t",
-        "--test",
-        help="set frame rate to a maximum of 2 fps",
-        action="store_true",
-    )
-    parser.add_argument(
-        "-e",
-        "--eval",
-        help=(
-            "use 'eval()' rather than 'ast.literal_eval()' to  parse settings. "
-        ),
-        action="store_true",
-    )
-    parser.add_argument(
-        "-f",
-        "--frames",
-        help=(
-            "a comma-separated list of numbers (with no spaces); specifies a "
-            "list of individual frames to be drawn"
-        ),
-        type=get_frames,
-        default=None,
-    )
-    args = parser.parse_args()
-    main(
-        args.midi, args.audio, args.test, args.settings, args.eval, args.frames
-    )
+    main()

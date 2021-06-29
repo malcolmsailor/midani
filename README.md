@@ -32,28 +32,35 @@ To install Python dependencies, from script directory:
 pip install -r requirements.txt
 ```
 
+To install the script itself, from the script directory:
+
+```
+pip install .
+```
+
 ## Example Usage:
 
 Create an animation with the default settings:
 
-`python midani.py --midi [MIDIFILE]`
+`midani --midi [MIDIFILE]`
 
 The same, but add audio as well:
 
-`python midani.py --midi [MIDIFILE] --audio [AUDIOFILE]`
+`midani --midi [MIDIFILE] --audio [AUDIOFILE]`
 
 The same, but animate at 2fps rather than the default 30fps, so you can get a flavor of the results without waiting quite so long:
 
-`python midani.py --midi [MIDIFILE] --audio [AUDIOFILE] --test`
+`midani --midi [MIDIFILE] --audio [AUDIOFILE] --test`
 
 Create an animation using one of the sample settings and one of the sample midi/audio files:
 
-`python midani.py --settings sample_settings/settings1.py`
+`midani --settings sample_settings/settings1.py`
 
 ## Usage
 
 ```
-usage: midani.py [-h] [-m MIDI] [-a AUDIO] [-s SETTINGS] [-t] [-e]
+usage: midani [-h] [-m MIDI] [-a AUDIO] [-s [SETTINGS ...]] [-t] [-e]
+              [-f FRAMES]
 
 Animate a midi file. The path to a midi file must either be included as a
 command line argument with -m/--midi, or it must be specified with the
@@ -64,11 +71,15 @@ optional arguments:
   -m MIDI, --midi MIDI  path to midi file to animate
   -a AUDIO, --audio AUDIO
                         path to audio file to add to video
-  -s SETTINGS, --settings SETTINGS
-                        path to settings file containing a Python dictionary
+  -s [SETTINGS ...], --settings [SETTINGS ...]
+                        path to settings files, each containing a Python
+                        dictionary
   -t, --test            set frame rate to a maximum of 2 fps
   -e, --eval            use 'eval()' rather than 'ast.literal_eval()' to parse
-                        settings. Use with caution!
+                        settings.
+  -f FRAMES, --frames FRAMES
+                        a comma-separated list of numbers (with no spaces);
+                        specifies a list of individual frames to be drawn
 ```
 
 ## Configuration

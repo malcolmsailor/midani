@@ -3,12 +3,12 @@
 
 import math
 
-import src.midani_annotations as midani_annotations
-import src.midani_colors as midani_colors
-import src.midani_misc_classes as midani_misc_classes
-import src.midani_r as midani_r
-import src.midani_score as midani_score
-import src.midani_time as midani_time
+import midani.midani_annotations as midani_annotations
+import midani.midani_colors as midani_colors
+import midani.midani_misc_classes as midani_misc_classes
+import midani.midani_r as midani_r
+import midani.midani_score as midani_score
+import midani.midani_time as midani_time
 
 
 def _rect_or_its_shadow_in_frame(now, note, settings, voice_i):

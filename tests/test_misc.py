@@ -7,9 +7,9 @@ sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 )
 
-import src.midani_score as midani_score  # pylint: disable=wrong-import-position
-import src.midani_settings as midani_settings  # pylint: disable=wrong-import-position
-import src.midani_time as midani_time  # pylint: disable=wrong-import-position
+import midani.midani_score as midani_score  # pylint: disable=wrong-import-position
+import midani.midani_settings as midani_settings  # pylint: disable=wrong-import-position
+import midani.midani_time as midani_time  # pylint: disable=wrong-import-position
 
 SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
 

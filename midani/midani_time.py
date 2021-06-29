@@ -1,12 +1,11 @@
 """Provides TempoChanges class.
 """
 
-import src.from_my_other_projects.mal_misc as mal_misc
+import midani.from_my_other_projects.mal_misc as mal_misc
 
 
 class TempoChanges:
-    """Uses tempo changes from Score to convert between beats and clock times.
-    """
+    """Uses tempo changes from Score to convert between beats and clock times."""
 
     def __init__(self, score):
         self.t_changes_btimes = {

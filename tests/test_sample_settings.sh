@@ -48,11 +48,13 @@ for settings in "${MIDANI_DIR}"/sample_settings/settings*.py
 do
     if [[ $frames -eq 1 ]]
     then
-        try_to_run python3 "${MIDANI_DIR}/midani.py" --settings "$settings" \
+        # try_to_run python3 "${MIDANI_DIR}/midani.py" --settings "$settings" \
+        try_to_run midani --settings "$settings" \
             "${MIDANI_DIR}/tests/test_settings/frame_settings.py" \
             --frames 0,2,4 "${@:2}"
     else
-        try_to_run python3 "${MIDANI_DIR}/midani.py" \
+        # try_to_run python3 "${MIDANI_DIR}/midani.py" \
+        try_to_run midani \
             --settings "$settings" "${@:2}"
     fi
 done

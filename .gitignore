@@ -7,3 +7,6 @@ src/.temp_r_files
 tests/test_out
 tests/test_mid
 pylintrc_default
+.vscode/
+.idea/
+*.egg-info/

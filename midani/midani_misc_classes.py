@@ -7,7 +7,7 @@ import math
 import random
 import typing
 
-import src.midani_colors as midani_colors
+import midani.midani_colors as midani_colors
 
 
 @dataclasses.dataclass

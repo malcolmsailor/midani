@@ -9,9 +9,9 @@ sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 )
 
-import src.midani_settings as midani_settings  # pylint: disable=wrong-import-position
-import src.midani_score as midani_score  # pylint: disable=wrong-import-position
-import src.midani_time as midani_time  # pylint: disable=wrong-import-position
+import midani.midani_settings as midani_settings  # pylint: disable=wrong-import-position
+import midani.midani_score as midani_score  # pylint: disable=wrong-import-position
+import midani.midani_time as midani_time  # pylint: disable=wrong-import-position
 
 
 SCRIPT_DIR = os.path.dirname((os.path.realpath(__file__)))
@@ -67,7 +67,11 @@ def test_voice_settings():
         "note_start": 0.5,
         "note_end": 2,
         "note_end_width": 2,
-        "duplicate_voice_settings": {0: [1,]},
+        "duplicate_voice_settings": {
+            0: [
+                1,
+            ]
+        },
         "bracket_settings": {"1": {"line_width": 7}, "3": {"line_width": 0.5}},
         "default_bracket_settings": {"x_offset": 2, "text_y_offset": 1},
     }

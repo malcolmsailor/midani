@@ -3,8 +3,8 @@ import fractions
 
 import mido
 
-import src.from_my_other_projects.note_classes as note_classes
-import src.from_my_other_projects.tuning as tuning
+import midani.from_my_other_projects.note_classes as note_classes
+import midani.from_my_other_projects.tuning as tuning
 
 NUM_CHANNELS = 16
 
