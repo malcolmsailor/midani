@@ -128,7 +128,6 @@ if __name__ == "__main__":
         "--eval",
         help=(
             "use 'eval()' rather than 'ast.literal_eval()' to  parse settings. "
-            "Use with caution!"
         ),
         action="store_true",
     )

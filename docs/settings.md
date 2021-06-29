@@ -34,7 +34,8 @@ There are two types of settings, "global" settings and "per-voice" settings:
 
 - Global settings always apply to the animation as a whole. An example is
     `intro`, which sets the length of time before the music begins.
-    - Per-voice settings can be applied to individual "voices" (=tracks in the
+
+- Per-voice settings can be applied to individual "voices" (=tracks in the
     input midi file). They can also be provided as global defaults which apply
     whenever the setting is not explicitly set for an individual voice. An
     example is `connection_lines`, which controls whether lines are drawn
@@ -86,6 +87,10 @@ All general settings are global.
     It is also possible to pass a list of files. In that case, the
             tempos will be taken from the first file, but the notes will be
             taken from all files.
+- **midi_reset_start_to_0**: bool. If True, then the first note in the input
+            midi file will be adjusted to occur at time "0" (if it doesn't
+            already).
+            *Default*: `False`
 - **midi_tracks_to_voices**: bool. If True, different tracks in the input
             midi will be mapped to different "voices" in the animation.
             *Default*: `True`
@@ -558,8 +563,12 @@ To turn on shadow rendering, ensure that `shadow_positions` is at least
             they shadow. If there is more than one shadow per note (i.e., if
             `len(shadow_positions) > 1`), then each shadow will be scaled by
             `shadow_scale**n` where n is its position in the list (starting
-            from 1).
+            from 1). Can be overridden by `shadow_scale_x` or `shadow_scale_y`.
             *Default*: `1.0`
+- **shadow_scale_x**: float. Like shadow_scale, but in the horizontal
+            dimension only. Overrides any value specified by `shadow_scale`.
+- **shadow_scale_y**: float. Like shadow_scale, but in the vertical
+            dimension only. Overrides any value specified by `shadow_scale`.
 - **highlight_shadows**: boolean. Controls whether shadows are highlighted
             similarly to notes.
             *Default*: `False`
@@ -743,6 +752,9 @@ All bounce settings are per-voice or global.
 - **annot_color**: tuple of form (int, int, int[, int]). Color for
             annotations.
             *Default*: `(255, 255, 255, 255).`
+- **annot_size**: float. Sets annot size by scaling the annot with the
+            `cex` argument to the R `text` command.
+            *Default*: `1.0`
 - **now_line**: boolean. If True, adds a line to each frame indicating "now".
             *Default*: `False.`
     

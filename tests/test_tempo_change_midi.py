@@ -26,6 +26,7 @@ class DummySettings:  # pylint: disable=missing-class-docstring
     tet: int = 12
     midi_tracks_to_voices: bool = True
     midi_channels_to_voices: bool = False
+    midi_reset_start_to_0: bool = False
 
 
 def test_tempo_changes():

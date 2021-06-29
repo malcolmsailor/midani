@@ -9,6 +9,7 @@ def read_score(settings):
         return midi_funcs.read_midi_to_internal_data(
             midi_fname,
             tet=settings.tet,
+            first_note_at_0=settings.midi_reset_start_to_0,
             split_tracks_to_voices=settings.midi_tracks_to_voices,
             split_channels_to_voices=settings.midi_channels_to_voices,
         )

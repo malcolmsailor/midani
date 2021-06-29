@@ -16,6 +16,9 @@ import src.midani_colors as midani_colors
 # TODO document scaled pixels
 # TODO delete now_line
 # TODO make folders if they don't exist
+# TODO setting to specify path for temporary R files?
+# TODO why do pngs (like those for the efficient_rhythms docs) have "outlines"
+#   visible?
 
 DEFAULT_CHANNEL_SETTINGS = {
     "l_padding": 0.1,
@@ -440,6 +443,7 @@ class Settings:
 
     - Global settings always apply to the animation as a whole. An example is
     `intro`, which sets the length of time before the music begins.
+
     - Per-voice settings can be applied to individual "voices" (=tracks in the
     input midi file). They can also be provided as global defaults which apply
     whenever the setting is not explicitly set for an individual voice. An
@@ -493,6 +497,10 @@ class Settings:
             It is also possible to pass a list of files. In that case, the
             tempos will be taken from the first file, but the notes will be
             taken from all files.
+        midi_reset_start_to_0: bool. If True, then the first note in the input
+            midi file will be adjusted to occur at time "0" (if it doesn't
+            already).
+            Default: False
         midi_tracks_to_voices: bool. If True, different tracks in the input
             midi will be mapped to different "voices" in the animation.
             Default: True
@@ -1177,6 +1185,7 @@ class Settings:
     midi_fname: typing.Union[  # pylint: disable=unsubscriptable-object
         str, typing.Sequence[str]
     ] = ""
+    midi_reset_start_to_0: bool = False
     midi_tracks_to_voices: bool = True
     midi_channels_to_voices: bool = False
     output_dirname: str = None

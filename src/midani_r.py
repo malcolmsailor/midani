@@ -70,8 +70,7 @@ class RBoss:
             or (self.plot_count + 1) % MAX_PLOT_COUNT == 0
         ):
             self._increment_outf()
-        if self.plot_count % PLOT_PRINT_COUNT == 0:
-            print(f"Writing frame {self.plot_count} \r", end="")
+        print(f"Writing frame {self.plot_count} \r", end="")
         self.outf.write(
             self._init_png_str.format(
                 png_fnumber=self.png_fnumber,
