@@ -8,15 +8,15 @@ ignore=midani_tests.py
 ignore-patterns=sample_settings
 
 # From https://github.com/PyCQA/pylint/issues/2686#issuecomment-621927895
-init-hook=
-    sys.path.append(os.getcwd());
-    from midani.third_party.pylint_ignore import PylintIgnorePaths;
-    PylintIgnorePaths(
-        "tests/third_party",
-        "tests/test_settings",
-        "midani/from_my_other_projects",
-        "midani/third_party",
-    )
+# init-hook=
+#     sys.path.append(os.getcwd());
+#     from midani.third_party.pylint_ignore import PylintIgnorePaths;
+#     PylintIgnorePaths(
+#         "tests/third_party",
+#         "tests/test_settings",
+#         "midani/from_my_other_projects",
+#         "midani/third_party",
+#     )
 
 
 [MESSAGES CONTROL]

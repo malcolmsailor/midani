@@ -4,12 +4,8 @@
 import os
 import sys
 
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-)
-
-import midani.midani_plot as midani_plot  # pylint: disable=wrong-import-position
-import midani.midani_settings as midani_settings  # pylint: disable=wrong-import-position
+from midani import midani_plot
+from midani import midani_settings
 
 SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
 OUT_PATH = os.path.join(SCRIPT_PATH, "test_out/pngs")
@@ -28,7 +24,7 @@ def test_plot():
         end_time=1,
         outro=0,
     )
-    midani_plot.plot(settings)
+    midani_plot.plot(settings, False)
     print(f"Wrote test pngs to folder {OUT_PATH}")
 
 

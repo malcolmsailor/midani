@@ -11,7 +11,7 @@ import os
 import random
 import typing
 
-import midani.midani_colors as midani_colors
+from . import midani_colors
 
 # TODO document scaled pixels
 # TODO delete now_line
@@ -111,8 +111,7 @@ Bracket = collections.namedtuple(
 
 @dataclasses.dataclass
 class BracketSettings:
-    """Stores settings for brackets.
-    """
+    """Stores settings for brackets."""
 
     # LONGTERM should there be a way of specifying global defaults for the
     # brackets? (So if we want all brackets to be the same height, we
@@ -149,8 +148,7 @@ class BracketSettings:
 
 
 def post_init_helper(obj):
-    """Called by both VoiceSettings and Settings
-    """
+    """Called by both VoiceSettings and Settings"""
     obj.frame_note_start = (
         obj.note_start
         * obj.global_parent.frame_len
@@ -214,8 +212,7 @@ def post_init_helper(obj):
 
 
 def add_transparencies(obj):
-    """ Add transparency value to colors if absent.
-    """
+    """Add transparency value to colors if absent."""
     try:
         obj._colors  # pylint: disable=protected-access
     except AttributeError:
@@ -226,7 +223,12 @@ def add_transparencies(obj):
                 setattr(
                     obj,
                     color_name,
-                    tuple(list(getattr(obj, color_name)) + [255,]),
+                    tuple(
+                        list(getattr(obj, color_name))
+                        + [
+                            255,
+                        ]
+                    ),
                 )
 
     try:
@@ -249,7 +251,14 @@ def add_transparencies(obj):
                 obj,
                 color_list,
                 tuple(
-                    tuple(list(tup) + [opacity,]) if len(tup) < 4 else tup
+                    tuple(
+                        list(tup)
+                        + [
+                            opacity,
+                        ]
+                    )
+                    if len(tup) < 4
+                    else tup
                     for tup in val
                 ),
             )
@@ -419,8 +428,7 @@ class VoiceSettings:
         return self.getattr_func(name)
 
     def _getattr2(self, name):
-        """After post_init runs, we overwrite __getattr__ with this function.
-        """
+        """After post_init runs, we overwrite __getattr__ with this function."""
         if name in self.allowed_attributes:
             return self._getattr(name)
         raise AttributeError(
@@ -1650,12 +1658,16 @@ class Settings:
         self.max_shadow_x_time = max(
             [s.shadow_x for s in self.shadow_positions]
             + [s.cline_shadow_x for s in self.shadow_positions]
-            + [0,]
+            + [
+                0,
+            ]
         )
         self.min_shadow_x_time = min(
             [s.shadow_x for s in self.shadow_positions]
             + [s.cline_shadow_x for s in self.shadow_positions]
-            + [0,]
+            + [
+                0,
+            ]
         )
         self.pixel_normalize_attr("con_line_width")
         self.pixel_normalize_attr("lyrics_size")

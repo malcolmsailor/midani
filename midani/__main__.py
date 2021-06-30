@@ -1,11 +1,12 @@
 import argparse
 import os
 import re
+import shutil
 import sys
 
-import midani.midani_av as midani_av
-import midani.midani_plot as midani_plot
-import midani.midani_settings as midani_settings
+from . import midani_av
+from . import midani_plot
+from . import midani_settings
 
 NO_PATH_MSG = """Nothing to animate! Either
     - pass path to a midi file as a command-line argument with "-m" or "--midi"
@@ -56,6 +57,11 @@ def parse_args():
         type=get_frames,
         default=None,
     )
+    parser.add_argument(
+        "--mpl",
+        help=("use matplotlib (rather than R) for plotting. Much slower."),
+        action="store_true",
+    )
     args = parser.parse_args()
     return (
         args.midi,
@@ -64,7 +70,31 @@ def parse_args():
         args.settings,
         args.eval,
         args.frames,
+        args.mpl,
     )
+
+
+def check_requirements(mpl):
+    if not mpl:
+        if not shutil.which("Rscript"):
+            print(
+                "ERROR: "
+                "Can't find `Rscript` in path. Perhaps you need to install R?\n"
+                "You can also plot with matplotlib using the --mpl argument.\n"
+                "However, matplotlib seems to be much slower."
+            )
+            sys.exit(1)
+    else:
+        try:
+            import matplotlib
+        except ModuleNotFoundError:
+            print(
+                "ERROR: "
+                "Can't import `matplotlib`. Perhaps you need to install it?\n"
+                "However, be warned that this script is much slower when \n"
+                "using matplotlib. Using `R` instead is recommended."
+            )
+            sys.exit(1)
 
 
 def main():
@@ -79,6 +109,7 @@ def main():
         user_settings_paths,
         use_eval,
         frame_list,
+        mpl,
     ) = parse_args()
     if user_settings_paths is None:
         user_settings = {}
@@ -107,8 +138,10 @@ def main():
     settings = midani_settings.Settings(
         script_path=SCRIPT_PATH, **user_settings
     )
+    if settings.process_video != "only":
+        check_requirements(mpl)
     if frame_list is not None or settings.process_video != "only":
-        n_frames = midani_plot.plot(settings, frame_list)
+        n_frames = midani_plot.plot(settings, mpl, frame_list)
     else:
         png_pattern = re.compile(
             os.path.basename(settings.png_fname_base) + r"\d+\.png"
@@ -129,7 +162,7 @@ def main():
         print(f"The output file is\n{settings.video_fname}")
     if frame_list is not None:
         print("The output files are:")
-        for i in range(1, n_frames):
+        for i in range(1, n_frames + 1):
             print(
                 f"{settings.png_fname_base}"
                 f"{str(i).zfill(settings.png_fnum_digits)}.png"

@@ -7,7 +7,7 @@ import math
 import random
 import typing
 
-import midani.midani_colors as midani_colors
+from . import midani_colors
 
 
 @dataclasses.dataclass
@@ -23,8 +23,7 @@ class Note:  # pylint: disable=missing-class-docstring
 
 @dataclasses.dataclass
 class RectTuple:
-    """Stores data used to plot rectangles.
-    """
+    """Stores data used to plot rectangles."""
 
     note: Note
     scale_x_factor: float
@@ -40,8 +39,7 @@ class RectTuple:
 
 @dataclasses.dataclass
 class LineTuple:
-    """Stores data used to plot lines.
-    """
+    """Stores data used to plot lines."""
 
     note: Note
     scale_factor: float
@@ -55,8 +53,7 @@ class LineTuple:
 
 
 class PitchFlutter:
-    """Calculates 'flutter' according to provided parameters.
-    """
+    """Calculates 'flutter' according to provided parameters."""
 
     def __init__(
         self,
@@ -173,13 +170,14 @@ class Window:
             prev_bg_color = self._last_bg_color_before_outro
             bg_prop = (self._now - self.end_bg_time) / self.outro
         return midani_colors.blend_colors(
-            prev_bg_color, next_bg_color, bg_prop,
+            prev_bg_color,
+            next_bg_color,
+            bg_prop,
         )
 
     @functools.cached_property
     def _last_bg_color_before_outro(self):
-        """Raises an error if called when self.outro_has_begun is False.
-        """
+        """Raises an error if called when self.outro_has_begun is False."""
         if self.outro_has_begun is False:
             raise ValueError(
                 "`_last_bg_color_before_outro` should only be called after "
@@ -284,8 +282,7 @@ class Window:
 
 
 class PitchRange:
-    """Used by child classes below to determine where pitches lie in range.
-    """
+    """Used by child classes below to determine where pitches lie in range."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -350,8 +347,7 @@ class VoiceList(PitchRange, list):
 
 
 class Channel(PitchRange):
-    """Represents a horizontal 'channel' within which notes can be plotted.
-    """
+    """Represents a horizontal 'channel' within which notes can be plotted."""
 
     def __init__(self, channel_i, settings):
         super().__init__()
@@ -376,8 +372,7 @@ class Channel(PitchRange):
         return 1 / self.pitch_range * self.height * self.non_padding
 
     def y_position(self, pitch):
-        """Returns the y position of a pitch in the frame, in pixels.
-        """
+        """Returns the y position of a pitch in the frame, in pixels."""
         return self.proportion(pitch) + self.offset
 
     def pixel_height(self, height):

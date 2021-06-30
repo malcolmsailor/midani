@@ -3,13 +3,8 @@
 import dataclasses
 import os
 import shutil
-import sys
 
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-)
-
-import midani.midani_av as midani_av  # pylint: disable=wrong-import-position
+from midani import midani_av
 
 SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
 OUT_PATH = os.path.join(SCRIPT_PATH, "test_out")

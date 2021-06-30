@@ -2,17 +2,10 @@
 """
 import dataclasses
 import os
-import sys
-import traceback
 
 import mido
-
-sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-)
-
-import midani.midani_score as midani_score  # pylint: disable=wrong-import-position
-import midani.midani_time as midani_time  # pylint: disable=wrong-import-position
+from midani import midani_score
+from midani import midani_time
 
 SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
 OUT_DIR = os.path.join(SCRIPT_PATH, "test_mid")
@@ -69,20 +62,12 @@ def test_tempo_changes():
         3.3996212121212124,
         3.740530303030303,
     ]
-    try:
-        for note, time in zip(score.voices[0], times):
-            # Times do not agree exactly because tempos don't come out exactly
-            # from mido conversion (e.g., 144 becomes 143.99988480009216)
-            assert (
-                abs(time - tempo_changes.ctime_from_btime(note.attack_time))
-                < 1e-6
-            ), "abs(time - tempo_changes.ctime_from_btime(note.attack_time)) >= 1e-6"
-    except:  # pylint: disable=bare-except
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        traceback.print_exception(
-            exc_type, exc_value, exc_traceback, file=sys.stdout
-        )
-        breakpoint()
+    for note, time in zip(score.voices[0], times):
+        # Times do not agree exactly because tempos don't come out exactly
+        # from mido conversion (e.g., 144 becomes 143.99988480009216)
+        assert (
+            abs(time - tempo_changes.ctime_from_btime(note.attack_time)) < 1e-6
+        ), "abs(time - tempo_changes.ctime_from_btime(note.attack_time)) >= 1e-6"
 
     # t1 = 60 / 120
     # t2 = 60 / 144

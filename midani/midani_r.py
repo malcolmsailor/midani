@@ -1,6 +1,7 @@
 """Provides RBoss class to control Rscript.
 """
 
+import contextlib
 import os
 import shutil
 import subprocess
@@ -12,8 +13,7 @@ R_PRINT_COUNT = 1
 
 
 class RBoss:
-    """Class for writing R scripts and then calling Rscript to read them.
-    """
+    """Class for writing R scripts and then calling Rscript to read them."""
 
     def __init__(self, settings):
         self.outfnumber = 0
@@ -27,7 +27,6 @@ class RBoss:
         self._increment_outf()
         self.png_dirname = settings.output_dirname
         self.png_fname_base = settings.png_fname_base
-        self.png_fnumber = 1
         self.out_width = settings.out_width
         self.out_height = settings.out_height
         self._init_png_str = (
@@ -64,6 +63,14 @@ class RBoss:
         self.outf.write("require(grDevices)\n")
         self.line_count = 1
 
+    @contextlib.contextmanager
+    def make_png(self, window):
+        self.init_png(window)
+        try:
+            yield
+        finally:
+            self.close_png()
+
     def init_png(self, window):
         if (
             self.line_count > MAX_LINE_COUNT
@@ -73,7 +80,7 @@ class RBoss:
         print(f"Writing frame {self.plot_count} \r", end="")
         self.outf.write(
             self._init_png_str.format(
-                png_fnumber=self.png_fnumber,
+                png_fnumber=self.plot_count + 1,
                 bg_color=self.hex_color(window.bg_color),
                 window_start=window.start,
                 window_end=window.end,
@@ -86,9 +93,10 @@ class RBoss:
                 window_top=window.top,
             )
         )
-        self.png_fnumber += 1
-        self.plot_count += 1
         self.line_count += 4
+
+    def close_png(self):
+        self.plot_count += 1
 
     def now_line(self, now, window):
         self.outf.write(
@@ -96,35 +104,39 @@ class RBoss:
         )
         self.line_count += 1
 
-    def plot_rect(self, x1, x2, y1, y2, color):
+    def plot_rect(self, x1, x2, y1, y2, color, zorder):
         self.outf.write(
             f'rect({x1}, {y1}, {x2}, {y2}, col = "{self.hex_color(color)}", '
             "border = NA)\n"
         )
         self.line_count += 1
 
-    def plot_line(self, x1, x2, y1, y2, color, width):
+    def plot_line(self, x1, x2, y1, y2, color, width, zorder):
         self.outf.write(
             f"lines(c({x1},{x2}), c({y1},{y2}), "
             f'col = "{self.hex_color(color)}", lwd = {width})\n'
         )
         self.line_count += 1
 
-    def text(self, text, x, y, color, size, adj="NULL"):
+    def text(self, text, x, y, color, size, position=None, zorder=None):
+        if position is None:
+            adj = "NULL"
+        else:
+            adj = f"c{position}"
         self.outf.write(
             f'text(c({x}), c({y}), "{text}", '
             f'col = "{self.hex_color(color)}", cex={size}, adj={adj})\n'
         )
         self.line_count += 1
 
-    def bracket(self, x1, x2, y1, y2, color, width):
+    def bracket(self, x1, x2, y1, y2, color, width, zorder):
         self.outf.write(
             f"lines(c({x1},{x1},{x2},{x2}), c({y1},{y2},{y2},{y1}), "
             f'col = "{self.hex_color(color)}", lwd = {width})\n'
         )
         self.line_count += 1
 
-    def run_r(self):
+    def run(self):
         print(f"Plotting {self.plot_count} frames in R")
         if not os.path.exists(self.png_dirname):
             os.makedirs(self.png_dirname)

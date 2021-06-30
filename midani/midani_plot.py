@@ -2,13 +2,16 @@
 """
 
 import math
+import operator
 
-import midani.midani_annotations as midani_annotations
-import midani.midani_colors as midani_colors
-import midani.midani_misc_classes as midani_misc_classes
-import midani.midani_r as midani_r
-import midani.midani_score as midani_score
-import midani.midani_time as midani_time
+from . import midani_annotations
+from . import midani_colors
+from . import midani_misc_classes
+
+from . import plt_boss
+from . import midani_r
+from . import midani_score
+from . import midani_time
 
 
 def _rect_or_its_shadow_in_frame(now, note, settings, voice_i):
@@ -61,7 +64,10 @@ def get_voice_and_line_tuples(now, settings, table):
     line_tuples = []
     for voice_i, voice in zip(settings.voice_order, table):
         if settings[voice_i].bounce_type == "scalar":
-            bounce_term = max(1, settings[voice_i].bounce_radius,)
+            bounce_term = max(
+                1,
+                settings[voice_i].bounce_radius,
+            )
         else:
             bounce_term = 0
         voice_color = settings[voice_i].color
@@ -156,17 +162,21 @@ def _get_shadow_gradient(
         settings[voice_i].num_shadows + settings[voice_i].shadow_gradient_offset
     )
     shadow_n_color = midani_colors.blend_colors(
-        shadow_color, main_color, shadow_n_strength,
+        shadow_color,
+        main_color,
+        shadow_n_strength,
     )
     if (hl_blend := hl_factor * settings[voice_i].shadow_hl_strength) :
         shadow_n_color = midani_colors.blend_colors(
-            shadow_n_color, settings[voice_i].highlight_color, hl_blend,
+            shadow_n_color,
+            settings[voice_i].highlight_color,
+            hl_blend,
         )
     return shadow_n_color
 
 
 def draw_note_shadows(
-    shadow_i, shadow_position, rect_tuples, window, settings, table, r_boss
+    shadow_i, shadow_position, rect_tuples, window, settings, table, plot_boss
 ):
     shadow_n = settings.num_shadows - shadow_i
     for voice_i, voice in zip(settings.voice_order, rect_tuples):
@@ -221,16 +231,23 @@ def draw_note_shadows(
                     settings,
                     voice_i,
                 )
-            r_boss.plot_rect(
-                max(window.start, rect.note.mid + shadow_x - half_width,),
-                min(window.end, rect.note.mid + shadow_x + half_width,),
+            plot_boss.plot_rect(
+                max(
+                    window.start,
+                    rect.note.mid + shadow_x - half_width,
+                ),
+                min(
+                    window.end,
+                    rect.note.mid + shadow_x + half_width,
+                ),
                 bottom,
                 top,
                 shadow_n_color,
+                zorder=5,
             )
 
 
-def draw_shadows(line_tuples, rect_tuples, window, settings, table, r_boss):
+def draw_shadows(line_tuples, rect_tuples, window, settings, table, plot_boss):
     if settings.shadows <= 0:
         return
     for shadow_i, shadow_position in enumerate(
@@ -243,7 +260,7 @@ def draw_shadows(line_tuples, rect_tuples, window, settings, table, r_boss):
             window,
             settings,
             table,
-            r_boss,
+            plot_boss,
         )
         draw_note_shadows(
             shadow_i,
@@ -252,7 +269,7 @@ def draw_shadows(line_tuples, rect_tuples, window, settings, table, r_boss):
             window,
             settings,
             table,
-            r_boss,
+            plot_boss,
         )
 
 
@@ -293,7 +310,7 @@ def _connection_line_conditions_apply(now, src, dst, settings, voice_i):
 
 
 def draw_line_shadows(
-    shadow_i, shadow_position, line_tuples, window, settings, table, r_boss
+    shadow_i, shadow_position, line_tuples, window, settings, table, plot_boss
 ):
     for voice_i, voice in zip(settings.voice_order, line_tuples):
         if (
@@ -342,7 +359,7 @@ def draw_line_shadows(
                 if line_start_offset is None
                 else min(dst.note.start + line_start_offset, dst.note.mid)
             )
-            r_boss.plot_line(
+            plot_boss.plot_line(
                 x1=x1 + shadow_position.cline_shadow_x,
                 x2=x2 + shadow_position.cline_shadow_x,
                 y1=channel.y_position(src.pitch)
@@ -351,10 +368,11 @@ def draw_line_shadows(
                 + shadow_position.cline_shadow_y,
                 width=settings[voice_i].con_line_width * src.scale_factor,
                 color=shadow_n_color,
+                zorder=1,
             )
 
 
-def draw_connection_lines(line_tuples, window, settings, table, r_boss):
+def draw_connection_lines(line_tuples, window, settings, table, plot_boss):
     for voice_i, voice in zip(settings.voice_order, line_tuples):
         if (
             voice_i not in settings.voices_to_render
@@ -386,17 +404,18 @@ def draw_connection_lines(line_tuples, window, settings, table, r_boss):
                 if line_start_offset is None
                 else min(dst.note.start + line_start_offset, dst.note.mid)
             )
-            r_boss.plot_line(
+            plot_boss.plot_line(
                 x1=x1,
                 x2=x2,
                 y1=channel.y_position(src.pitch),
                 y2=channel.y_position(dst.pitch),
                 color=color,
                 width=settings[voice_i].con_line_width * src.scale_factor,
+                zorder=10,
             )
 
 
-def draw_notes(rect_tuples, window, settings, table, r_boss):
+def draw_notes(rect_tuples, window, settings, table, plot_boss):
     for voice_i, voice in zip(settings.voice_order, rect_tuples):
         if (
             voice_i not in settings.voices_to_render
@@ -429,7 +448,7 @@ def draw_notes(rect_tuples, window, settings, table, r_boss):
             height = channel.pixel_height(rect.scale_y_factor)
             lower_half = height // 2
             upper_half = height - lower_half
-            r_boss.plot_rect(
+            plot_boss.plot_rect(
                 x1=max(window.start, rect.note.mid - half_width),
                 x2=min(window.end, rect.note.mid + half_width),
                 # The next lines are part of an abortive attempt to express
@@ -440,35 +459,38 @@ def draw_notes(rect_tuples, window, settings, table, r_boss):
                 y1=channel.y_position(rect.pitch) - lower_half,
                 y2=channel.y_position(rect.pitch) + upper_half,
                 color=color,
+                zorder=15,
             )
 
 
-def draw_lyrics(window, lyricist, settings, r_boss):
+def draw_lyrics(window, lyricist, settings, plot_boss):
     lyric = lyricist(window.now)
     if lyric is None:
         return
     x = (window.end - window.start) * settings.lyrics_x + window.start
     y = settings.lyrics_y
-    r_boss.text(
+    plot_boss.text(
         text=lyric,
         x=x,
         y=window.y_position(y),
         color=settings.lyrics_color,
         size=settings.lyrics_size,
+        zorder=20,
     )
 
 
-def draw_annotations(window, settings, r_boss):
+def draw_annotations(window, settings, plot_boss):
     y = 0.1
     for annot in settings.add_annotations:
         if annot in midani_annotations.ANNOT:
             for line in midani_annotations.ANNOT[annot](window).split("\n"):
-                r_boss.text(
+                plot_boss.text(
                     text=line,
                     x=window.now,
                     y=window.y_position(y),
                     color=settings.annot_color,
                     size=settings.annot_size,
+                    zorder=20,
                 )
                 y += 0.025
 
@@ -540,7 +562,7 @@ def yield_bracket_coords(bracket, voice, voice_i, bracket_settings, window):
                     break
 
 
-def draw_brackets(table, window, settings, r_boss):
+def draw_brackets(table, window, settings, plot_boss):
     for voice_i, voice in zip(settings.voice_order, table):
         if (
             voice_i not in settings.voices_to_render
@@ -562,77 +584,69 @@ def draw_brackets(table, window, settings, r_boss):
                 bracket, voice, voice_i, bracket_settings, window
             ):
                 if bracket_settings.above:
-                    if (
-                        isinstance(bracket.start, int)
-                        and isinstance(bracket.end, int)
-                        and bracket_settings.tight
-                    ):
-                        y1 = (
-                            max(
-                                note.pitch
-                                for note in voice[
-                                    bracket.start : bracket.end + 1
-                                ]
-                            )
-                            + bracket_settings.y_offset
-                        )
-                    else:
-                        y1 = voice.h_pitch + bracket_settings.y_offset
-                    y2 = y1 + bracket_settings.height
+                    op = operator.add
+                    extreme = max
+                    limit_pitch = voice.h_pitch
                 else:
-                    if (
-                        # If I ever implement validation earlier, then it
-                        # shouldn't be necessary to check that these are
-                        # *both* ints
-                        isinstance(bracket.start, int)
-                        and isinstance(bracket.end, int)
-                        and bracket_settings.tight
-                    ):
-                        y1 = (
-                            min(
-                                note.pitch
-                                for note in voice[
-                                    bracket.start : bracket.end + 1
-                                ]
-                            )
-                            - bracket_settings.y_offset
-                        )
-                    else:
-                        y1 = voice.l_pitch - bracket_settings.y_offset
-                    y2 = y1 - bracket_settings.height
-                r_boss.bracket(
+                    op = operator.sub
+                    extreme = min
+                    limit_pitch = voice.l_pitch
+                if (
+                    # If I ever implement validation earlier, then it
+                    # shouldn't be necessary to check that these are
+                    # *both* ints
+                    isinstance(bracket.start, int)
+                    and isinstance(bracket.end, int)
+                    and bracket_settings.tight
+                ):
+                    y1 = op(
+                        extreme(
+                            note.pitch
+                            for note in voice[bracket.start : bracket.end + 1]
+                        ),
+                        bracket_settings.y_offset,
+                    )
+                else:
+                    y1 = op(limit_pitch, bracket_settings.y_offset)
+                y2 = op(y1, bracket_settings.height)
+                plot_boss.bracket(
                     x1=x1,
                     x2=x2,
                     y1=channel.y_position(y1),
                     y2=channel.y_position(y2),
                     color=bracket_settings.color,
                     width=bracket_settings.line_width,
+                    zorder=20,
                 )
                 if not bracket.text:
                     continue
                 if bracket_settings.above:
-                    adj = "c(0.5, 0)"
+                    # the meaning of "position" is borrowed from R's 'adj'
+                    # arg: 0 for left/bottom, 1 for right/top, and 0.5 for
+                    # centered.
+                    position = (0.5, 0)
                     y2 += bracket_settings.text_y_offset
                 else:
-                    adj = "c(0.5, 1)"
+                    position = (0.5, 1)
                     y2 -= bracket_settings.text_y_offset
-                r_boss.text(
+                plot_boss.text(
                     bracket.text,
                     (x2 - x1) / 2 + x1,
                     channel.y_position(y2),
                     bracket_settings.color,
                     size=bracket_settings.text_size,
-                    adj=adj,
+                    position=position,
+                    zorder=20,
                 )
 
 
-def plot(settings, frame_list=None):
+def plot(settings, mpl, frame_list=None):
     score = midani_score.read_score(settings)
     tempo_changes = midani_time.TempoChanges(score)
     settings.update_from_score(score, tempo_changes)
     score = midani_score.crop_score(score, settings, tempo_changes)
     table = midani_misc_classes.PitchTable(score, settings, tempo_changes)
-    r_boss = midani_r.RBoss(settings)
+    plot_boss = plt_boss.MPLBoss(settings) if mpl else midani_r.RBoss(settings)
     window = midani_misc_classes.Window(settings)
     lyricist = midani_annotations.Lyricist(settings)
     if frame_list is not None:
@@ -645,24 +659,28 @@ def plot(settings, frame_list=None):
         # Originally, I got the current tempo here, because "bounce"
         # was set in beats. But now, "bounce" is in seconds, so we have no
         # need for tempi.
-        r_boss.init_png(window)
-        if settings.now_line:
-            r_boss.now_line(now, window)
-        rect_tuples, line_tuples = get_voice_and_line_tuples(
-            now, settings, table
-        )
-        draw_shadows(line_tuples, rect_tuples, window, settings, table, r_boss)
-        draw_connection_lines(line_tuples, window, settings, table, r_boss)
-        draw_notes(rect_tuples, window, settings, table, r_boss)
-        draw_lyrics(window, lyricist, settings, r_boss)
-        draw_annotations(window, settings, r_boss)
-        draw_brackets(table, window, settings, r_boss)
-        if frame_list is not None:
-            try:
-                now = next(frame_iter)
-            except StopIteration:
-                break
-        else:
-            now += settings.frame_increment
-    r_boss.run_r()
-    return r_boss.png_fnumber
+        with plot_boss.make_png(window):
+            if settings.now_line:
+                plot_boss.now_line(now, window)
+            rect_tuples, line_tuples = get_voice_and_line_tuples(
+                now, settings, table
+            )
+            draw_shadows(
+                line_tuples, rect_tuples, window, settings, table, plot_boss
+            )
+            draw_connection_lines(
+                line_tuples, window, settings, table, plot_boss
+            )
+            draw_notes(rect_tuples, window, settings, table, plot_boss)
+            draw_lyrics(window, lyricist, settings, plot_boss)
+            draw_annotations(window, settings, plot_boss)
+            draw_brackets(table, window, settings, plot_boss)
+            if frame_list is not None:
+                try:
+                    now = next(frame_iter)
+                except StopIteration:
+                    break
+            else:
+                now += settings.frame_increment
+    plot_boss.run()
+    return plot_boss.plot_count
