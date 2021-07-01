@@ -12,7 +12,7 @@ long_description = long_description.replace(
 
 setuptools.setup(
     name="midani",
-    version="0.0.2",
+    version="0.0.3",
     author="Malcolm Sailor",
     author_email="malcolm.sailor@gmail.com",
     description="Make piano-roll animations from midi files",
