@@ -1,5 +1,6 @@
 import collections
 import fractions
+import warnings
 
 import mido
 
@@ -62,14 +63,16 @@ def _pitch_bend_handler(pitch_bend_dict, track_i, msg):
     pitch_bend_dict[track_i][msg.channel] = msg.pitch
 
 
-def _note_on_handler(note_on_dict, inverse_pb_tup_dict, track_i, msg, tet=12):
+def _note_on_handler(
+    note_on_dict, pb_dict, inverse_pb_tup_dict, track_i, msg, tet=12
+):
     """Used by read_midi_to_internal_data()."""
 
     channel = msg.channel
     midinum = msg.note
 
     if tet != 12:
-        pitch_bend = pitch_bend_dict[track_i][channel]
+        pitch_bend = pb_dict[track_i][channel]
         pitch = inverse_pb_tup_dict[(midinum, pitch_bend)]
 
     else:
@@ -221,7 +224,12 @@ def read_midi_to_internal_data(
                 _pitch_bend_handler(pitch_bend_dict, track_i, msg)
             elif msg.type == "note_on" and msg.velocity > 0:
                 _note_on_handler(
-                    note_on_dict, inverse_pb_tup_dict, track_i, msg, tet=tet
+                    note_on_dict,
+                    pitch_bend_dict,
+                    inverse_pb_tup_dict,
+                    track_i,
+                    msg,
+                    tet=tet,
                 )
             elif msg.type == "note_on" and msg.velocity == 0 and msg.note == 0:
                 # JRP scores seem to have note_on events with velocity and

@@ -11,6 +11,8 @@ import mido
 
 import midani.from_my_other_projects.mal_misc as mal_misc
 
+# TODO update from er_classes
+
 # import spell
 
 # constants for writing notes
@@ -386,7 +388,7 @@ class Voice(collections.UserDict):
             i -= 1
             if i < 0:
                 break
-            attack_time = attack_times[i]
+            attack_time = last_attack_time = attack_times[i]
             if attack_time == time and not include_start_time:
                 continue
 
@@ -398,7 +400,7 @@ class Voice(collections.UserDict):
                     break
                 if (
                     stop_at_rest
-                    and note.attack_time + note.dur < last.attack_time
+                    and note.attack_time + note.dur < last_attack_time
                 ):
                     break_out = True
                     break
@@ -423,8 +425,7 @@ class Voice(collections.UserDict):
     def get_last_n_pitches(
         self, n, time, min_attack_time=0, stop_at_rest=False
     ):
-        """Returns last n pitches (including pitch attacked at time).
-        """
+        """Returns last n pitches (including pitch attacked at time)."""
         return self.get_prev_n_pitches(
             n,
             time,
@@ -492,8 +493,7 @@ class Voice(collections.UserDict):
         )[0]
 
     def get_last_n_notes(self, n, time, min_attack_time=0, stop_at_rest=False):
-        """Returns last n pitches (including pitch attacked at time).
-        """
+        """Returns last n pitches (including pitch attacked at time)."""
         return self.get_prev_n_notes(
             n,
             time,
@@ -799,15 +799,13 @@ class Score:
         velocity=DEFAULT_VELOCITY,
         choir=DEFAULT_CHOIR,
     ):
-        """Adds a note to the specified voice.
-        """
+        """Adds a note to the specified voice."""
         self.voices[voice_i].add_note(
             pitch, attack_time, dur, velocity=velocity, choir=choir
         )
 
     def add_note_object(self, voice_i, note_object, update_sort=True):
-        """Adds a note object to the specified voice.
-        """
+        """Adds a note object to the specified voice."""
         self.voices[voice_i].add_note_object(
             note_object, update_sort=update_sort
         )
@@ -1188,8 +1186,7 @@ class Score:
     def get_last_n_pitches(
         self, n, time, voice_i, min_attack_time=0, stop_at_rest=False
     ):
-        """Returns last n pitches (including pitch attacked at time).
-        """
+        """Returns last n pitches (including pitch attacked at time)."""
         return self.voices[voice_i].get_prev_n_pitches(
             n,
             time,

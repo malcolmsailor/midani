@@ -8,7 +8,6 @@ from . import midani_annotations
 from . import midani_colors
 from . import midani_misc_classes
 
-from . import plt_boss
 from . import midani_r
 from . import midani_score
 from . import midani_time
@@ -646,7 +645,14 @@ def plot(settings, mpl, frame_list=None):
     settings.update_from_score(score, tempo_changes)
     score = midani_score.crop_score(score, settings, tempo_changes)
     table = midani_misc_classes.PitchTable(score, settings, tempo_changes)
-    plot_boss = plt_boss.MPLBoss(settings) if mpl else midani_r.RBoss(settings)
+    if mpl:
+        # we move the import statement here because we don't want to require
+        # matplotlib unless it is actually being used.
+        from . import plt_boss
+
+        plot_boss = plt_boss.MPLBoss(settings)
+    else:
+        plot_boss = midani_r.RBoss(settings)
     window = midani_misc_classes.Window(settings)
     lyricist = midani_annotations.Lyricist(settings)
     if frame_list is not None:

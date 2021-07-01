@@ -18,8 +18,6 @@ either be included as a command line argument with -m/--midi, or it must be
 specified with the "midi_fname" keyword argument in a settings file provided with
 -s/--settings."""
 
-SCRIPT_PATH = os.path.dirname((os.path.realpath(__file__)))
-
 
 def parse_args():
     parser = argparse.ArgumentParser(description=ARGPARSE_DESCRIPTION)
@@ -86,7 +84,7 @@ def check_requirements(mpl):
             sys.exit(1)
     else:
         try:
-            import matplotlib
+            import matplotlib  # pylint: disable=unused-import, import-outside-toplevel
         except ModuleNotFoundError:
             print(
                 "ERROR: "
@@ -135,9 +133,7 @@ def main():
         else:
             user_settings["frame_increment"] = 0.5
         user_settings["_test"] = True
-    settings = midani_settings.Settings(
-        script_path=SCRIPT_PATH, **user_settings
-    )
+    settings = midani_settings.Settings(**user_settings)
     if settings.process_video != "only":
         check_requirements(mpl)
     if frame_list is not None or settings.process_video != "only":

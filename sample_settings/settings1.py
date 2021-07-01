@@ -36,8 +36,13 @@
     "connection_lines": True,
     "line_start_size": 0,
     "line_end_size": 0,
-    "bg_beat_times": [0,],
+    "bg_beat_times": [
+        0,
+    ],
     "bg_beat_times_length": 4,
-    "bg_colors": [(32, 16, 48), (32, 32, 32),],
+    "bg_colors": [
+        (32, 16, 48),
+        (32, 32, 32),
+    ],
     "p_displace": {-12: [1, 3]},
 }

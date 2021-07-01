@@ -14,7 +14,6 @@ def test_bg_beat_times():
     midi_fname = "../sample_music/effrhy_2207.mid"
     settings_kwargs = {
         "midi_fname": os.path.join(SCRIPT_PATH, midi_fname),
-        "script_path": SCRIPT_PATH,
         "bg_beat_times_length": 2,
     }
     settings = midani_settings.Settings(**settings_kwargs)

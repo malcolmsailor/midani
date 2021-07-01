@@ -12,8 +12,8 @@
     #     (18, -18),
     # ],
     # This looks quite cool with widely spaced shadows like
-    "shadow_positions": [(3, -25), (6, -50), (9, -75),],
-    "bg_colors": [(0, 0, 0),],
+    "shadow_positions": [(3, -25), (6, -50), (9, -75)],
+    "bg_colors": [(0, 0, 0)],
     "shadow_color": (0, 0, 0),
     "con_line_offset_color": (0, 0, 0),
     "con_line_offset_prop": 0.4,

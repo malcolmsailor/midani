@@ -17,7 +17,6 @@ def test_plot():
         midi_fname=os.path.join(
             SCRIPT_PATH, "..", "sample_music", "effrhy_732.mid"
         ),
-        script_path=SCRIPT_PATH,
         output_dirname=OUT_PATH,
         intro=0,
         start_time=0,

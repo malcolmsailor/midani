@@ -75,7 +75,7 @@ GLOBAL_COLORS = (
 PER_VOICE_COLOR_LISTS = ("color_loop",)
 GLOBAL_COLOR_LISTS = ("color_palette", "bg_colors")
 
-DEFAULT_OUTPUT_PATH = "output"
+DEFAULT_OUTPUT_PATH = "midani_output"
 DEFAULT_TEMP_R_PATH = ".temp_r_files"
 
 
@@ -519,11 +519,9 @@ class Settings:
             Default: False
         output_dirname: str. path to folder where output images will be created.
             If a relative path, will be created relative to the current
-            directory, unless the path begins with the string "MIDANI_DIR",
-            in which case "MIDANI_DIR" will be replaced with the directory
-            of the midani script. If the path does not exist, it will be
+            directory. If the path does not exist, it will be
             created.
-            Default: "MIDANI_DIR/output"
+            Default: "midani_output"
         resolution: tuple of form (int, int). Resolution of output frames.
             Default (1280, 720)
         process_video: str. Possible values:
@@ -535,7 +533,7 @@ class Settings:
                     png filename in `output_dirname`.)
         video_fname: str. Path to output video file. If a basename (i.e., with
             no directory component), will be written in directory
-            `ourput_dirname`. If not passed, the video will be written in
+            `output_dirname`. If not passed, the video will be written in
             `output_dirname` with the same filename as `midi_fname`, except for
             the extension ".mp4". (If `midi_fname` is a list, then it will be
             named after the first item in the list.) Has no effect if
@@ -543,7 +541,7 @@ class Settings:
         audio_fname: str. Path to input audio file. If passed, this audio file
             will be added to the output video file using ffmpeg. If ffmpeg is
             not found, a warning will be printed instead and no audio will be
-            added. (If `process_video` == "no", in which case this argument is
+            added. (If `process_video` == "no", this argument is
             ignored.) Note that if `midi_fname` is passed as a command-line
             argument, this keyword argument will be ignored; any audio file
             should then be passed as a command-line argument as well.
@@ -1196,7 +1194,7 @@ class Settings:
     midi_reset_start_to_0: bool = False
     midi_tracks_to_voices: bool = True
     midi_channels_to_voices: bool = False
-    output_dirname: str = None
+    output_dirname: str = DEFAULT_OUTPUT_PATH
     resolution: typing.Tuple[int, int] = (1280, 720)
     _temp_r_dirname: str = DEFAULT_TEMP_R_PATH
     process_video: str = "yes"
@@ -1380,8 +1378,6 @@ class Settings:
     bracket_settings: typing.Dict[str, dict] = None
     default_bracket_settings: dict = dataclasses.field(default_factory=dict)
 
-    script_path: str = None  # for internal use only
-
     _colors = GLOBAL_COLORS + PER_VOICE_COLORS
     _color_lists = GLOBAL_COLOR_LISTS + PER_VOICE_COLOR_LISTS
 
@@ -1404,8 +1400,6 @@ class Settings:
             raise ValueError("no 'midi_fname' keyword argument to Settings()")
         if isinstance(self.midi_fname, str):
             self.midi_fname = (self.midi_fname,)
-        if not self.script_path:
-            raise ValueError("no 'script_path' keyword argument to Settings()")
         if self.seed is not None:
             random.seed(self.seed)
         if self.intro_bg_color is None:
@@ -1444,26 +1438,9 @@ class Settings:
             sum(self.channel_heights[i + 1 :]) for i in range(self.num_channels)
         ]
 
-        if self._temp_r_dirname is None:
-            self._temp_r_dirname = os.path.join(
-                self.script_path, DEFAULT_TEMP_R_PATH
-            )
-        elif not os.path.isabs(self._temp_r_dirname):
-            self._temp_r_dirname = os.path.join(
-                self.script_path, self._temp_r_dirname
-            )
         self.temp_r_script_base = os.path.join(
             self._temp_r_dirname, TEMP_R_SCRIPT
         )
-        if self.output_dirname is None:
-            self.output_dirname = os.path.join(
-                self.script_path, DEFAULT_OUTPUT_PATH
-            )
-        elif self.output_dirname.startswith("MIDANI_DIR"):
-            self.output_dirname = os.path.join(
-                self.script_path,
-                self.output_dirname.replace("MIDANI_DIR", "", 1),
-            )
         if not self.video_fname:
             self.video_fname = (
                 os.path.splitext(os.path.basename(self.midi_fname[0]))[0]

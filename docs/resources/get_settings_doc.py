@@ -21,7 +21,7 @@ def get_code_block_replacement(code_block):
 
 def get_docstring():
     with open(
-        os.path.join(SCRIPT_PATH, "../../src/midani_settings.py"), "r"
+        os.path.join(SCRIPT_PATH, "../../midani/midani_settings.py"), "r"
     ) as inf:
         docstring = re.search(
             r'^class Settings:\s+"""(.*?)"""',

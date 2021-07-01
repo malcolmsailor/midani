@@ -26,7 +26,7 @@ For example, if you wanted a "primary color" note color palette, with white back
 
 For more examples, see the files in `sample_settings/`.
 
-The settings files are ordinarily parsed with `ast.literal_eval()`, thus (to quote the Python docs) they "may only consist of the following Python literal structures: strings, bytes, numbers, tuples, lists, dicts, sets, booleans, and None." (If you get an error like `ValueError: malformed node or string`, then you are probably using expressions that `ast.literal_eval()` cannot parse.) If you wish to use conveniences like arithmetic expressions or list comprehensions, you can pass the `--eval` flag, and the settings files will instead be parsed with `eval()`. Don't do anything reckless with this! (E.g., use `--eval` with settings from sources that you do not trust.)
+The settings files are ordinarily parsed with `ast.literal_eval()`, thus (to quote the Python docs) they "may only consist of the following Python literal structures: strings, bytes, numbers, tuples, lists, dicts, sets, booleans, and None." (If you get an error like `ValueError: malformed node or string`, then you are probably using expressions that `ast.literal_eval()` cannot parse.) If you wish to use conveniences like arithmetic expressions or list comprehensions, you can pass the `--eval` flag, and the settings files will instead be parsed with `eval()`. Don't use this flag with settings that you do not trust.
 
 ## Detailed settings
 
@@ -101,11 +101,9 @@ All general settings are global.
             *Default*: `False`
 - **output_dirname**: str. path to folder where output images will be created.
             If a relative path, will be created relative to the current
-            directory, unless the path begins with the string "MIDANI_DIR",
-            in which case "MIDANI_DIR" will be replaced with the directory
-            of the midani script. If the path does not exist, it will be
+            directory. If the path does not exist, it will be
             created.
-            *Default*: `"MIDANI_DIR/output"`
+            *Default*: `"midani_output"`
 - **resolution**: tuple of form (int, int). Resolution of output frames.
             Default (1280, 720)
 - **process_video**: str. Possible values:
@@ -117,7 +115,7 @@ All general settings are global.
                     png filename in `output_dirname`.)
 - **video_fname**: str. Path to output video file. If a basename (i.e., with
             no directory component), will be written in directory
-            `ourput_dirname`. If not passed, the video will be written in
+            `output_dirname`. If not passed, the video will be written in
             `output_dirname` with the same filename as `midi_fname`, except for
             the extension ".mp4". (If `midi_fname` is a list, then it will be
             named after the first item in the list.) Has no effect if
@@ -125,7 +123,7 @@ All general settings are global.
 - **audio_fname**: str. Path to input audio file. If passed, this audio file
             will be added to the output video file using ffmpeg. If ffmpeg is
             not found, a warning will be printed instead and no audio will be
-            added. (If `process_video` == "no", in which case this argument is
+            added. (If `process_video` == "no", this argument is
             ignored.) Note that if `midi_fname` is passed as a command-line
             argument, this keyword argument will be ignored; any audio file
             should then be passed as a command-line argument as well.

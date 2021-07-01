@@ -13,29 +13,41 @@ Requires Python >= 3.8
 - Python libraries:
     - opencv-python
     - mido
+    - matplotlib (optionally, see below)
 - Other:
-    - R to plot frames
+    - R (optionally, see below)
     - FFmpeg to add audio
 
 ## Installation
 
-To install R and FFmpeg on MacOS with Homebrew:
+The easiest way to install is from [PyPI](https://pypi.org/project/midani):
+
+```
+pip install midani
+```
+
+You can also install by downloading the repository and then running the following commands from the repository directory.
+
+```
+pip install -r requirements.txt
+pip install .
+```
+
+Either way, you will need to install 
+- either R or matplotlib to do the plotting of frames. R turns out to be quite a faster than matplotlib, so it is recommended. 
+- FFmpeg, used to add audio to the video.
+
+On MacOS, R and FFmpeg can be installed using homebrew:
 
 ```
 brew install r
 brew install ffmpeg
 ```
 
-To install Python dependencies, from script directory:
+Matplotlib can be installed with pip:
 
 ```
-pip install -r requirements.txt
-```
-
-To install the script itself, from the script directory:
-
-```
-pip install .
+pip install matplotlib
 ```
 
 ## Example Usage:
@@ -105,11 +117,7 @@ For example, if you wanted a "primary color" note color palette, with white back
 
 For more examples, see the files in `sample_settings/`.
 
-The settings files are ordinarily parsed with `ast.literal_eval()`, thus (to quote the Python docs) they "may only consist of the following Python literal structures: strings, bytes, numbers, tuples, lists, dicts, sets, booleans, and None." (If you get an error like `ValueError: malformed node or string`, then you are probably using expressions that `ast.literal_eval()` cannot parse.) If you wish to use conveniences like arithmetic expressions or list comprehensions, you can pass the `--eval` flag, and the settings files will instead be parsed with `eval()`. Don't do anything reckless with this! (E.g., use `--eval` with settings from sources that you do not trust.)
-
-## Miscellany
-
-Why, you might ask, is R used to plot frames, rather than a Python plotting library like Matplotlib? For no better reason than that at the time I started the script (in summer 2018), R was the only plotting software I was familiar with.
+The settings files are ordinarily parsed with `ast.literal_eval()`, thus (to quote the Python docs) they "may only consist of the following Python literal structures: strings, bytes, numbers, tuples, lists, dicts, sets, booleans, and None." (If you get an error like `ValueError: malformed node or string`, then you are probably using expressions that `ast.literal_eval()` cannot parse.) If you wish to use conveniences like arithmetic expressions or list comprehensions, you can pass the `--eval` flag, and the settings files will instead be parsed with `eval()`. Don't use this flag with settings that you do not trust.
 
 ## Sample files
 

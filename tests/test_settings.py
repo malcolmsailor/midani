@@ -40,7 +40,6 @@ def test_voice_settings():
         "midi_fname": os.path.join(
             SCRIPT_DIR, "../sample_music/effrhy_105.mid"
         ),
-        "script_path": SCRIPT_DIR,
         "voice_settings": {
             0: {
                 "note_start": 1,
@@ -130,7 +129,6 @@ def test_voice_order():
         settings_dict = {
             "midi_fname": midi_fname,
             "voice_order": voice_order,
-            "script_path": SCRIPT_DIR,
         }
         settings = midani_settings.Settings(**settings_dict)
         score = midani_score.read_score(settings)
