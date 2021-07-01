@@ -9,6 +9,7 @@ import math
 import numbers
 import os
 import random
+import sys
 import typing
 
 from . import midani_colors
@@ -1400,6 +1401,10 @@ class Settings:
             raise ValueError("no 'midi_fname' keyword argument to Settings()")
         if isinstance(self.midi_fname, str):
             self.midi_fname = (self.midi_fname,)
+        for fname in self.midi_fname:
+            if not os.path.exists(fname):
+                print(f"ERROR: Midi file `{fname}` does not exist!")
+                sys.exit(1)
         if self.seed is not None:
             random.seed(self.seed)
         if self.intro_bg_color is None:
