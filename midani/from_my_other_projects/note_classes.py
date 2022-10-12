@@ -1,11 +1,9 @@
 """Provides a Score class that stores Voice classes which store Note classes,
 together with associated methods.
 """
+from __future__ import annotations
 import collections
 import copy
-import fractions
-import numbers
-import warnings
 
 import mido
 
@@ -103,6 +101,7 @@ class Voice(collections.UserDict):
         self.range = voice_range
         self.sort_up_to_date = 0
         self.reversed_up_to_date = -1
+        self.reversed_voice = None
 
     def __iter__(self):
         for attack_time in self.data:
@@ -248,8 +247,10 @@ class Voice(collections.UserDict):
 
         try:
             notes = self.data[attack_time]
-        except KeyError:
-            raise RemoveNoteError(f"No notes at attack time {attack_time}")
+        except KeyError as exc:
+            raise RemoveNoteError(
+                f"No notes at attack time {attack_time}"
+            ) from exc
         remove_i = -1
         for note_i, note in enumerate(notes):
             if note.pitch == pitch:
@@ -277,10 +278,10 @@ class Voice(collections.UserDict):
         attack_time = note_object.attack_time
         try:
             notes = self.data[attack_time]
-        except KeyError:
+        except KeyError as exc:
             raise RemoveNoteObjectError(
                 f"No attacks at {attack_time} in voice {self.voice_i}."
-            )
+            ) from exc
         notes.remove(note_object)
         if not notes:
             del self.data[attack_time]
@@ -482,7 +483,7 @@ class Voice(collections.UserDict):
             if break_out:
                 break
 
-        for j in range(n - len(out_notes)):
+        for _ in range(n - len(out_notes)):
             out_notes.insert(0, None)
         return out_notes
 
@@ -654,9 +655,9 @@ class VoiceList(collections.UserList):
         self.data.append(item)
         self.num_new_voices += 1
 
-    def extend(self, iterable):
-        self.data.extend(iterable)
-        self.num_new_voices += len(iterable)
+    def extend(self, other):
+        self.data.extend(other)
+        self.num_new_voices += len(other)
 
     def insert(self, i, item):
         self.data.insert(i, item)
@@ -696,7 +697,10 @@ class Score:
 
     """
 
-    def __str__(self, head=-1):
+    def __str__(self):
+        return self._str_sub()
+
+    def _str_sub(self, head=-1):
         strings = []
         for voice_type, voice_list in (
             ("EXISTING VOICE", self.existing_voices),
@@ -725,7 +729,7 @@ class Score:
         return "\n".join(strings)[:-2]
 
     def head(self, head=15):
-        return self.__str__(head=head)
+        return self._str_sub(head=head)
 
     def __iter__(self):
         # This iterates over new *and* existing voices... is there any
@@ -836,7 +840,6 @@ class Score:
             temp_voice = Voice(
                 voice_i=voice.voice_i, tet=voice.tet, voice_range=voice.range
             )
-            time = 0
             prev_release = 0
             for note in voice:
                 attack_time = note.attack_time
@@ -952,9 +955,7 @@ class Score:
         for voice in self:
             for note in voice:
                 return list(vars(note).keys())
-        raise ValueError(
-            "It appears that the score doesn't contain " "any notes."
-        )
+        raise ValueError("It appears that the score doesn't contain any notes.")
 
     # def to_np(self, add_release_times=True):
     #     """Returns a np array of notes and a dict of column names: indexes.
@@ -1023,7 +1024,7 @@ class Score:
         passage_end_time=None,
         dont_overlap_start=True,
         end_time_refers_to_attack=True,
-    ):
+    ) -> Score:
         """Returns all voices of a given passage as a Score object.
 
         Passage is inclusive of passage_start_time and exclusive of

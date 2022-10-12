@@ -7,7 +7,12 @@ import math
 import random
 import typing
 
+
+import midani.from_my_other_projects.note_classes as note_classes
+
+from . import midani_settings
 from . import midani_colors
+from . import midani_time
 
 
 @dataclasses.dataclass
@@ -15,6 +20,9 @@ class Note:  # pylint: disable=missing-class-docstring
     pitch: int
     start: float
     end: float
+    voice_i: int
+    first_visible: float
+    last_visible: float
 
     def __post_init__(self):
         self.dur = self.end - self.start
@@ -390,7 +398,14 @@ class PitchTable(PitchRange, list):
     items.
     """
 
-    def __init__(self, score, settings, tempo_changes, *args, **kwargs):
+    def __init__(
+        self,
+        score: note_classes.Score,
+        settings: midani_settings.Settings,
+        tempo_changes: midani_time.TempoChanges,
+        *args,
+        **kwargs
+    ):
         super().__init__()
         self.settings = settings
         self.equal_start_xy_size = tuple(
@@ -411,7 +426,13 @@ class PitchTable(PitchRange, list):
             for chan_i in range(settings.num_channels)
         }
         self.pitch_flutters = {}
+        self.notes_by_onset = []
+        self.notes_by_release = []
         for voice_i in settings.voice_order:
+            voice_list = VoiceList()
+            self.append(voice_list)
+            if voice_i not in settings.voices_to_render:
+                continue
             voice = score.voices[voice_i]
             chan_assmt = settings.chan_assmts[voice_i]
             pitch_displacement = (
@@ -419,17 +440,27 @@ class PitchTable(PitchRange, list):
                 if voice_i in settings.p_displace_rev
                 else 0
             )
-            voice_list = VoiceList()
-            self.append(voice_list)
-            if voice_i not in settings.voices_to_render:
-                continue
             for note in voice:
                 attack_ctime = tempo_changes.ctime_from_btime(note.attack_time)
                 end_dur_ctime = tempo_changes.ctime_from_btime(
                     note.attack_time + note.dur
                 )
+                first_visible = (
+                    attack_ctime + settings[voice_i].min_shadow_x_time
+                )
+                last_visible = (
+                    end_dur_ctime - settings[voice_i].max_shadow_x_time
+                )
                 pitch = note.pitch + pitch_displacement
-                voice_list.append(Note(pitch, attack_ctime, end_dur_ctime))
+                note_instance = Note(
+                    pitch,
+                    attack_ctime,
+                    end_dur_ctime,
+                    voice_i,
+                    first_visible,
+                    last_visible,
+                )
+                voice_list.append(note_instance)
 
             if voice_list:  # voice is not empty
                 self.channels[chan_assmt].update_from_pitch(voice_list.l_pitch)

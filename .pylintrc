@@ -32,7 +32,13 @@ disable=too-many-instance-attributes,
     too-many-lines,
     fixme,
     eval-used,
-
+    invalid-name,
+    missing-class-docstring,
+    missing-module-docstring,
+    missing-function-docstring,
+    consider-using-f-string,
+    unspecified-encoding,
+    unnecessary-lambda-assignment,
 
 
 [BASIC]

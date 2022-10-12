@@ -1401,6 +1401,9 @@ class Settings:
             raise ValueError("no 'midi_fname' keyword argument to Settings()")
         if isinstance(self.midi_fname, str):
             self.midi_fname = (self.midi_fname,)
+        self.midi_fname = tuple(
+            os.path.abspath(os.path.expanduser(p)) for p in self.midi_fname
+        )
         for fname in self.midi_fname:
             if not os.path.exists(fname):
                 print(f"ERROR: Midi file `{fname}` does not exist!")
@@ -1443,6 +1446,14 @@ class Settings:
             sum(self.channel_heights[i + 1 :]) for i in range(self.num_channels)
         ]
 
+        self._temp_r_dirname = os.path.abspath(
+            os.path.expanduser(self._temp_r_dirname)
+        )
+        self.output_dirname = os.path.abspath(
+            os.path.expanduser(self.output_dirname)
+        )
+        self.video_fname = os.path.abspath(os.path.expanduser(self.video_fname))
+        self.audio_fname = os.path.abspath(os.path.expanduser(self.audio_fname))
         self.temp_r_script_base = os.path.join(
             self._temp_r_dirname, TEMP_R_SCRIPT
         )

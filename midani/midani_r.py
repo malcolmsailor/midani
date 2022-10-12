@@ -104,21 +104,47 @@ class RBoss:
         )
         self.line_count += 1
 
-    def plot_rect(self, x1, x2, y1, y2, color, zorder):
+    def plot_rect(
+        self,
+        x1,
+        x2,
+        y1,
+        y2,
+        color,
+        zorder,  # pylint: disable=unused-argument
+    ):
         self.outf.write(
             f'rect({x1}, {y1}, {x2}, {y2}, col = "{self.hex_color(color)}", '
             "border = NA)\n"
         )
         self.line_count += 1
 
-    def plot_line(self, x1, x2, y1, y2, color, width, zorder):
+    def plot_line(
+        self,
+        x1,
+        x2,
+        y1,
+        y2,
+        color,
+        width,
+        zorder,  # pylint: disable=unused-argument
+    ):
         self.outf.write(
             f"lines(c({x1},{x2}), c({y1},{y2}), "
             f'col = "{self.hex_color(color)}", lwd = {width})\n'
         )
         self.line_count += 1
 
-    def text(self, text, x, y, color, size, position=None, zorder=None):
+    def text(
+        self,
+        text,
+        x,
+        y,
+        color,
+        size,
+        position=None,
+        zorder=None,  # pylint: disable=unused-argument
+    ):
         if position is None:
             adj = "NULL"
         else:
@@ -129,7 +155,16 @@ class RBoss:
         )
         self.line_count += 1
 
-    def bracket(self, x1, x2, y1, y2, color, width, zorder):
+    def bracket(
+        self,
+        x1,
+        x2,
+        y1,
+        y2,
+        color,
+        width,
+        zorder,  # pylint: disable=unused-argument
+    ):
         self.outf.write(
             f"lines(c({x1},{x1},{x2},{x2}), c({y1},{y2},{y2},{y1}), "
             f'col = "{self.hex_color(color)}", lwd = {width})\n'

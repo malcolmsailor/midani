@@ -9,6 +9,7 @@ import cv2
 
 
 def process_video(settings, n):
+    os.makedirs(os.path.dirname(settings.video_fname), exist_ok=True)
     # After http://tsaith.github.io/combine-images-into-a-video-with-python-3-and-opencv-3.html
 
     # For some reason, pylint doesn't recognize any of the members I

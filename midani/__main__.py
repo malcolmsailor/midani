@@ -3,6 +3,7 @@ import os
 import re
 import shutil
 import sys
+import typing as t
 
 from . import midani_av
 from . import midani_plot
@@ -165,7 +166,7 @@ def main():
             )
 
 
-def get_frames(in_str):
+def get_frames(in_str:str) -> t.Tuple[float]:
     bits = in_str.split(",")
     try:
         return tuple(float(bit) for bit in bits)

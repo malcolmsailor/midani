@@ -1,4 +1,3 @@
-import collections
 import fractions
 import warnings
 
@@ -127,7 +126,7 @@ def _return_sorted_midi_tracks(in_mid):
             else:
                 out[-1].append(AbsoluteMidiMsg(msg, tick_time))
 
-        out[-1].sort(key=lambda msg: _sorter_string(msg))
+        out[-1].sort(key=_sorter_string)
         out[-1].sort(key=lambda msg: msg.time)
 
     return out
@@ -143,7 +142,7 @@ def read_midi_to_internal_data(
     min_attack_to_adjust=4,
     split_tracks_to_voices=True,
     split_channels_to_voices=False,
-):
+) -> note_classes.Score:
     """Reads midi file into a Score() instance.
 
     NB Because one can't tell from a note off event when a note might have

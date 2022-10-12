@@ -3,6 +3,7 @@
 
 import math
 import operator
+import typing as t
 
 from . import midani_annotations
 from . import midani_colors
@@ -11,6 +12,7 @@ from . import midani_misc_classes
 from . import midani_r
 from . import midani_score
 from . import midani_time
+from . import midani_settings
 
 
 def _rect_or_its_shadow_in_frame(now, note, settings, voice_i):
@@ -58,7 +60,9 @@ def _line_or_its_shadow_in_frame(now, note, note_i, settings, voice, voice_i):
     return False
 
 
-def get_voice_and_line_tuples(now, settings, table):
+def get_voice_and_line_tuples(
+    now, settings, table: midani_misc_classes.PitchTable
+):
     rect_tuples = []
     line_tuples = []
     for voice_i, voice in zip(settings.voice_order, table):
@@ -74,9 +78,11 @@ def get_voice_and_line_tuples(now, settings, table):
         rect_tuples.append([])
         line_tuples.append([])
         for note_i, note in enumerate(voice):
+            # TODO calculate start and end times for each note *once*
             rect_in_frame = _rect_or_its_shadow_in_frame(
                 now, note, settings, voice_i
             )
+            # TODO calculate start and end times for each line *once*
             line_in_frame = (
                 _line_or_its_shadow_in_frame(
                     now, note, note_i, settings, voice, voice_i
@@ -165,7 +171,7 @@ def _get_shadow_gradient(
         main_color,
         shadow_n_strength,
     )
-    if (hl_blend := hl_factor * settings[voice_i].shadow_hl_strength) :
+    if hl_blend := hl_factor * settings[voice_i].shadow_hl_strength:
         shadow_n_color = midani_colors.blend_colors(
             shadow_n_color,
             settings[voice_i].highlight_color,
@@ -639,7 +645,11 @@ def draw_brackets(table, window, settings, plot_boss):
                 )
 
 
-def plot(settings, mpl, frame_list=None):
+def plot(
+    settings: midani_settings.Settings,
+    mpl: bool,
+    frame_list: t.Sequence[float] = None,
+):
     score = midani_score.read_score(settings)
     tempo_changes = midani_time.TempoChanges(score)
     settings.update_from_score(score, tempo_changes)
@@ -648,7 +658,7 @@ def plot(settings, mpl, frame_list=None):
     if mpl:
         # we move the import statement here because we don't want to require
         # matplotlib unless it is actually being used.
-        from . import plt_boss
+        from . import plt_boss  # pylint: disable=import-outside-toplevel
 
         plot_boss = plt_boss.MPLBoss(settings)
     else:

@@ -1,10 +1,11 @@
 """Provides functions to read midi file into score object.
 """
-
 import midani.from_my_other_projects.midi_funcs as midi_funcs
+import midani.from_my_other_projects.note_classes as note_classes
+from . import midani_settings
 
 
-def read_score(settings):
+def read_score(settings: midani_settings.Settings) -> note_classes.Score:
     def _read(midi_fname):
         return midi_funcs.read_midi_to_internal_data(
             midi_fname,
@@ -22,7 +23,9 @@ def read_score(settings):
     return score
 
 
-def crop_score(score, settings, tempo_changes):
+def crop_score(
+    score: note_classes.Score, settings: midani_settings.Settings, tempo_changes
+):
     start_beat = tempo_changes.btime_from_ctime(settings.start_time)
     end_beat = tempo_changes.btime_from_ctime(settings.end_time)
     return score.get_passage(

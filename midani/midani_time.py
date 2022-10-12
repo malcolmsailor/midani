@@ -2,12 +2,13 @@
 """
 
 import midani.from_my_other_projects.mal_misc as mal_misc
+import midani.from_my_other_projects.note_classes as note_classes
 
 
 class TempoChanges:
     """Uses tempo changes from Score to convert between beats and clock times."""
 
-    def __init__(self, score):
+    def __init__(self, score: note_classes.Score):
         self.t_changes_btimes = {
             beat: tempo
             for (tempo, beat) in score.get_tempo_changes_from_meta_messages()

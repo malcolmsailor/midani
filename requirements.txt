@@ -1,2 +1,2 @@
-opencv_python==4.4.0.46
-mido==1.2.9
+opencv_python
+mido

@@ -1,4 +1,5 @@
 import contextlib
+import typing as t
 
 import matplotlib.lines as lines
 import matplotlib.patches as patches
@@ -65,7 +66,7 @@ class MPLBoss:
         self.plot_count += 1
 
     @staticmethod
-    def hex_color(color):
+    def hex_color(color: t.Tuple[int, int, int, int]):
         # Will raise a ValueError if color has floats (rather than ints)
         return f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}{color[3]:02x}"
 
