@@ -12,3 +12,4 @@ pylintrc_default
 *.egg-info/
 midani_output/
 .temp_pylint_output
+dist/

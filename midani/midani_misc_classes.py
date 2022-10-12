@@ -409,15 +409,23 @@ class PitchTable(PitchRange, list):
         super().__init__()
         self.settings = settings
         self.equal_start_xy_size = tuple(
-            settings[voice_i].note_start_width
-            == settings[voice_i].note_start_height
+            (
+                settings[voice_i].note_start_width
+                == settings[voice_i].note_start_height
+            )
+            and (settings[voice_i].note_width == settings[voice_i].note_height)
             for voice_i in range(settings.num_voices)
         )
         self.equal_end_xy_size = tuple(
-            settings[voice_i].note_end_width
-            == settings[voice_i].note_end_height
+            (
+                settings[voice_i].note_end_width
+                == settings[voice_i].note_end_height
+            )
+            and (settings[voice_i].note_width == settings[voice_i].note_height)
             for voice_i in range(settings.num_voices)
         )
+        # self.equal_start_xy_size = [False for _ in range(settings.num_voices)]
+        # self.equal_end_xy_size = [False for _ in range(settings.num_voices)]
         self.voice_ranges = []
         self.l_pitch = None
         self.h_pitch = None
