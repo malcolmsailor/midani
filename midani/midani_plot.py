@@ -14,6 +14,8 @@ from . import midani_score
 from . import midani_time
 from . import midani_settings
 
+SPECIAL_FRAMES = ("B", "M", "E")
+
 
 def _rect_or_its_shadow_in_frame(now, note, settings, voice_i):
     return (
@@ -645,6 +647,20 @@ def draw_brackets(table, window, settings, plot_boss):
                 )
 
 
+def preprocess_frame_list(settings, frame_list):
+    out = []
+    for frame in frame_list:
+        if frame == "B":
+            out.append(settings.start_time)
+        elif frame == "M":
+            out.append((settings.end_time - settings.start_time) / 2)
+        elif frame == "E":
+            out.append(settings.end_time)
+        else:
+            out.append(frame)
+    return out
+
+
 def plot(
     settings: midani_settings.Settings,
     mpl: bool,
@@ -666,7 +682,7 @@ def plot(
     window = midani_misc_classes.Window(settings)
     lyricist = midani_annotations.Lyricist(settings)
     if frame_list is not None:
-        frame_iter = iter(frame_list)
+        frame_iter = iter(preprocess_frame_list(settings, frame_list))
         now = next(frame_iter)
     else:
         now = window.get_first_now()

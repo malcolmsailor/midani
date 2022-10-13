@@ -51,7 +51,9 @@ def parse_args():
         "--frames",
         help=(
             "a comma-separated list of numbers (with no spaces); specifies a "
-            "list of individual frames to be drawn"
+            "list of individual frames to be drawn; there are also three "
+            "'special' frames that can be indicated: B (beginning), M (middle) "
+            "and E (end)."
         ),
         type=get_frames,
         default=None,
@@ -166,16 +168,29 @@ def main():
             )
 
 
-def get_frames(in_str:str) -> t.Tuple[float]:
+def get_frames(in_str: str) -> t.Tuple[float]:
     bits = in_str.split(",")
-    try:
-        return tuple(float(bit) for bit in bits)
-    except ValueError:
-        sys.exit(
-            "Fatal error: Didn't understand '--frames'/'-f' argument "
-            f"'{in_str}'. Pass a comma separated list with no spaces, e.g., "
-            "'--frames 0.25' or '--frames 2,4,6.5'"
-        )
+    out = []
+    for bit in bits:
+        try:
+            parsed = float(bit)
+        except ValueError:
+            if bit not in midani_plot.SPECIAL_FRAMES:
+                sys.exit(
+                    "Fatal error: Didn't understand '--frames'/'-f' argument "
+                    f"'{in_str}'. Pass a comma separated list with no spaces, e.g., "
+                    "'--frames 0.25' or '--frames 2,4,6.5'"
+                )
+            parsed = bit
+        out.append(parsed)
+    #     return tuple(float(bit) for bit in bits)
+    # except ValueError:
+    #     sys.exit(
+    #         "Fatal error: Didn't understand '--frames'/'-f' argument "
+    #         f"'{in_str}'. Pass a comma separated list with no spaces, e.g., "
+    #         "'--frames 0.25' or '--frames 2,4,6.5'"
+    #     )
+    return tuple(out)
 
 
 if __name__ == "__main__":
