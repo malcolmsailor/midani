@@ -25,6 +25,8 @@ from . import midani_colors
 DEFAULT_CHANNEL_SETTINGS = {
     "l_padding": 0.1,
     "h_padding": 0.1,
+    "l_pitch": None,
+    "h_pitch": None,
 }
 
 TEMP_R_SCRIPT = "midani{:06d}.R"
@@ -705,6 +707,12 @@ class Settings:
                     and the top of the channel, as a proportion of the
                     channel.
                     Default: 0.1
+                "l_pitch" : int. Explicitly sets the lower bound pitch of the
+                    channel, rather than inferring it from the lowest-present
+                    pitch in the channel.
+                "h_pitch" : int. Explicitly sets the higher bound pitch of the
+                    channel, rather than inferring it from the highest-present
+                    pitch in the channel.
 
         Background
         ==========

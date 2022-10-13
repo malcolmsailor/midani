@@ -292,16 +292,22 @@ class Window:
 class PitchRange:
     """Used by child classes below to determine where pitches lie in range."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, l_pitch=None, h_pitch=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self._l_pitch = None
-        self._h_pitch = None
+        self._update_l_pitch = l_pitch is None
+        self._l_pitch = l_pitch
+        self._update_h_pitch = h_pitch is None
+        self._h_pitch = h_pitch
         self._pitch_range = None
 
     def update_from_pitch(self, pitch):
-        if self._l_pitch is None or pitch < self._l_pitch:
+        if self._update_l_pitch and (
+            self._l_pitch is None or pitch < self._l_pitch
+        ):
             self._l_pitch = pitch
-        if self._h_pitch is None or pitch > self._h_pitch:
+        if self._update_h_pitch and (
+            self._h_pitch is None or pitch > self._h_pitch
+        ):
             self._h_pitch = pitch
         self._update_pitch_range()
 
@@ -358,7 +364,10 @@ class Channel(PitchRange):
     """Represents a horizontal 'channel' within which notes can be plotted."""
 
     def __init__(self, channel_i, settings):
-        super().__init__()
+        super().__init__(
+            l_pitch=settings.channel_settings[channel_i]["l_pitch"],
+            h_pitch=settings.channel_settings[channel_i]["h_pitch"],
+        )
         self.l_padding = settings.channel_settings[channel_i]["l_padding"]
         self.h_padding = settings.channel_settings[channel_i]["h_padding"]
         self.non_padding = 1 - self.l_padding - self.h_padding
