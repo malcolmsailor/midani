@@ -11,6 +11,7 @@ import os
 import random
 import sys
 import typing
+import warnings
 
 from . import midani_colors
 
@@ -1599,6 +1600,14 @@ class Settings:
                 ):
                     voice_init_order.remove(src_i)
                     voice_init_order.insert(0, src_i)
+
+        for key in list(self.voice_settings.keys()):
+            if key not in voice_init_order:
+                warnings.warn(
+                    f"key '{key}' not valid for score with {self.num_voices} "
+                    "voices. Removing from voice_settings."
+                )
+                del self.voice_settings[key]
 
         for voice_i in voice_init_order:
             self.voice_settings[voice_i] = VoiceSettings(

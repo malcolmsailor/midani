@@ -653,7 +653,7 @@ def preprocess_frame_list(settings, frame_list):
         if frame == "B":
             out.append(settings.start_time)
         elif frame == "M":
-            out.append((settings.end_time - settings.start_time) / 2)
+            out.append((settings.end_time + settings.start_time) / 2)
         elif frame == "E":
             out.append(settings.end_time)
         else:
