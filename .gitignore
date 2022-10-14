@@ -13,3 +13,5 @@ pylintrc_default
 midani_output/
 .temp_pylint_output
 dist/
+OLDsetup.cfg
+workspace.code-workspace

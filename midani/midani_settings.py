@@ -1455,15 +1455,11 @@ class Settings:
         self.channel_offsets = [
             sum(self.channel_heights[i + 1 :]) for i in range(self.num_channels)
         ]
-
         self._temp_r_dirname = os.path.abspath(
             os.path.expandvars(os.path.expanduser(self._temp_r_dirname))
         )
         self.output_dirname = os.path.abspath(
             os.path.expandvars(os.path.expanduser(self.output_dirname))
-        )
-        self.video_fname = os.path.abspath(
-            os.path.expandvars(os.path.expanduser(self.video_fname))
         )
         self.audio_fname = os.path.abspath(
             os.path.expandvars(os.path.expanduser(self.audio_fname))
@@ -1471,7 +1467,11 @@ class Settings:
         self.temp_r_script_base = os.path.join(
             self._temp_r_dirname, TEMP_R_SCRIPT
         )
-        if not self.video_fname:
+        if self.video_fname:
+            self.video_fname = os.path.abspath(
+                os.path.expandvars(os.path.expanduser(self.video_fname))
+            )
+        else:
             self.video_fname = (
                 os.path.splitext(os.path.basename(self.midi_fname[0]))[0]
                 + ".mp4"
