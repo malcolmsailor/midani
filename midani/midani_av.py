@@ -56,13 +56,23 @@ def add_audio(settings):
     temp_file = os.path.join(
         tempfile.gettempdir(), os.path.basename(settings.video_fname)
     )
+    audio_offset = settings.intro + settings.audio_offset
+    if audio_offset < 0:
+        video_offset = str(-1 * audio_offset)
+        audio_offset = "0"
+    else:
+        video_offset = "0"
+        audio_offset = str(audio_offset)
     proc = subprocess.run(
         [
             "ffmpeg",
+            "-itsoffset",
+            video_offset,
             "-i",
             settings.video_fname,
             "-itsoffset",
-            str(settings.intro),
+            # str(settings.intro),
+            audio_offset,
             "-i",
             settings.audio_fname,
             "-c",

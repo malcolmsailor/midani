@@ -70,7 +70,8 @@ class MPLBoss:
         # Will raise a ValueError if color has floats (rather than ints)
         return f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}{color[3]:02x}"
 
-    def now_line(self, now, window):
+    def now_line(self, now, window, color, width, zorder):
+        # TODO implement color, width, zorder
         line = lines.Line2D([now, now], [window.bottom, window.top], zorder=30)
         self._ax.add_line(line)
 
@@ -130,7 +131,7 @@ class MPLBoss:
         )
         self._ax.add_line(line)
 
-    def run(self):
+    def run(self) -> bool:
         # This function exists for compatibility with the previous R version
         # of this class, but there is nothing to do here.
-        pass
+        return True

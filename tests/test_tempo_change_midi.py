@@ -3,6 +3,8 @@
 import dataclasses
 import os
 
+from typing import Optional
+
 import mido
 from midani import midani_score
 from midani import midani_time
@@ -20,6 +22,7 @@ class DummySettings:  # pylint: disable=missing-class-docstring
     midi_tracks_to_voices: bool = True
     midi_channels_to_voices: bool = False
     midi_reset_start_to_0: bool = False
+    midi_constant_note_length: Optional[float] = None
 
 
 def test_tempo_changes():

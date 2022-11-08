@@ -20,6 +20,10 @@ def read_score(settings: midani_settings.Settings) -> note_classes.Score:
         new_score = _read(midi_fname)
         for voice in new_score.voices:
             score.add_voice(voice, voice_i=score.num_voices)
+    if settings.midi_constant_note_length is not None:
+        for onset in score:
+            for note in onset:
+                note.dur = settings.midi_constant_note_length
     return score
 
 

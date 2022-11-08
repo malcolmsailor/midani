@@ -10,15 +10,14 @@ import numbers
 import os
 import random
 import sys
+import tempfile
 import typing
 import warnings
 
 from . import midani_colors
 
 # TODO document scaled pixels
-# TODO delete now_line
 # TODO make folders if they don't exist
-# TODO setting to specify path for temporary R files?
 # TODO why do pngs (like those for the efficient_rhythms docs) have "outlines"
 #   visible?
 
@@ -74,6 +73,7 @@ GLOBAL_COLORS = (
     "outro_bg_color",
     "annot_color",
     "lyrics_color",
+    "now_line_color",
 )
 
 PER_VOICE_COLOR_LISTS = ("color_loop",)
@@ -126,6 +126,7 @@ class BracketSettings:
     # taken from the frame resolution setting
     pixel_width: int
     above: bool = False
+    display: bool = True
     color: typing.Union[  # pylint: disable=unsubscriptable-object
         typing.Tuple[int, int, int], typing.Tuple[int, int, int, int]
     ] = (
@@ -138,8 +139,20 @@ class BracketSettings:
     y_offset: float = 1.0
     x_offset: float = 0.0
     text_size: float = 3.0
+    text_vfont: typing.Optional[typing.Tuple[str, str]] = None
     text_y_offset: float = 0.2
+    text_align: str = "center"
     tight: bool = False
+    y_position: typing.Optional[float] = None
+    type: str = "bracket"
+    ascending: bool = True
+    fill_color: typing.Union[  # pylint: disable=unsubscriptable-object
+        typing.Tuple[int, int, int], typing.Tuple[int, int, int, int]
+    ] = (
+        255,
+        255,
+        255,
+    )
 
     _colors = ("color",)
 
@@ -364,7 +377,7 @@ class VoiceSettings:
                 voice_i % len(self.global_parent.color_palette)
             ]
         elif len(self.color) < 4:
-            self.color = tuple(self.color) + (self.default_note_opacity)
+            self.color = tuple(self.color) + (self.default_note_opacity,)
         if isinstance(
             self.color_loop,  # pylint: disable=access-member-before-definition
             int,
@@ -521,6 +534,10 @@ class Settings:
             (It is possible for both `midi_tracks_to_voices` and
             `midi_channels_to_voices` to be True.)
             Default: False
+        midi_constant_note_length: optional number. If provided, all notes
+            will be set to this constant length. (I have found that with some
+            scores with a lot of staccato onsets, a constant note length
+            looks better.)
         output_dirname: str. path to folder where output images will be created.
             If a relative path, will be created relative to the current
             directory. If the path does not exist, it will be
@@ -549,6 +566,8 @@ class Settings:
             ignored.) Note that if `midi_fname` is passed as a command-line
             argument, this keyword argument will be ignored; any audio file
             should then be passed as a command-line argument as well.
+        audio_offset: float. Time (in seconds) by which audio should be delayed
+            relative to video (can be negative).
         clean_up_r_files: bool. If False, the R scripts output by this script
             will not be deleted (and so can be inspected).
             Default: True.
@@ -1140,6 +1159,9 @@ class Settings:
                 "above" : bool. If True, the brackets are drawn *above* the
                     specified voice. Otherwise, they are drawn below.
                     Default: False
+                "display": bool. If False, the bracket is not displayed, but
+                    any associated text annotation still is. This provides a
+                    (somewhat hacky) way to get arbitrary text annotations.
                 "line_width" : float. How wide the line making up the bracket
                     should be. This parameter is passed directly through to R.
                     Default: 5.0
@@ -1171,13 +1193,30 @@ class Settings:
                     specify a small positive value for this setting, so that
                     the brackets will not elide with one another.
                     Default: 0.0
+                "y_position": optional float in [0.0, 1.0]. If passed, fixes the
+                    vertical position of the bracket as a proportion of the
+                    channel containing the voice. If passed, "y_offset" is
+                    ignored.
                 "text_size" : float. The font size for the text annotations.
                     This parameter is passed directly through to R.
                     Default: 3.0
+                "text_vfont" : 2-tuple of strings. See
+                    https://www.rdocumentation.org/packages/grDevices/versions/3.6.2/topics/Hershey
+                    for valid values. Passed directly through to R.
                 "text_y_offset" : float. Determines the vertical distance of the
                     text annotations from the brackets. Positive values shift
                     the text away from the notes.
                     Default: 0.2
+                "text_align": str. Either "left", "right", or "center".
+                    Default: "center".
+                "type": str. Either "bracket" (default) or "line_plot".
+                The following settings only have an effect if "type" is
+                    "line_plot". This code should probably ideally be
+                    refactored to separate "line_plot" from "bracket" since
+                    they are really two quite different types of annotations.
+                "ascending": bool. Default: True.
+                "fill_color": a 3-tuple or 4-tuple of ints.
+                    Default: (255, 255, 255)
         default_bracket_settings: dict. It is often useful to define a setting
             like "text_y_offset" for all brackets. Any bracket setting for a
             particular bracket type that is not found in `bracket_settings`
@@ -1196,6 +1235,13 @@ class Settings:
             Default: 1.0
         now_line: boolean. If True, adds a line to each frame indicating "now".
             Default: False.
+        now_line_color: tuple of form (int, int, int[, int]). Color for
+            now_line.
+            Default: (0, 0, 0, 255).
+        now_line_width: Number.
+            Default: 5.0
+        now_line_zorder: Number. Higher brings it closer to the front.
+            Default: 1.
     """
 
     midi_fname: typing.Union[  # pylint: disable=unsubscriptable-object
@@ -1204,20 +1250,25 @@ class Settings:
     midi_reset_start_to_0: bool = False
     midi_tracks_to_voices: bool = True
     midi_channels_to_voices: bool = False
+    midi_constant_note_length: typing.Optional[numbers.Number] = None
     output_dirname: str = DEFAULT_OUTPUT_PATH
     resolution: typing.Tuple[int, int] = (1280, 720)
-    _temp_r_dirname: str = DEFAULT_TEMP_R_PATH
+    _temp_r_dirname: typing.Optional[str] = None
     process_video: str = "yes"
     video_fname: str = ""
     audio_fname: str = ""
+    audio_offset: float = 0.0
     clean_up_r_files: bool = True
     clean_up_png_files: bool = True
     tet: int = 12
     seed: int = None
     add_annotations: list = dataclasses.field(default_factory=list)
-    annot_color: typing.Tuple[int, int, int] = (255, 255, 255, 255)
+    annot_color: typing.Tuple[int, int, int, int] = (255, 255, 255, 255)
     annot_size: float = 1.0
     now_line: bool = False
+    now_line_color: typing.Tuple[int, int, int, int] = (0, 0, 0, 255)
+    now_line_width: numbers.Number = 5.0
+    now_line_zorder: numbers.Number = 1
     _test: bool = False  # append "_test to output filename"
 
     # lyrics
@@ -1400,6 +1451,11 @@ class Settings:
         self.bounce_radius = self.bounce_sin_factor = None
         # End attributes defined in post_init_helper
         self.out_width, self.out_height = self.resolution
+        if self._temp_r_dirname is None:
+            if not self.clean_up_r_files:
+                self._temp_r_dirname = DEFAULT_TEMP_R_PATH
+            else:
+                self._temp_r_dirname = tempfile.mkdtemp()
         if self.color is not None:
             print("Notice: passing a global value for 'color' has no effect")
             self.color = None
@@ -1580,6 +1636,9 @@ class Settings:
         else:
             temp = []
             for voice_i in self.voice_order:
+                if voice_i >= self.num_voices:
+                    # skip voices that do not exist
+                    continue
                 temp.append(voice_i)
                 if voice_i in self.duplicate_voice_settings:
                     temp += self.duplicate_voice_settings[voice_i]
@@ -1687,6 +1746,7 @@ class Settings:
         self.pixel_normalize_attr("con_line_width")
         self.pixel_normalize_attr("lyrics_size")
         self.pixel_normalize_attr("annot_size")
+        self.pixel_normalize_attr("now_line_width")
 
     def pixel_normalize(self, val):
         return val * self.out_width / DEFAULT_PIXEL_WIDTH

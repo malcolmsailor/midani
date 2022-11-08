@@ -109,7 +109,17 @@ def get_voice_and_line_tuples(
                 )
             flutter = 0
             if settings[voice_i].max_flutter_size > 0:
-                flutter += table.pitch_flutters[voice_i][note.pitch](now)
+                try:
+                    flutterer = table.pitch_flutters[voice_i][note.pitch]
+                except KeyError:
+                    # In the event that note.pitch is outside of the channel
+                    #   we will have a KeyError. I think the best thing to do
+                    #    in that case is just continue silently without
+                    #   adding flutter (since I believe the note will not be
+                    #   plotted anyway?)
+                    pass
+                else:
+                    flutter += flutterer(now)
             # (Following condition is not true if settings[voice_i].bounce_len is
             # zero, so no need to check that separately)
             if (
@@ -584,9 +594,11 @@ def draw_brackets(table, window, settings, plot_boss):
         ):
             continue
         channel_i = settings.chan_assmts[voice_i]
-        channel = table.channels[channel_i]
+        channel: midani_misc_classes.Channel = table.channels[channel_i]
         for bracket in settings[voice_i].brackets + settings.brackets:
-            bracket_settings = settings[voice_i].bracket_settings[bracket.type]
+            bracket_settings: midani_settings.BracketSettings = settings[
+                voice_i
+            ].bracket_settings[bracket.type]
             for x1, x2 in yield_bracket_coords(
                 bracket, voice, voice_i, bracket_settings, window
             ):
@@ -598,52 +610,80 @@ def draw_brackets(table, window, settings, plot_boss):
                     op = operator.sub
                     extreme = min
                     limit_pitch = voice.l_pitch
-                if (
-                    # If I ever implement validation earlier, then it
-                    # shouldn't be necessary to check that these are
-                    # *both* ints
-                    isinstance(bracket.start, int)
-                    and isinstance(bracket.end, int)
-                    and bracket_settings.tight
-                ):
-                    y1 = op(
-                        extreme(
-                            note.pitch
-                            for note in voice[bracket.start : bracket.end + 1]
-                        ),
-                        bracket_settings.y_offset,
+                if bracket_settings.y_position is not None:
+                    y1 = channel.y_position_by_proportion(
+                        bracket_settings.y_position
                     )
+                    y2 = op(y1, channel.pixel_height(bracket_settings.height))
                 else:
-                    y1 = op(limit_pitch, bracket_settings.y_offset)
-                y2 = op(y1, bracket_settings.height)
-                plot_boss.bracket(
-                    x1=x1,
-                    x2=x2,
-                    y1=channel.y_position(y1),
-                    y2=channel.y_position(y2),
-                    color=bracket_settings.color,
-                    width=bracket_settings.line_width,
-                    zorder=20,
-                )
+                    if (
+                        # If I ever implement validation earlier, then it
+                        # shouldn't be necessary to check that these are
+                        # *both* ints
+                        isinstance(bracket.start, int)
+                        and isinstance(bracket.end, int)
+                        and bracket_settings.tight
+                    ):
+                        y1 = op(
+                            extreme(
+                                note.pitch
+                                for note in voice[
+                                    bracket.start : bracket.end + 1
+                                ]
+                            ),
+                            bracket_settings.y_offset,
+                        )
+                    else:
+                        y1 = op(limit_pitch, bracket_settings.y_offset)
+                    y2 = op(y1, bracket_settings.height)
+                    y1 = channel.y_position(y1)
+                    y2 = channel.y_position(y2)
+                if bracket_settings.display:
+                    if bracket_settings.type == "line_plot":
+                        plot_boss.line_plot(
+                            x1=x1,
+                            x2=x2,
+                            y1=y2,
+                            y2=y1,
+                            ascending=bracket_settings.ascending,
+                            fill_color=bracket_settings.fill_color,
+                            color=bracket_settings.color,
+                            width=bracket_settings.line_width,
+                            zorder=20,
+                        )
+                    else:
+                        plot_boss.bracket(
+                            x1=x1,
+                            x2=x2,
+                            y1=y2,
+                            y2=y1,
+                            color=bracket_settings.color,
+                            width=bracket_settings.line_width,
+                            zorder=20,
+                        )
                 if not bracket.text:
                     continue
+                text_align = {"center": 0.5, "left": 0, "right": 1}[
+                    bracket_settings.text_align
+                ]
                 if bracket_settings.above:
                     # the meaning of "position" is borrowed from R's 'adj'
                     # arg: 0 for left/bottom, 1 for right/top, and 0.5 for
                     # centered.
-                    position = (0.5, 0)
-                    y2 += bracket_settings.text_y_offset
+                    position = (text_align, 0)
+                    y2 += channel.pixel_height(bracket_settings.text_y_offset)
                 else:
-                    position = (0.5, 1)
-                    y2 -= bracket_settings.text_y_offset
+                    position = (text_align, 1)
+                    y2 -= channel.pixel_height(bracket_settings.text_y_offset)
                 plot_boss.text(
                     bracket.text,
-                    (x2 - x1) / 2 + x1,
-                    channel.y_position(y2),
+                    (x2 + x1) / 2,
+                    y2,
                     bracket_settings.color,
                     size=bracket_settings.text_size,
                     position=position,
                     zorder=20,
+                    vfont=bracket_settings.text_vfont,
                 )
 
 
@@ -693,7 +733,13 @@ def plot(
         # need for tempi.
         with plot_boss.make_png(window):
             if settings.now_line:
-                plot_boss.now_line(now, window)
+                plot_boss.now_line(
+                    now,
+                    window,
+                    settings.now_line_color,
+                    settings.now_line_width,
+                    settings.now_line_zorder,
+                )
             rect_tuples, line_tuples = get_voice_and_line_tuples(
                 now, settings, table
             )
@@ -714,5 +760,5 @@ def plot(
                     break
             else:
                 now += settings.frame_increment
-    plot_boss.run()
-    return plot_boss.plot_count
+    success = plot_boss.run()
+    return success, plot_boss.plot_count

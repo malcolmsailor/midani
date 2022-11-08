@@ -21,6 +21,7 @@ class DummySettings:  # pylint: disable=missing-class-docstring
     clean_up_png_files: bool = False
     intro: float = 0.0
     audio_fname: str = os.path.join(SCRIPT_PATH, "test_audio/effrhy_732.mp3")
+    audio_offset: float = 0.0
 
 
 def test_video():

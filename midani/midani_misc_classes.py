@@ -119,6 +119,13 @@ class Window:
         self.last_now = self.next_bg_time = self.prev_bg_time = None
         self._now = self._start = self._end = None
 
+    #     print(
+    #         f"""Initializing window with
+    # start_time={self.start_time}
+    # end_time={self.end_time}
+    # first_now={self.get_first_now()}"""
+    #     )
+
     def _update_bg_times(self):
         try:
             if self._now < self.last_now:
@@ -140,7 +147,7 @@ class Window:
 
     @property
     def bg_color(self):
-        """Meant to be called with now in montonically ascending sequence,
+        """Meant to be called with now in monotonically ascending sequence,
         raises a value error otherwise."""
         if self.bg_color_constant:
             return self.bg_colors[0]
@@ -392,6 +399,12 @@ class Channel(PitchRange):
         """Returns the y position of a pitch in the frame, in pixels."""
         return self.proportion(pitch) + self.offset
 
+    def y_position_by_proportion(self, x):
+        """Returns the y position of a float between 0.0 and 1.0 in pixels.
+
+        The float indicates a proportion of the total channel height."""
+        return round(x * self.height) + self.offset
+
     def pixel_height(self, height):
         return round(
             (self.proportion(self.l_pitch + 1) - self.proportion(self.l_pitch))
@@ -413,7 +426,7 @@ class PitchTable(PitchRange, list):
         settings: midani_settings.Settings,
         tempo_changes: midani_time.TempoChanges,
         *args,
-        **kwargs
+        **kwargs,
     ):
         super().__init__()
         self.settings = settings
@@ -478,7 +491,6 @@ class PitchTable(PitchRange, list):
                     last_visible,
                 )
                 voice_list.append(note_instance)
-
             if voice_list:  # voice is not empty
                 self.channels[chan_assmt].update_from_pitch(voice_list.l_pitch)
                 self.channels[chan_assmt].update_from_pitch(voice_list.h_pitch)
@@ -500,7 +512,6 @@ class PitchTable(PitchRange, list):
             if channel.l_pitch is not None:
                 self.update_from_pitch(channel.l_pitch)
                 self.update_from_pitch(channel.h_pitch)
-
         # TODO implement or delete
         # for voice_i, voice in enumerate(self):
         #     if "take_l_pitch_from_voice" in settings.voice_settings[voice_i]:

@@ -98,11 +98,20 @@ class RBoss:
     def close_png(self):
         self.plot_count += 1
 
-    def now_line(self, now, window):
-        self.outf.write(
-            f"lines(c({now, now}), c({window.bottom}, {window.top}))"
+    def now_line(self, now, window, color, width, zorder):
+        self.plot_line(
+            now,
+            now,
+            window.bottom,
+            window.top,
+            color=color,
+            width=width,
+            zorder=zorder,
         )
-        self.line_count += 1
+        # self.outf.write(
+        #     f"lines(c({now}, {now}), c({window.bottom}, {window.top}))\n"
+        # )
+        # self.line_count += 1
 
     def plot_rect(
         self,
@@ -119,19 +128,12 @@ class RBoss:
         )
         self.line_count += 1
 
-    def plot_line(
-        self,
-        x1,
-        x2,
-        y1,
-        y2,
-        color,
-        width,
-        zorder,  # pylint: disable=unused-argument
-    ):
+    def plot_line(self, x1, x2, y1, y2, color, width, zorder=None):
+        if zorder is not None:
+            zorder_str = f", zorder={zorder}"
         self.outf.write(
             f"lines(c({x1},{x2}), c({y1},{y2}), "
-            f'col = "{self.hex_color(color)}", lwd = {width})\n'
+            f'col = "{self.hex_color(color)}", lwd = {width}{zorder_str})\n'
         )
         self.line_count += 1
 
@@ -144,14 +146,19 @@ class RBoss:
         size,
         position=None,
         zorder=None,  # pylint: disable=unused-argument
+        vfont=None,
     ):
         if position is None:
             adj = "NULL"
         else:
             adj = f"c{position}"
+        if vfont is None:
+            vfont = ""
+        else:
+            vfont = f', vfont=c("{vfont[0]}", "{vfont[1]}")'
         self.outf.write(
             f'text(c({x}), c({y}), "{text}", '
-            f'col = "{self.hex_color(color)}", cex={size}, adj={adj})\n'
+            f'col = "{self.hex_color(color)}", cex={size}, adj={adj}{vfont})\n'
         )
         self.line_count += 1
 
@@ -171,7 +178,52 @@ class RBoss:
         )
         self.line_count += 1
 
-    def run(self):
+    def line_plot(
+        self,
+        x1,
+        x2,
+        y1,
+        y2,
+        ascending,
+        fill_color,
+        color,
+        width,
+        zorder,  # pylint: disable=unused-argument
+    ):
+        """For use making annotations for my SMT 2022 presentation. Not sure if
+        it will be of use more generally."""
+        y1, y2 = sorted([y1, y2])
+        if ascending:
+            self.outf.write(
+                f"lines(c({x1},{x2},{x2}), c({y1},{y1},{y2}), "
+                f'col = "{self.hex_color(color)}", lwd = {width})\n'
+            )
+            # self.outf.write(
+            #     f"lines(c({x1},{x2}), c({y1},{y2}), "
+            #     f'col = "{self.hex_color(color)}", lwd = {width / 2})\n'
+            # )
+            self.outf.write(
+                f"polygon(c({x1},{x2},{x2}), c({y1},{y1},{y2}), "
+                f'col = "{self.hex_color(fill_color)}", '
+                f'border = "{self.hex_color(fill_color)}", lwd = {width/2})\n'
+            )
+        else:
+            self.outf.write(
+                f"lines(c({x1},{x1},{x2}), c({y2},{y1},{y1}), "
+                f'col = "{self.hex_color(color)}", lwd = {width})\n'
+            )
+            # self.outf.write(
+            #     f"lines(c({x1},{x2}), c({y2},{y1}), "
+            #     f'col = "{self.hex_color(color)}", lwd = {width / 2})\n'
+            # )
+            self.outf.write(
+                f"polygon(c({x1},{x1},{x2}), c({y2},{y1},{y1}), "
+                f'col = "{self.hex_color(fill_color)}", '
+                f'border = "{self.hex_color(fill_color)}", lwd = {width/2})\n'
+            )
+
+    def run(self) -> bool:
+        success = True
         print(f"Plotting {self.plot_count} frames in R")
         if not os.path.exists(self.png_dirname):
             os.makedirs(self.png_dirname)
@@ -192,7 +244,9 @@ class RBoss:
                 print("")
                 print(f"Rscript returned error code {proc.returncode}")
                 print(proc.stdout.decode())
+                success = False
         print("")
         if self.clean_up:
             print("Removing temporary R files")
             shutil.rmtree(self.outf_dirname)
+        return success

@@ -137,10 +137,11 @@ def main():
             user_settings["frame_increment"] = 0.5
         user_settings["_test"] = True
     settings = midani_settings.Settings(**user_settings)
+    plot_success = True
     if settings.process_video != "only":
         check_requirements(mpl)
     if frame_list is not None or settings.process_video != "only":
-        n_frames = midani_plot.plot(settings, mpl, frame_list)
+        plot_success, n_frames = midani_plot.plot(settings, mpl, frame_list)
     else:
         png_pattern = re.compile(
             os.path.basename(settings.png_fname_base) + r"\d+\.png"
@@ -152,20 +153,23 @@ def main():
                 if re.match(png_pattern, f)
             ]
         )
-    if frame_list is None and settings.process_video != "no":
-        midani_av.process_video(settings, n_frames)
+    if plot_success:
+        if frame_list is None and settings.process_video != "no":
+            midani_av.process_video(settings, n_frames)
 
-        if settings.audio_fname:
-            midani_av.add_audio(settings)
+            if settings.audio_fname:
+                midani_av.add_audio(settings)
 
-        print(f"The output file is\n{settings.video_fname}")
-    if frame_list is not None:
-        print("The output files are:")
-        for i in range(1, n_frames + 1):
-            print(
-                f"{settings.png_fname_base}"
-                f"{str(i).zfill(settings.png_fnum_digits)}.png"
-            )
+            print(f"The output file is\n{settings.video_fname}")
+        if frame_list is not None:
+            print("The output files are:")
+            for i in range(1, n_frames + 1):
+                print(
+                    f"{settings.png_fname_base}"
+                    f"{str(i).zfill(settings.png_fnum_digits)}.png"
+                )
+    else:
+        print("Plotting failed.")
 
 
 def get_frames(in_str: str) -> t.Tuple[float]:
