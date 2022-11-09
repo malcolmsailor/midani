@@ -6,6 +6,8 @@ import os
 import shutil
 import subprocess
 
+import typing as t
+
 MAX_LINE_COUNT = 2000
 MAX_PLOT_COUNT = 50
 PLOT_PRINT_COUNT = 25
@@ -113,18 +115,12 @@ class RBoss:
         # )
         # self.line_count += 1
 
-    def plot_rect(
-        self,
-        x1,
-        x2,
-        y1,
-        y2,
-        color,
-        zorder,  # pylint: disable=unused-argument
-    ):
+    def plot_rect(self, x1, x2, y1, y2, color, zorder):
+        if zorder is not None:
+            zorder_str = f", zorder={zorder}"
         self.outf.write(
             f'rect({x1}, {y1}, {x2}, {y2}, col = "{self.hex_color(color)}", '
-            "border = NA)\n"
+            f"border = NA{zorder_str})\n"
         )
         self.line_count += 1
 

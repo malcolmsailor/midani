@@ -701,6 +701,42 @@ def preprocess_frame_list(settings, frame_list):
     return out
 
 
+def draw_piano_roll_background(table, window, settings, plot_boss):
+    colors = settings.piano_roll_colors
+    color_map = settings.piano_roll_color_map
+    consecutive_white_keys = settings.consecutive_white_keys
+    for chan_i, channel in table.channels.items():
+        if settings.channel_settings[chan_i]["piano_roll_bg"]:
+            z = {"rect": 1, "line": 2}
+            for pitch in range(channel.l_pitch, channel.h_pitch + 1):
+                pitch_height = channel.y_position(pitch)
+                half_height = channel.pixel_height(1) / 2
+                if pitch % settings.tet in color_map:
+                    color = colors[color_map[pitch % settings.tet]]
+                    plot_boss.plot_rect(
+                        window.start,
+                        window.end,
+                        pitch_height - half_height,
+                        pitch_height + half_height,
+                        color=color,
+                        zorder=0,
+                    )
+
+                elif (
+                    pitch % settings.tet in consecutive_white_keys
+                    and pitch != channel.l_pitch
+                ):
+                    plot_boss.plot_line(
+                        window.start,
+                        window.end,
+                        pitch_height - half_height,
+                        pitch_height - half_height,
+                        color=settings.between_consecutive_white_keys_color,
+                        width=1,  # TODO ?
+                        zorder=0,
+                    )
+
+
 def plot(
     settings: midani_settings.Settings,
     mpl: bool,
@@ -726,6 +762,10 @@ def plot(
         now = next(frame_iter)
     else:
         now = window.get_first_now()
+    any_piano_roll_bgs = any(
+        channel_settings["piano_roll_bg"]
+        for channel_settings in settings.channel_settings.values()
+    )
     while window.in_range(now):
         window.update(now)
         # Originally, I got the current tempo here, because "bounce"
@@ -740,6 +780,8 @@ def plot(
                     settings.now_line_width,
                     settings.now_line_zorder,
                 )
+            if any_piano_roll_bgs:
+                draw_piano_roll_background(table, window, settings, plot_boss)
             rect_tuples, line_tuples = get_voice_and_line_tuples(
                 now, settings, table
             )

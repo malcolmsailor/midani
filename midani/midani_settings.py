@@ -26,6 +26,7 @@ DEFAULT_CHANNEL_SETTINGS = {
     "h_padding": 0.1,
     "l_pitch": None,
     "h_pitch": None,
+    "piano_roll_bg": False,
 }
 
 TEMP_R_SCRIPT = "midani{:06d}.R"
@@ -732,6 +733,18 @@ class Settings:
                 "h_pitch" : int. Explicitly sets the higher bound pitch of the
                     channel, rather than inferring it from the highest-present
                     pitch in the channel.
+                "piano_roll_bg": bool. Whether to add a piano-roll background.
+                    Default: False.
+        piano_roll_colors: iterable of colors.
+            Default: ((232, 232, 232, 255),).
+        piano_roll_color_map: dict of form int: int. Keys are pitch-classes;
+            values are indexes into "piano_roll_colors".
+            Default: {1: 0, 3: 0, 6: 0, 8: 0, 10: 0}
+        consecutive_white_keys: iterable of ints. Indicates (for purposes of
+            piano-roll backgrounds) where the higher of consecutive white-keys
+            are located.
+            Default: (0, 5)
+        between_consecutive_white_keys_color: color. Default (232, 232, 232, 255)
 
         Background
         ==========
@@ -1406,6 +1419,19 @@ class Settings:
     bounce_size: float = 0.3
     bounce_period: float = 1.0
     bounce_len: float = 1.0
+    piano_roll_colors: typing.Iterable[typing.Tuple[int, int, int, int]] = (
+        (232, 232, 232, 255),
+    )
+    piano_roll_color_map: typing.Dict[int, int] = dataclasses.field(
+        default_factory=lambda: {1: 0, 3: 0, 6: 0, 8: 0, 10: 0}
+    )
+    consecutive_white_keys: typing.Iterable[int] = (0, 5)
+    between_consecutive_white_keys_color: typing.Tuple[int, int, int, int] = (
+        232,
+        232,
+        232,
+        255,
+    )
 
     # If bg_beat_times is empty, or bg_beat_times_length is 0, bg color is
     # constant
