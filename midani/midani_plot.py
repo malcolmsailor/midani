@@ -4,6 +4,7 @@
 import math
 import operator
 import typing as t
+import warnings
 
 from . import midani_annotations
 from . import midani_colors
@@ -768,6 +769,9 @@ def plot(
     frame_list: t.Sequence[float] = None,
 ):
     score = midani_score.read_score(settings)
+    if not len(score):
+        warnings.warn("Midi file is empty, skipping plotting...")
+        return False, 0
     tempo_changes = midani_time.TempoChanges(score)
     settings.update_from_score(score, tempo_changes)
     score = midani_score.crop_score(score, settings, tempo_changes)

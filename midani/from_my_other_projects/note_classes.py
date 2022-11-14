@@ -747,6 +747,10 @@ class Score:
                     pass
             yield out
 
+    def __len__(self):
+        """Returns number of notes across all voices."""
+        return sum(len(voice) for voice in self.voices)
+
     def get_total_len(self):
         """Returns the length of the super pattern from 0 to the final note
         release.
