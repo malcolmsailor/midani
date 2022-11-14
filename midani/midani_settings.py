@@ -146,7 +146,7 @@ class BracketSettings:
     tight: bool = False
     y_position: typing.Optional[float] = None
     type: str = "bracket"
-    ascending: bool = True
+    plot_shape: str = "ascending"
     fill_color: typing.Union[  # pylint: disable=unsubscriptable-object
         typing.Tuple[int, int, int], typing.Tuple[int, int, int, int]
     ] = (
@@ -782,6 +782,11 @@ class Settings:
         outro_bg_color: tuple of form (int, int, int). The RGB color at the
             end of the outro (if any), or during the complete outro, if
             `bg_color_blend` is False.
+        metric_columns: dict of form (number, number): color. TODO finish doc.
+        metric_column_cycle_len: number. Default 4.
+        metric_column_offset: number. Default 0. Allows a "pickup" (incomplete
+            cycle of metric_columns at start).
+
 
         Global voice settings
         =====================
@@ -1227,7 +1232,7 @@ class Settings:
                     "line_plot". This code should probably ideally be
                     refactored to separate "line_plot" from "bracket" since
                     they are really two quite different types of annotations.
-                "ascending": bool. Default: True.
+                "plot_shape": str. "ascending" (default), "descending", or "flat".
                 "fill_color": a 3-tuple or 4-tuple of ints.
                     Default: (255, 255, 255)
         default_bracket_settings: dict. It is often useful to define a setting
@@ -1449,6 +1454,11 @@ class Settings:
     bg_color_blend: bool = True
     intro_bg_color: tuple = (0, 0, 0, 255)
     outro_bg_color: tuple = None
+    metric_columns: typing.Dict[
+        typing.Tuple[int, int], typing.Tuple[int, int, int, int]
+    ] = dataclasses.field(default_factory=lambda: {})
+    metric_column_cycle_len: numbers.Number = 4.0
+    metric_column_offset: numbers.Number = 0.0
 
     brackets: typing.Sequence[
         typing.Union[  # pylint: disable=unsubscriptable-object

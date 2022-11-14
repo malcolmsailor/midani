@@ -180,7 +180,7 @@ class RBoss:
         x2,
         y1,
         y2,
-        ascending,
+        plot_type,
         fill_color,
         color,
         width,
@@ -189,7 +189,7 @@ class RBoss:
         """For use making annotations for my SMT 2022 presentation. Not sure if
         it will be of use more generally."""
         y1, y2 = sorted([y1, y2])
-        if ascending:
+        if plot_type == "ascending":
             self.outf.write(
                 f"lines(c({x1},{x2},{x2}), c({y1},{y1},{y2}), "
                 f'col = "{self.hex_color(color)}", lwd = {width})\n'
@@ -203,7 +203,7 @@ class RBoss:
                 f'col = "{self.hex_color(fill_color)}", '
                 f'border = "{self.hex_color(fill_color)}", lwd = {width/2})\n'
             )
-        else:
+        elif plot_type == "descending":
             self.outf.write(
                 f"lines(c({x1},{x1},{x2}), c({y2},{y1},{y1}), "
                 f'col = "{self.hex_color(color)}", lwd = {width})\n'
@@ -214,6 +214,16 @@ class RBoss:
             # )
             self.outf.write(
                 f"polygon(c({x1},{x1},{x2}), c({y2},{y1},{y1}), "
+                f'col = "{self.hex_color(fill_color)}", '
+                f'border = "{self.hex_color(fill_color)}", lwd = {width/2})\n'
+            )
+        else:
+            self.outf.write(
+                f"lines(c({x1},{x1},{x2}, {x2}), c({y2},{y1},{y1}, {y2}), "
+                f'col = "{self.hex_color(color)}", lwd = {width})\n'
+            )
+            self.outf.write(
+                f"polygon(c({x1},{x1},{x2}, {x2}), c({y2},{y1},{y1}, {y2}), "
                 f'col = "{self.hex_color(fill_color)}", '
                 f'border = "{self.hex_color(fill_color)}", lwd = {width/2})\n'
             )

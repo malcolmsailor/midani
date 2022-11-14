@@ -645,7 +645,7 @@ def draw_brackets(table, window, settings, plot_boss):
                             x2=x2,
                             y1=y2,
                             y2=y1,
-                            ascending=bracket_settings.ascending,
+                            plot_type=bracket_settings.plot_shape,
                             fill_color=bracket_settings.fill_color,
                             color=bracket_settings.color,
                             width=bracket_settings.line_width,
@@ -737,6 +737,31 @@ def draw_piano_roll_background(table, window, settings, plot_boss):
                     )
 
 
+def draw_metric_columns(window, settings, plot_boss):
+    first_column = math.floor(
+        (window.start - settings.metric_column_offset)
+        / settings.metric_column_cycle_len
+    )
+    last_column = math.ceil(
+        (window.end - settings.metric_column_offset)
+        / settings.metric_column_cycle_len
+    )
+    for (onset, release), color in settings.metric_columns.items():
+        for column_i in range(first_column, last_column + 1):
+            column_offset = (
+                column_i * settings.metric_column_cycle_len
+                + settings.metric_column_offset
+            )
+            plot_boss.plot_rect(
+                onset + column_offset,
+                release + column_offset,
+                window.bottom,
+                window.top,
+                color=color,
+                zorder=1,
+            )
+
+
 def plot(
     settings: midani_settings.Settings,
     mpl: bool,
@@ -772,6 +797,10 @@ def plot(
         # was set in beats. But now, "bounce" is in seconds, so we have no
         # need for tempi.
         with plot_boss.make_png(window):
+            if any_piano_roll_bgs:
+                draw_piano_roll_background(table, window, settings, plot_boss)
+            if settings.metric_columns:
+                draw_metric_columns(window, settings, plot_boss)
             if settings.now_line:
                 plot_boss.now_line(
                     now,
@@ -780,8 +809,6 @@ def plot(
                     settings.now_line_width,
                     settings.now_line_zorder,
                 )
-            if any_piano_roll_bgs:
-                draw_piano_roll_background(table, window, settings, plot_boss)
             rect_tuples, line_tuples = get_voice_and_line_tuples(
                 now, settings, table
             )
